@@ -2,6 +2,7 @@ import './App.css'
 import Home from './pages/Home/Home'
 import Login from './pages/Login/Login'
 import Order from './pages/Order/Order'
+import Promotion from './pages/Promotion/Promotion'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path='/login' element={<Login />}/>
           <Route path='/order' element={<Order/>}></Route>
+          <Route path='/promotion' element={<Promotion/>}></Route>
           <Route path='/' element={<Protected><Home /></Protected>}/>
         </Routes>
       </AuthProvider>

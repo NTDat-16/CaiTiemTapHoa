@@ -9,7 +9,8 @@ export default function Sidebar() {
         <ul className="SidebarList">
             <li className="SidebarItem"><Link to='/order' className="SidebarLink">
             <FiFileText/></Link></li>
-            <li className="SidebarItem"><FiPackage /></li>
+            <li className="SidebarItem"><Link to='/promotion' className="SidebarLink">
+            <FiFileText/></Link></li>
             <li className="SidebarItem"><FiUser /></li>
             <li className="SidebarItem"><FiUsers /></li>
             <li className="SidebarItem"><FiGift /></li>
