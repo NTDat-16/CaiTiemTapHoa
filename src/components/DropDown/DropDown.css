@@ -1,0 +1,50 @@
+/* DropDown wrapper giữ nguyên */
+.DropDownWrapper {
+  position: absolute;
+  top: 55px;
+  right: 10px;
+  width: 150px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 100;
+  padding: 8px 0;
+}
+
+/* Khi show dropdown */
+.DropDownWrapper.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Danh sách */
+.DropDownList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Từng item */
+.DropDownItem {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.DropDownItem:last-child {
+  border-bottom: none;
+}
+
+.DropDownItem:hover {
+  background-color: #f0f2f5;
+  color: #1877f2;
+  font-weight: 500;
+}

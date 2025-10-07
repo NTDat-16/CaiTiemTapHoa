@@ -1,0 +1,109 @@
+
+.login {
+  width: 100vw;
+  height: 100vh;
+  background-color: #f0f2f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loginWrapper {
+  width: 70%;
+  height: 70%;
+  display: flex;
+}
+.loginLeft{
+  width: 60%;
+}
+.loginRight{
+  width: 40%;
+}
+.loginLeft,
+.loginRight {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.loginLogo {
+  font-size: 50px;
+  font-weight: 800;
+  color: #2dc55f;
+  margin-bottom: 10px;
+}
+
+.loginDesc {
+  font-size: 24px;
+}
+
+.loginBox{
+  height: 340px;
+  padding: 20px;
+  background-color: white;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.titleLogin{
+  font-size: 35px;
+  text-align: center;
+  font-weight: 700;
+  color: #2dc55f;
+  margin-bottom: 5px;
+}
+
+.loginInput{
+  height: 45px;
+  border-radius: 10px;
+  border: 1px solid gray;
+  font-size: 18px;
+  padding-left: 20px;
+}
+
+.loginInput:focus{
+  outline: none;
+}
+
+.errorForm{
+  color: red;
+  font-weight: bold;
+}
+
+.loginButton{
+  height: 50px;
+  border-radius: 10px;
+  border: none;
+  background-color: #2dc55f;
+  color: white;
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.loginButton:hover {
+  background-color: #2dc55f;
+  opacity: 0.8;
+}
+
+.TextChoice{
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* .forgotButton{
+  text-align: center;
+  color: #0866ff;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.forgotButton:hover{
+  color: #0866ff;
+  opacity: 0.8;
+  text-decoration: underline;
+} */

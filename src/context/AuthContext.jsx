@@ -1,0 +1,53 @@
+import React, { createContext, useContext, useState } from 'react'
+
+//Tạo ra một context mới
+const AuthContext = createContext();
+
+//Tạo hook để lấy dữ liệu từ AuthContext
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({children}) => {
+    const [user, setUser] = useState(() => {
+        // đọc user từ localStorage lúc khởi tạo
+        const savedUser = localStorage.getItem("user");
+        return savedUser ? JSON.parse(savedUser) : null;
+    });
+
+    const login = async (username, password) => {
+        try {
+            const res = await fetch('http://localhost:5000/api/auth/login',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await res.json();
+            console.log(data);
+            if (res.ok && data.success) {
+                const loginData = data.data;
+                setUser(loginData);
+                localStorage.setItem('user', JSON.stringify(loginData.user));
+                localStorage.setItem('token', loginData.token);
+                return { success: true };
+            } else {
+                const message = 'Tên đăng nhập hoặc mật khẩu không đúng';
+                return { success: false, message };
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            return { success: false, message: 'Network error' };
+        }
+    }
+
+    const logout = () => {
+        setUser(null);
+    };
+
+    return (
+        <AuthContext.Provider value={{user, login, logout}}>
+            {children}
+        </AuthContext.Provider>
+    );
+}

@@ -1,0 +1,44 @@
+.SidebarWrapper {
+  background-color: #7a8286;
+  width: 60px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+  box-sizing: border-box;
+}
+
+/* Danh sách icon */
+.SidebarList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+/* Item */
+.SidebarItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #ccc;
+  gap: 12px;
+  border-radius: 12px;
+  margin: 6px 0; /* khoảng cách giữa các icon */
+}
+
+.SidebarItem:hover {
+  background-color: rgba(255,255,255,0.2);
+  color: #fff;
+  transform: translateX(2px);
+}
+
+/* Tăng kích thước icon */
+.SidebarItem svg {
+  font-size: 28px;
+  transition: all 0.3s ease;
+}
