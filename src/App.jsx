@@ -19,6 +19,8 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+            <Route path="order" element={<Order />} />
+          <Route path="promotion" element={<Promotion />} />
           <Route path='/login' element={<Login />}/>
           <Route path='/order' element={<Order/>}></Route>
           <Route path='/promotion' element={<Promotion/>}></Route>
