@@ -1,10 +1,10 @@
-import './UserManage.css'
+import './CustomerManage.css'
 
-export default function UserManage() {
+export default function CustomerManage() {
   return (
     <div className="UserManage">
       <div className='UserManageWrapper'>
-          Đây là user
+          Đây là khách hàng
       </div>
     </div>
   )
