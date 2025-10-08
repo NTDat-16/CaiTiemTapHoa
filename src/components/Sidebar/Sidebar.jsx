@@ -1,9 +1,4 @@
 import  './Sidebar.css'
-<<<<<<< HEAD
-import { FiUsers, FiFileText, FiTrendingUp, FiPackage, FiUser, FiGift} from 'react-icons/fi'
-import { Link } from 'react-router-dom';
-import Order from "../../pages/Order/Order";
-=======
 import { FiUsers, FiFileText, FiTrendingUp, FiPackage, FiUser, FiGift, FiLogOut } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -25,22 +20,11 @@ export default function Sidebar({onTag, choosen}) {
   }
 
 
->>>>>>> origin/main
 
   return (
     <div className="sidebar">
       <div className="SidebarWrapper">
         <ul className="SidebarList">
-<<<<<<< HEAD
-            <li className="SidebarItem"><Link to='/order' className="SidebarLink">
-            <FiFileText/></Link></li>
-            <li className="SidebarItem"><Link to='/promotion' className="SidebarLink">
-            <FiFileText/></Link></li>
-            <li className="SidebarItem"><FiUser /></li>
-            <li className="SidebarItem"><FiUsers /></li>
-            <li className="SidebarItem"><FiGift /></li>
-            <li className="SidebarItem"><FiTrendingUp /></li>
-=======
           <li
             className={`SidebarItem ${choosen === 'order' ? 'active' : ''}`}
             data-label="Hóa đơn"
@@ -83,7 +67,6 @@ export default function Sidebar({onTag, choosen}) {
           >
             <FiTrendingUp />
           </li>
->>>>>>> origin/main
         </ul>
 
         <div className="SidebarLogout" data-label="Đăng xuất" onClick={HandleLogOut}>

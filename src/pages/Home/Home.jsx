@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-import Navbar from '../../components/Navbar/Navbar'
-import Sidebar from '../../components/Sidebar/Sidebar'
-
-import './Home.css'
-=======
 import { useState } from 'react';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
@@ -12,7 +6,6 @@ import Order from '../../components/Order/Order';
 import CustomerManage from '../../components/CustomerManage/CustomerManage';
 import Promotion from '../../components/Promotion/Promotion';
 import './Home.css';
->>>>>>> origin/main
 
 export default function Home() {
   const [choosen, setChoosen] = useState('employee');
