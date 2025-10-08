@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
-export default function Sidebar({onTag}) {
+export default function Sidebar({onTag, choosen}) {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -21,11 +21,18 @@ export default function Sidebar({onTag}) {
     <div className="sidebar">
       <div className='SidebarWrapper'>
           <ul className="SidebarList">
-              <li className="SidebarItem" data-label="Hóa đơn"><FiFileText /></li>
-              <li className="SidebarItem" data-label="Sản phẩm"><FiPackage /></li>
+              <li 
+                // className="SidebarItem"
+                className={`SidebarItem ${choosen === "invoice" ? "active" : ""}`} 
+                data-label="Hóa đơn" 
+                onClick={()=> {handleTag("invoice")}}
+              >
+                <FiFileText />
+              </li>
+              <li className="SidebarItem" data-label="Sản phẩm" onClick={()=> {handleTag("product")}}><FiPackage /></li>
               <li className="SidebarItem" data-label='Nhân viên' onClick={()=> {handleTag("employee")}}><FiUser /></li>
               <li className="SidebarItem" data-label='Khách hàng' onClick={()=> {handleTag("customer")}}><FiUsers /></li>
-              <li className="SidebarItem" data-label='Mã giảm giá'><FiGift /></li>
+              <li className="SidebarItem" data-label='Mã giảm giá' onClick={()=> {handleTag("discount")}}><FiGift /></li>
               <li className="SidebarItem" data-label='Báo cáo'><FiTrendingUp /></li>
           </ul>
 

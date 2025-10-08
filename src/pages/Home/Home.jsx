@@ -4,14 +4,15 @@ import Sidebar from '../../components/Sidebar/Sidebar'
 import UserManage from '../../components/UserManage/UserManage'
 import './Home.css'
 import CustomerManage from '../../components/CustomerManage/CustomerManage'
+import InvoiceManage from '../../components/InvoiceManage/InvoiceManage'
 
 export default function Home() {
-  const [choosen, setChoosen] = useState("employee");
+  const [choosen, setChoosen] = useState("invoice");
 
   function handleChoosen(frame) {
     switch (frame) {
-      case "home":
-        
+      case "invoice":
+        setChoosen("invoice");
         break;
 
       case "employee":
@@ -36,8 +37,8 @@ export default function Home() {
     <>
       <Navbar />
       <div className="HomeWrapper">
-        <Sidebar onTag={handleChoosen}/>
-        {/* <UserManage /> */}
+        <Sidebar onTag={handleChoosen} choosen={choosen}/>
+        {choosen === "invoice" && <InvoiceManage />}
         {choosen === "employee" && <UserManage />}
         {choosen === "customer" && <CustomerManage />}
       </div>
