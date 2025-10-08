@@ -6,6 +6,7 @@ import Order from '../../components/Order/Order';
 import CustomerManage from '../../components/CustomerManage/CustomerManage';
 import Promotion from '../../components/Promotion/Promotion';
 import './Home.css';
+import ProductManage from '../../components/ProductManage/ProductManage';
 
 export default function Home() {
   const [choosen, setChoosen] = useState('employee');
@@ -28,6 +29,7 @@ export default function Home() {
           {choosen === 'customer' && <CustomerManage />}
           {choosen === 'order' && <Order />}
           {choosen === 'promotion' && <Promotion />}
+          {choosen === 'product' && <ProductManage />}
           {choosen === 'report' && (
             <p style={{ textAlign: 'center', marginTop: '100px' }}>Trang Báo cáo</p>
           )}
