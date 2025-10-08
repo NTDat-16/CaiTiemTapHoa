@@ -9,11 +9,10 @@ import './Home.css';
 import ProductManage from '../../components/ProductManage/ProductManage';
 
 export default function Home() {
-  const [choosen, setChoosen] = useState('employee');
+  const [choosen, setChoosen] = useState('order');
 
   function handleChoosen(frame) {
-    setChoosen(frame); // đơn giản hóa
-    console.log('Đã chọn:', frame);
+    setChoosen(frame);
   }
 
   return (
@@ -25,6 +24,7 @@ export default function Home() {
 
         {/* Khu vực nội dung chính thay đổi */}
         <div className="HomeContent">
+          {choosen === 'category' && <UserManage />}
           {choosen === 'employee' && <UserManage />}
           {choosen === 'customer' && <CustomerManage />}
           {choosen === 'order' && <Order />}
