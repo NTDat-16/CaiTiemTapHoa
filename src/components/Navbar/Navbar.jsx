@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import './Navbar.css'
 import DropDown from '../DropDown/DropDown';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Navbar() {
+    const { user } = useAuth();
     const [currentTime, setCurrentTime] = useState('');
-    const [openDropDown, setOpenDropDown] = useState(false);
+    // const [openDropDown, setOpenDropDown] = useState(false);
 
     useEffect(() => {
         const updateDateTime = () => {
@@ -33,13 +35,13 @@ export default function Navbar() {
         return () => clearInterval(interval);
     }, []);
 
-    function handleDropDown() {
-        setOpenDropDown(!openDropDown);
-    }
+    // function handleDropDown() {
+    //     setOpenDropDown(!openDropDown);
+    // }
 
     return (
         <>
-            <nav className="NavbarWrapper">
+            <div className="NavbarWrapper">
                 {/* Logo */}
                 <div className="NavbarLogo">
                     <span className="LogoText">CaiTiemTapHoa</span>
@@ -52,18 +54,17 @@ export default function Navbar() {
 
                 {/* User Avatar */}
                 <div className="NavbarUser">
-                    <span>Nguyễn Văn A</span>
+                    <span>{user?.fullName}</span>
                     <img 
                         className='UserAvatar'
                         src="./img/AvtUser.png" 
                         alt=""
-                        onClick={handleDropDown}
+                        // onClick={handleDropDown}
                     />
                 </div>
-            </nav>
-            {openDropDown && 
-                <DropDown />
-            }
+                
+            </div>
+            {/* {openDropDown && <DropDown />} */}
         </>
     )
 }
