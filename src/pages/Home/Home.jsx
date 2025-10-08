@@ -11,7 +11,7 @@ export default function Home() {
   const [choosen, setChoosen] = useState('employee');
 
   function handleChoosen(frame) {
-    setChoosen(frame); // đơn giản hóa
+    setChoosen(frame); 
     console.log('Đã chọn:', frame);
   }
 
