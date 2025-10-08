@@ -1,20 +1,45 @@
+<<<<<<< HEAD
 import Navbar from '../../components/Navbar/Navbar'
 import Sidebar from '../../components/Sidebar/Sidebar'
 
 import './Home.css'
+=======
+import { useState } from 'react';
+import Navbar from '../../components/Navbar/Navbar';
+import Sidebar from '../../components/Sidebar/Sidebar';
+import UserManage from '../../components/UserManage/UserManage';
+import Order from '../../components/Order/Order';
+import CustomerManage from '../../components/CustomerManage/CustomerManage';
+import Promotion from '../../components/Promotion/Promotion';
+import './Home.css';
+>>>>>>> origin/main
 
 export default function Home() {
+  const [choosen, setChoosen] = useState('employee');
+
+  function handleChoosen(frame) {
+    setChoosen(frame); // đơn giản hóa
+    console.log('Đã chọn:', frame);
+  }
+
   return (
-    <div className="HomeWrapper">
-        <div className="HomeTop">
-          <Navbar />
+    <div className="home-container">
+      <Navbar />
+      <div className="HomeWrapper">
+        {/* Sidebar cố định bên trái */}
+        <Sidebar onTag={handleChoosen} choosen={choosen} />
+
+        {/* Khu vực nội dung chính thay đổi */}
+        <div className="HomeContent">
+          {choosen === 'employee' && <UserManage />}
+          {choosen === 'customer' && <CustomerManage />}
+          {choosen === 'order' && <Order />}
+          {choosen === 'promotion' && <Promotion />}
+          {choosen === 'report' && (
+            <p style={{ textAlign: 'center', marginTop: '100px' }}>Trang Báo cáo</p>
+          )}
         </div>
-        <div className="HomeBody">
-          <Sidebar />
-          <div className="MainContentRight">
-            <h1>Dashboard</h1>
-          </div>
-        </div>
+      </div>
     </div>
-  )
+  );
 }

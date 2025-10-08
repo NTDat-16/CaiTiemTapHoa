@@ -1,28 +1,36 @@
+.home-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f5f6f8;
+}
+
+/* Navbar luôn ở trên cùng */
+.home-container > .Navbar {
+  flex-shrink: 0;
+}
+
+/* Bố cục chính gồm Sidebar và nội dung */
 .HomeWrapper {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100vh;
+  flex: 1;
+  display: flex;
+  height: calc(100vh - 60px); /* 60px là chiều cao Navbar */
+  overflow: hidden;
 }
 
-/* Navbar nằm trên */
-.HomeTop {
-    width: 100%;
-    height: 60px;
+/* Sidebar cố định bên trái */
+.HomeWrapper > .sidebar {
+  width: 70px;
+  background-color: #2f3640;
+  color: white;
+  flex-shrink: 0;
 }
 
-/* Container chính */
-.HomeBody {
-    display: flex;
-    flex: 1;
-    width: 100%;
-    gap: 10px;
-}
-
-/* Nội dung chính */
-.MainContent {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-    box-sizing: border-box;
+/* Khu vực nội dung thay đổi (Order, Customer, ...) */
+.HomeContent {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #f3f6f4;
+  padding: 20px;
+  transition: all 0.3s ease;
 }

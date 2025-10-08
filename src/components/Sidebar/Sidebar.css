@@ -1,12 +1,18 @@
 .SidebarWrapper {
-  background-color: #7a8286;
-  width: 60px;
-  height: 100%;
+  background: #838b8f;
+  width: 70px;
+  height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 20px;
+  padding: 20px 0;
   box-sizing: border-box;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  position: fixed;
+  top: 60px;
+  left: 0;
+  z-index: 900;
+  transition: all 0.3s ease-in-out;
 }
 
 /* Danh sách icon */
@@ -15,30 +21,87 @@
   margin: 0;
   padding: 0;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* Item */
-.SidebarItem {
+/* Item chung */
+.SidebarItem,
+.SidebarLogout {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 0;
+  width: 80%;
+  height: 55px;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #ccc;
-  gap: 12px;
-  border-radius: 12px;
-  margin: 6px 0; /* khoảng cách giữa các icon */
+  color: #e0e0e0;
+  border-radius: 14px;
+  margin: 6px 0;
+  position: relative;
 }
 
-.SidebarItem:hover {
-  background-color: rgba(255,255,255,0.2);
+/* Hover chung */
+.SidebarItem:hover,
+.SidebarLogout:hover {
+  background-color: rgba(255, 255, 255, 0.25);
   color: #fff;
-  transform: translateX(2px);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(255, 255, 255, 0.25);
 }
 
-/* Tăng kích thước icon */
-.SidebarItem svg {
-  font-size: 28px;
+/* Active */
+.SidebarItem.active {
+  background-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+/* Icon */
+.SidebarItem svg,
+.SidebarLogout svg {
+  font-size: 26px;
   transition: all 0.3s ease;
+}
+
+/* Tooltip */
+.SidebarItem::after,
+.SidebarLogout::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 80px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(-50%) scale(0.95);
+  pointer-events: none;
+  transition: all 0.25s ease;
+}
+
+.SidebarItem:hover::after,
+.SidebarLogout:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+/* Logout nằm cuối */
+.SidebarLogout {
+  margin-top: auto;
+}
+
+/* Khi được chọn */
+.SidebarItem.active {
+  background: linear-gradient(135deg, #a5adb1, #9ba2a6);
+  color: #ffffff;
+  border-left: 4px solid #4fc3f7;
+  /* box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.25),
+              0 0 6px rgba(79, 195, 247, 0.4); */
+  transform: scale(1.05);
+  font-weight: 600;
 }
