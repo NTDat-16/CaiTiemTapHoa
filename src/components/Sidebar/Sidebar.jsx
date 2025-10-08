@@ -14,31 +14,64 @@ export default function Sidebar({onTag, choosen}) {
   }
 
   function handleTag(frame) {
-    onTag(frame);
+ 
+      onTag(frame)
+    
   }
+
+
 
   return (
     <div className="sidebar">
-      <div className='SidebarWrapper'>
-          <ul className="SidebarList">
-              <li 
-                // className="SidebarItem"
-                className={`SidebarItem ${choosen === "invoice" ? "active" : ""}`} 
-                data-label="Hóa đơn" 
-                onClick={()=> {handleTag("invoice")}}
-              >
-                <FiFileText />
-              </li>
-              <li className="SidebarItem" data-label="Sản phẩm" onClick={()=> {handleTag("product")}}><FiPackage /></li>
-              <li className="SidebarItem" data-label='Nhân viên' onClick={()=> {handleTag("employee")}}><FiUser /></li>
-              <li className="SidebarItem" data-label='Khách hàng' onClick={()=> {handleTag("customer")}}><FiUsers /></li>
-              <li className="SidebarItem" data-label='Mã giảm giá' onClick={()=> {handleTag("discount")}}><FiGift /></li>
-              <li className="SidebarItem" data-label='Báo cáo'><FiTrendingUp /></li>
-          </ul>
+      <div className="SidebarWrapper">
+        <ul className="SidebarList">
+          <li
+            className={`SidebarItem ${choosen === 'order' ? 'active' : ''}`}
+            data-label="Hóa đơn"
+            onClick={() => onTag('order')}
+          >
+            <FiFileText />
+          </li>
+          <li
+            className={`SidebarItem ${choosen === 'product' ? 'active' : ''}`}
+            data-label="Sản phẩm"
+            onClick={() => onTag('product')}
+          >
+            <FiPackage />
+          </li>
+          <li
+            className={`SidebarItem ${choosen === 'employee' ? 'active' : ''}`}
+            data-label="Nhân viên"
+            onClick={() => onTag('employee')}
+          >
+            <FiUser />
+          </li>
+          <li
+            className={`SidebarItem ${choosen === 'customer' ? 'active' : ''}`}
+            data-label="Khách hàng"
+            onClick={() => onTag('customer')}
+          >
+            <FiUsers />
+          </li>
+          <li
+            className={`SidebarItem ${choosen === 'promotion' ? 'active' : ''}`}
+            data-label="Mã giảm giá"
+            onClick={() => onTag('promotion')}
+          >
+            <FiGift />
+          </li>
+          <li
+            className={`SidebarItem ${choosen === 'report' ? 'active' : ''}`}
+            data-label="Báo cáo"
+            onClick={() => onTag('report')}
+          >
+            <FiTrendingUp />
+          </li>
+        </ul>
 
-          <div className="SidebarLogout" data-label="Đăng xuất" onClick={HandleLogOut}>
-            <FiLogOut style={{rotate:"180deg"}}/>
-          </div>
+        <div className="SidebarLogout" data-label="Đăng xuất" onClick={HandleLogOut}>
+          <FiLogOut style={{ rotate: '180deg' }} />
+        </div>
       </div>
     </div>
   )

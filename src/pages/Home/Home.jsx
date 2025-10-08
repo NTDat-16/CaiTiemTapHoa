@@ -1,47 +1,38 @@
-import { useState } from 'react'
-import Navbar from '../../components/Navbar/Navbar'
-import Sidebar from '../../components/Sidebar/Sidebar'
-import UserManage from '../../components/UserManage/UserManage'
-import './Home.css'
-import CustomerManage from '../../components/CustomerManage/CustomerManage'
-import InvoiceManage from '../../components/InvoiceManage/InvoiceManage'
+import { useState } from 'react';
+import Navbar from '../../components/Navbar/Navbar';
+import Sidebar from '../../components/Sidebar/Sidebar';
+import UserManage from '../../components/UserManage/UserManage';
+import Order from '../../components/Order/Order';
+import CustomerManage from '../../components/CustomerManage/CustomerManage';
+import Promotion from '../../components/Promotion/Promotion';
+import './Home.css';
 
 export default function Home() {
-  const [choosen, setChoosen] = useState("invoice");
+  const [choosen, setChoosen] = useState('employee');
 
   function handleChoosen(frame) {
-    switch (frame) {
-      case "invoice":
-        setChoosen("invoice");
-        break;
-
-      case "employee":
-        setChoosen("employee");
-        break;
-
-      case "customer":
-        setChoosen("customer");
-        break;
-
-      case "product":
-
-        break;
-
-      case "report":
-
-        break;
-
-    }
+    setChoosen(frame); // đơn giản hóa
+    console.log('Đã chọn:', frame);
   }
+
   return (
-    <>
+    <div className="home-container">
       <Navbar />
       <div className="HomeWrapper">
-        <Sidebar onTag={handleChoosen} choosen={choosen}/>
-        {choosen === "invoice" && <InvoiceManage />}
-        {choosen === "employee" && <UserManage />}
-        {choosen === "customer" && <CustomerManage />}
+        {/* Sidebar cố định bên trái */}
+        <Sidebar onTag={handleChoosen} choosen={choosen} />
+
+        {/* Khu vực nội dung chính thay đổi */}
+        <div className="HomeContent">
+          {choosen === 'employee' && <UserManage />}
+          {choosen === 'customer' && <CustomerManage />}
+          {choosen === 'order' && <Order />}
+          {choosen === 'promotion' && <Promotion />}
+          {choosen === 'report' && (
+            <p style={{ textAlign: 'center', marginTop: '100px' }}>Trang Báo cáo</p>
+          )}
+        </div>
       </div>
-    </>
-  )
+    </div>
+  );
 }

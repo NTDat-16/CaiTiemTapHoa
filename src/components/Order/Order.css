@@ -1,0 +1,250 @@
+.order-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+  background-color: #f4f7f6;
+  box-sizing: border-box;
+  margin-top: 25px;
+}
+
+/* --- Header --- */
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.order-header h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #008b57;
+}
+
+.order-header input {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 250px;
+}
+
+/* --- Main Layout --- */
+.order-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  flex: 1;
+}
+
+/* --- Left Column --- */
+.order-left {
+  flex: 1;
+  min-width: 300px;
+  max-width: 380px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+
+.input-group label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.input-group input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* --- Cart Section --- */
+.product-list {
+  margin-top: 10px;
+}
+
+.product-list h2 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: #008b57;
+}
+
+.product-box {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  color: #777;
+  font-style: italic;
+}
+
+/* --- Payment Section --- */
+.payment-section {
+  margin-top: 20px;
+  background-color: #008b57;
+  color: white;
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.payment-section select,
+.payment-section button {
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+}
+
+.payment-section select {
+  color: black;
+}
+
+.payment-section button {
+  background-color: white;
+  color: #008b57;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.payment-section button:hover {
+  background-color: #d9f5e5;
+}
+
+/* --- Right Column --- */
+.order-right {
+  flex: 2;
+  min-width: 500px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-header {
+  margin-bottom: 10px;
+  border-bottom: 2px solid #008b57;
+}
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 15px;
+}
+
+.product-item {
+  background-color: #00a36c;
+  color: white;
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.product-item:hover {
+  transform: translateY(-4px);
+  background-color: #008b57;
+}
+
+.product-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.product-price {
+  font-size: 14px;
+  font-weight: 500;
+  background: rgba(255,255,255,0.15);
+  padding: 5px 10px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.product-barcode {
+  font-size: 12px;
+  color: rgba(255,255,255,0.8);
+  margin-top: 6px;
+}
+
+
+/* --- Pagination --- */
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.pagination button {
+  padding: 6px 14px;
+  background-color: #eee;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.pagination button:hover {
+  background-color: #ccc;
+}
+
+/* --- Responsive --- */
+@media (max-width: 1024px) {
+  .order-main {
+    flex-direction: column;
+  }
+
+  .order-left,
+  .order-right {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .order-header input {
+    width: 200px;
+  }
+}
+/* --- Product Filter --- */
+.type-product {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 20px;
+}
+
+.type-product label {
+  font-weight: 600;
+  color: #008b57;
+}
+
+.type-product select {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.type-product select:hover {
+  border-color: #008b57;
+}
+
