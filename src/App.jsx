@@ -1,7 +1,6 @@
 import './App.css'
 import Home from './pages/Home/Home'
 import Login from './pages/Login/Login'
-
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -19,6 +18,7 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path='/login' element={<Login />}/>
+          
           <Route path='/' element={<Protected><Home /></Protected>}/>
         </Routes>
       </AuthProvider>
