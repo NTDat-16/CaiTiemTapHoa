@@ -18,8 +18,8 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path='/login' element={<Login />}/>
-          
           <Route path='/' element={<Protected><Home /></Protected>}/>
+           <Route path='/home' element={<Home/>}/>
         </Routes>
       </AuthProvider>
     </BrowserRouter>

@@ -24,7 +24,7 @@ export default function Login() {
         }
         else{
             setError(result.message);
-        }
+        }  
     }
 
     return (

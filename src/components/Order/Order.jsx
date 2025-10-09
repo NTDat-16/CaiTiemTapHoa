@@ -131,16 +131,6 @@ export default function Order() {
 
     return (
         <div className="order-page">
-            <header className="order-header">
-                <h1>Đặt hàng tại quầy</h1>
-                <input
-                    type="text"
-                    placeholder="Tìm sản phẩm theo tên..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
-            </header>
-
             <main className="order-main">
                 {/* Cột bên trái: Giỏ hàng */}
                 <section className="order-left">
@@ -168,38 +158,39 @@ export default function Order() {
                                 ))}
                             </select>
                         </div>
-
-
+                    </div>
                         <div className="product-list">
                             <h2>🛒 Giỏ hàng ({cart.length} món)</h2>
                             <div className="product-box">
-                                {cart.length === 0 ? (
-                                    <p className="empty-cart-message">Chưa có sản phẩm</p>
-                                ) : (
-                                    cart.map((item) => (
-                                        <div key={item.product_id} className="cart-item">
-                                            <div className="cart-info">
-                                                <strong>{item.product_name}</strong>
-                                                <p>
-                                                    {item.price.toLocaleString()} ₫ × {item.quantity} ={" "}
-                                                    <span className="text-total">
-                                                        {(item.price * item.quantity).toLocaleString()} ₫
-                                                    </span>
-                                                </p>
+                                
+                                <div className="cart-scroll-area"> 
+                                    {cart.length === 0 ? (
+                                        <p className="empty-cart-message">Chưa có sản phẩm</p>
+                                    ) : (
+                                        cart.map((item) => (
+                                            <div key={item.product_id} className="cart-item">
+                                                <div className="cart-info">
+                                                    <strong>{item.product_name}</strong>
+                                                    <p>
+                                                        {item.price.toLocaleString()} ₫ × {item.quantity} ={" "}
+                                                        <span className="text-total">
+                                                            {(item.price * item.quantity).toLocaleString()} ₫
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                                <div className="cart-actions">
+                                                    <button onClick={() => updateQuantity(item.product_id, -1)}>-</button>
+                                                    <span>{item.quantity}</span>
+                                                    <button onClick={() => updateQuantity(item.product_id, +1)}>+</button>
+                                                    <button className="delete-btn" onClick={() => removeFromCart(item.product_id)}>X</button>
+                                                </div>
                                             </div>
-                                            <div className="cart-actions">
-                                                <button onClick={() => updateQuantity(item.product_id, -1)}>-</button>
-                                                <span>{item.quantity}</span>
-                                                <button onClick={() => updateQuantity(item.product_id, +1)}>+</button>
-                                                <button className="delete-btn" onClick={() => removeFromCart(item.product_id)}>X</button>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
+                                        ))
+                                    )}
+                                </div>
+                              
                             </div>
                         </div>
-                    </div>
-
                     {/* Thanh toán */}
                     <div className="payment-section">
                         <div className="payment-summary">
@@ -237,6 +228,15 @@ export default function Order() {
                 <section className="order-right">
                     <div className="product-header">
                         <h2>Danh sách sản phẩm</h2>
+                        
+                
+                        <input
+                            type="text"
+                            placeholder="Tìm sản phẩm theo tên..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+            
                         <div className="type-product">
                             <label>Loại: </label>
                             <select value={category} onChange={(e) => setCategory(e.target.value)}>

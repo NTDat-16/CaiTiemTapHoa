@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './Promotion.css' // Đảm bảo bạn có file CSS này để tạo kiểu
+// Lưu ý: Các import từ Ant Design (Table, Button, Modal, Form,...) không cần thiết ở đây vì bạn muốn giữ lại HTML custom.
 
 // Dữ liệu giả lập khuyến mãi
 const mockPromotions = [
@@ -8,6 +9,13 @@ const mockPromotions = [
     { promo_id: 3, promo_code: 'NEWUSER50', description: 'Giảm 50% cho khách hàng mới', discount_type: 'percent', discount_value: 50, start_date: '2025-09-01', end_date: '2025-12-31', min_order_amount: 50000, usage_limit: 100, used_count: 55, status: 'active' },
     { promo_id: 4, promo_code: 'BLACKFRIDAY', description: 'Giảm cố định 50K', discount_type: 'amount', discount_value: 50000, start_date: '2025-11-25', end_date: '2025-11-28', min_order_amount: 300000, usage_limit: 10, used_count: 10, status: 'expired' },
     { promo_id: 5, promo_code: 'TET2026', description: 'Khuyến mãi Tết Nguyên Đán', discount_type: 'percent', discount_value: 15, start_date: '2026-01-01', end_date: '2026-02-10', min_order_amount: 150000, usage_limit: 75, used_count: 0, status: 'active' },
+    // Thêm một số mock data để kiểm tra phân trang 10 mục/trang
+    { promo_id: 6, promo_code: 'SUMMER', description: 'Giảm 20% Hè', discount_type: 'percent', discount_value: 20, start_date: '2026-06-01', end_date: '2026-08-31', min_order_amount: 120000, usage_limit: 60, used_count: 10, status: 'active' },
+    { promo_id: 7, promo_code: 'WINTER', description: 'Giảm 10K Đông', discount_type: 'amount', discount_value: 10000, start_date: '2026-12-01', end_date: '2026-12-31', min_order_amount: 50000, usage_limit: 40, used_count: 15, status: 'active' },
+    { promo_id: 8, promo_code: 'GIFT5K', description: 'Quà 5.000 VNĐ', discount_type: 'amount', discount_value: 5000, start_date: '2025-10-01', end_date: '2025-10-05', min_order_amount: 20000, usage_limit: 200, used_count: 150, status: 'active' },
+    { promo_id: 9, promo_code: 'LASTCHANCE', description: 'Cơ hội cuối', discount_type: 'percent', discount_value: 5, start_date: '2025-12-25', end_date: '2025-12-30', min_order_amount: 500000, usage_limit: 5, used_count: 0, status: 'active' },
+    { promo_id: 10, promo_code: 'VIPUSER', description: 'Dành cho thành viên VIP', discount_type: 'percent', discount_value: 25, start_date: '2025-01-01', end_date: '2026-01-01', min_order_amount: 0, usage_limit: 999, used_count: 100, status: 'active' },
+    { promo_id: 11, promo_code: 'EXTRA1', description: 'Thêm mục 1', discount_type: 'percent', discount_value: 10, start_date: '2025-10-01', end_date: '2025-10-31', min_order_amount: 100000, usage_limit: 50, used_count: 5, status: 'active' },
 ];
 
 // Component Modal đơn giản (giữ nguyên)
@@ -31,7 +39,8 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 
 export default function Promotion() {
     const [promotions, setPromotions] = useState([])
-    const [loading, setLoading] = useState(true) // ✅ Thêm state loading
+    const [loading, setLoading] = useState(true) 
+    const [search, setSearch] = useState("");
     const [formData, setFormData] = useState({
         promo_code: '',
         description: '',
@@ -47,17 +56,17 @@ export default function Promotion() {
     const [editingId, setEditingId] = useState(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
 
-    // ✅ States cho phân trang
+    // ✅ Đã cập nhật: Đồng bộ Phân trang (10 mục/trang)
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5; // Ví dụ: 5 khuyến mãi trên mỗi trang
+    const itemsPerPage = 10; // Thay đổi từ 5 thành 10 (Giống Ant Design Table default)
 
-    // ✅ Hàm giả lập fetch dữ liệu
+    // ✅ Đã cập nhật: Đồng bộ Loading
     const fetchPromotions = async () => {
         setLoading(true);
         console.log("Đang giả lập gọi API fetch Khuyến mãi...");
         
-        // Mô phỏng độ trễ của API
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Mô phỏng độ trễ của API: 500ms (Đồng bộ với ProductManage)
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         // ⛔️ CHỖ NÀY SẼ ĐƯỢC THAY THẾ BẰNG LỆNH GỌI API THẬT
         /*
@@ -81,7 +90,7 @@ export default function Promotion() {
         fetchPromotions()
     }, [])
     
-    // ✅ Logic Phân trang
+    // ✅ Logic Phân trang (Sử dụng 10 mục/trang)
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentPromotions = promotions.slice(indexOfFirstItem, indexOfLastItem);
@@ -115,12 +124,12 @@ export default function Promotion() {
         setFormData({ ...formData, [e.target.name]: e.target.value })
     }
 
-    // Hàm submit (đã sửa để mô phỏng API)
+    // ✅ Đã cập nhật: Đồng bộ Loading
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setLoading(true); // Bắt đầu loading khi submit
-        await new Promise(resolve => setTimeout(resolve, 300)); // Mô phỏng độ trễ
-
+        setLoading(true); 
+        await new Promise(resolve => setTimeout(resolve, 500)); // Độ trễ 500ms
+        
         const finalData = {
             ...formData,
             discount_value: Number(formData.discount_value),
@@ -140,7 +149,7 @@ export default function Promotion() {
             console.log("Giả lập: Thêm khuyến mãi thành công", newPromo);
         }
         
-        setLoading(false);
+        setLoading(false)
         handleCloseModal();
     }
 
@@ -157,35 +166,45 @@ export default function Promotion() {
         setIsModalOpen(true)
     }
 
-    // Hàm xóa (đã sửa để mô phỏng API)
+    // ✅ Đã cập nhật: Đồng bộ Loading
     const handleDelete = async (id) => {
         if (window.confirm('Bạn có chắc chắn muốn xóa khuyến mãi này?')) {
             setLoading(true); // Bắt đầu loading khi xóa
-            await new Promise(resolve => setTimeout(resolve, 300)); // Mô phỏng độ trễ
+            await new Promise(resolve => setTimeout(resolve, 500)); // Độ trễ 500ms
             
             // ✅ Mock DELETE API
-            setPromotions(promotions.filter(p => p.promo_id !== id))
+            const updatedPromotions = promotions.filter(p => p.promo_id !== id);
+            setPromotions(updatedPromotions)
             console.log(`Giả lập: Xóa khuyến mãi ID ${id} thành công`);
             
             setLoading(false);
-            // Sau khi xóa, kiểm tra lại trang hiện tại
-            if (currentPromotions.length === 1 && currentPage > 1) {
-                setCurrentPage(currentPage - 1);
+            
+            // Cập nhật lại trang sau khi xóa
+            const newTotalPages = Math.ceil((updatedPromotions.length) / itemsPerPage);
+            if (currentPage > newTotalPages && newTotalPages > 0) {
+                setCurrentPage(newTotalPages);
             }
         }
     }
 
     // ✅ Hiển thị loading screen
     if (loading) {
+        // Tương tự như ProductManage, chỉ hiển thị loading, không hiển thị bảng
         return <div className="loading-screen">Đang tải dữ liệu Khuyến mãi...</div>;
     }
 
     return (
         <div className="PromotionWrapper">
             <div className="header-bar">
-                <h2>Quản lý Khuyến mãi</h2>
+                <h2>Quản lý khuyến mãi</h2>
+              <input
+                    type="text"
+                    placeholder="Tìm khuyến mãi theo tên..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
                 <button className="add-button" onClick={handleOpenAddModal}>
-                    + Thêm Khuyến mãi
+                    + Thêm khuyến mãi
                 </button>
             </div>
 
@@ -242,24 +261,38 @@ export default function Promotion() {
                 </table>
             </div>
             
-            {/* ✅ Thanh Footer và Phân trang */}
+            {/* ✅ Đã cập nhật: Đồng bộ Footer và Phân trang */}
             <div className="table-footer">
-                <p>Tổng {promotions.length} khuyến mãi</p>
+                {/* Giống ProductManage: "Tổng X sản phẩm" */}
+                <p>Tổng {promotions.length} khuyến mãi</p> 
                 <div className="pagination">
                     <button 
-                    
                         onClick={() => paginate(currentPage - 1)} 
                         disabled={currentPage === 1}
                     >
                         Trước
                     </button>
-                    <span>Trang {currentPage} / {totalPages}</span>
+                    {/* Giữ nguyên logic hiển thị trang */}
+                    <span>Trang {currentPage} / {totalPages}</span> 
                     <button 
                         onClick={() => paginate(currentPage + 1)} 
                         disabled={currentPage === totalPages || totalPages === 0}
                     >
                         Sau
                     </button>
+                    {/* Thêm chức năng chọn trang (để mô phỏng Select của Ant Design) */}
+                    <select className='selectpage'
+                        value={itemsPerPage} 
+                        onChange={(e) => {
+                            // Cần điều chỉnh logic này nếu muốn thay đổi itemsPerPage
+                            // Hiện tại itemsPerPage đã được cố định là 10 để mô phỏng ProductManage
+                            console.log("Tính năng thay đổi số mục/trang không được kích hoạt để đồng bộ với ProductManage (pageSize cố định là 10)");
+                        }}
+                       
+                    >
+                        <option value="10">10 / trang</option>
+                        <option value="20">20 / trang</option>
+                    </select>
                 </div>
             </div>
 
