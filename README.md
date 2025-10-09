@@ -9,5 +9,7 @@ Currently, two official plugins are available:
 
 ## Begin
 - npm install
+- npm install antd
+- npm install @ant-design/v5-patch-for-react-19 --save
 - npm run dev
 - lụm 
