@@ -1,0 +1,28 @@
+.inventory-container {
+  padding: 32px;
+  margin-top: 32px; /* Đẩy xuống tránh bị che bởi navbar */
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 24px;
+}
+
+.inventory-table th,
+.inventory-table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+  font-size: 18px; /* Tăng cỡ chữ trong bảng */
+}
+
+.inventory-table th {
+  background-color: #f2f2f2;
+}
+
+.low-stock-alert {
+  margin-bottom: 16px;
+  color: #d9534f;
+  font-weight: bold;
+}
