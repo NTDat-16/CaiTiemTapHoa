@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Table } from "antd";
+import { Table, Alert } from "antd";
 import "./Inventory.css";
 
 // Mock data for products tồn kho
@@ -34,22 +34,18 @@ const mockProducts = [
     quantity: 25,
     unit: "cái",
   },
-  {
-    product_id: 6,
-    product_name: "Túi xách da",
-    quantity: 25,
-    unit: "cái",
-  },
 ];
 
 export default function InventoryManage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [lowStock, setLowStock] = useState([]);
 
   useEffect(() => {
     setLoading(true);
     setTimeout(() => {
       setProducts(mockProducts);
+      setLowStock(mockProducts.filter((item) => item.quantity <= 5));
       setLoading(false);
     }, 300);
   }, []);
@@ -87,6 +83,25 @@ export default function InventoryManage() {
       <div className="product-manage-header">
         <h2>Quản lý tồn kho</h2>
       </div>
+      {/* Cảnh báo tồn kho thấp */}
+      {lowStock.length > 0 && (
+        <Alert
+          message={`Có ${lowStock.length} sản phẩm sắp hết hàng!`}
+          description={
+            <ul style={{ margin: 0, paddingLeft: 20 }}>
+              {lowStock.map((item) => (
+                <li key={item.product_id}>
+                  <b>{item.product_name}</b> (Còn lại:{" "}
+                  <span style={{ color: "red" }}>{item.quantity}</span>)
+                </li>
+              ))}
+            </ul>
+          }
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
       <div className="product-manage-table">
         <Table
           columns={columns}
