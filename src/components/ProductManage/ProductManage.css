@@ -1,0 +1,143 @@
+.product-manage-container {
+    position: fixed;
+    top: 5%;
+    left: 5%;
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: calc(100vh - 64px);
+  width: 95%;
+}
+
+.product-manage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.product-manage-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.product-manage-table {
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Ant Design Table customization */
+.product-manage-table .ant-table {
+  font-size: 14px;
+}
+
+.product-manage-table .ant-table-thead > tr > th {
+  background-color: #fafafa;
+  font-weight: 600;
+  color: #262626;
+}
+
+.product-manage-table .ant-table-tbody > tr:hover > td {
+  background-color: #e6f7ff;
+}
+
+/* Modal form styling */
+.ant-modal-header {
+  background-color: #1890ff;
+}
+
+.ant-modal-title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.ant-modal-close-x {
+  color: #ffffff;
+}
+
+.ant-form-item-label > label {
+  font-weight: 500;
+}
+
+.form-actions {
+  margin-bottom: 0;
+  margin-top: 24px;
+}
+
+.form-actions .ant-space {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+/* Button styling */
+.ant-btn-primary {
+  background-color: #1890ff;
+  border-color: #1890ff;
+}
+
+.ant-btn-primary:hover {
+  background-color: #40a9ff;
+  border-color: #40a9ff;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .product-manage-container {
+    padding: 16px;
+  }
+
+  .product-manage-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .product-manage-header h2 {
+    font-size: 20px;
+  }
+
+  .product-manage-table {
+    padding: 16px;
+  }
+}
+
+/* Loading state */
+.ant-spin-container {
+  min-height: 400px;
+}
+
+/* Empty state */
+.ant-empty {
+  padding: 40px 0;
+}
+
+/* Pagination styling */
+.ant-pagination {
+  margin-top: 16px;
+}
+
+/* Input and Select styling */
+.ant-input,
+.ant-select-selector {
+  border-radius: 4px;
+}
+
+.ant-input:focus,
+.ant-select-focused .ant-select-selector {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Popconfirm styling */
+.ant-popover-message-title {
+  padding-left: 22px;
+}
+
+

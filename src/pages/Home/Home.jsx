@@ -6,13 +6,13 @@ import Order from '../../components/Order/Order';
 import CustomerManage from '../../components/CustomerManage/CustomerManage';
 import Promotion from '../../components/Promotion/Promotion';
 import './Home.css';
+import ProductManage from '../../components/ProductManage/ProductManage';
 
 export default function Home() {
-  const [choosen, setChoosen] = useState('employee');
+  const [choosen, setChoosen] = useState('order');
 
   function handleChoosen(frame) {
-    setChoosen(frame); 
-    console.log('Đã chọn:', frame);
+    setChoosen(frame);
   }
 
   return (
@@ -24,10 +24,12 @@ export default function Home() {
 
         {/* Khu vực nội dung chính thay đổi */}
         <div className="HomeContent">
+          {choosen === 'category' && <UserManage />}
           {choosen === 'employee' && <UserManage />}
           {choosen === 'customer' && <CustomerManage />}
           {choosen === 'order' && <Order />}
           {choosen === 'promotion' && <Promotion />}
+          {choosen === 'product' && <ProductManage />}
           {choosen === 'report' && (
             <p style={{ textAlign: 'center', marginTop: '100px' }}>Trang Báo cáo</p>
           )}

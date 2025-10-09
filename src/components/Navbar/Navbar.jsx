@@ -6,7 +6,6 @@ import { useAuth } from '../../context/AuthContext';
 export default function Navbar() {
     const { user } = useAuth();
     const [currentTime, setCurrentTime] = useState('');
-    // const [openDropDown, setOpenDropDown] = useState(false);
 
     useEffect(() => {
         const updateDateTime = () => {
@@ -31,13 +30,8 @@ export default function Navbar() {
 
         updateDateTime(); // cập nhật ngay khi load
         const interval = setInterval(updateDateTime, 1000); // update mỗi giây
-
         return () => clearInterval(interval);
     }, []);
-
-    // function handleDropDown() {
-    //     setOpenDropDown(!openDropDown);
-    // }
 
     return (
         <>
@@ -54,17 +48,14 @@ export default function Navbar() {
 
                 {/* User Avatar */}
                 <div className="NavbarUser">
-                    <span>{user?.fullName}</span>
+                    <span>{user.user?.fullName || user.fullName}</span>
                     <img 
                         className='UserAvatar'
                         src="./img/AvtUser.png" 
                         alt=""
-                        // onClick={handleDropDown}
                     />
                 </div>
-                
             </div>
-            {/* {openDropDown && <DropDown />} */}
         </>
     )
 }

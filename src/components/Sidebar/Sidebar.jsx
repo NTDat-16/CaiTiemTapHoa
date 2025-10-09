@@ -1,8 +1,7 @@
 import  './Sidebar.css'
-import { FiUsers, FiFileText, FiTrendingUp, FiPackage, FiUser, FiGift, FiLogOut } from 'react-icons/fi'
+import { FiUsers, FiFileText, FiTrendingUp, FiPackage, FiUser, FiGift, FiLogOut, FiGrid } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 
 export default function Sidebar({onTag, choosen}) {
   const { logout } = useAuth();
@@ -14,12 +13,8 @@ export default function Sidebar({onTag, choosen}) {
   }
 
   function handleTag(frame) {
- 
-      onTag(frame)
-    
+    onTag(frame);
   }
-
-
 
   return (
     <div className="sidebar">
@@ -38,6 +33,14 @@ export default function Sidebar({onTag, choosen}) {
             onClick={() => onTag('product')}
           >
             <FiPackage />
+          </li>
+
+          <li
+            className={`SidebarItem ${choosen === 'category' ? 'active' : ''}`}
+            data-label="Loại sản phẩm"
+            onClick={() => onTag('category')}
+          >
+            <FiGrid />
           </li>
           <li
             className={`SidebarItem ${choosen === 'employee' ? 'active' : ''}`}
