@@ -1,11 +1,14 @@
 .order-page {
   display: flex;
+  top: 5%;
+    left: 5%;
   flex-direction: column;
   height: 100%;
   padding: 20px;
   background-color: #f4f7f6;
   box-sizing: border-box;
-  margin-top: 25px;
+   min-height: calc(100vh - 64px);
+  width: 95%;
 }
 
 /* --- Header --- */
@@ -32,7 +35,7 @@
 /* --- Main Layout --- */
 .order-main {
   display: flex;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
   gap: 20px;
   flex: 1;
 }
@@ -126,7 +129,7 @@
 /* --- Right Column --- */
 .order-right {
   flex: 2;
-  min-width: 500px;
+  
   background: white;
   border-radius: 10px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);

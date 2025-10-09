@@ -3,10 +3,10 @@ import "./Order.css";
 
 export default function Order() {
   const [category, setCategory] = useState("all");
-  const [cart, setCart] = useState([]); // ✅ Giỏ hàng
+  const [cart, setCart] = useState([]); 
   const [search, setSearch] = useState("");
 
-  // Danh sách sản phẩm mẫu
+  
   const products = [
     {
       product_id: 1,
@@ -164,7 +164,7 @@ export default function Order() {
           </div>
         </section>
 
-        {/* Cột bên phải: Danh sách sản phẩm */}
+      
         <section className="order-right">
           <div className="product-header">
             <h2>Danh sách sản phẩm</h2>
