@@ -317,7 +317,8 @@
 
 .AddUserForm {
   background: #fff;
-  width: 600px;
+  width: 500px;
+  height: auto;
   max-width: 95%;
   border-radius: 10px;
   overflow: hidden;
