@@ -1,5 +1,5 @@
 import  './Sidebar.css'
-import { FiUsers, FiFileText, FiTrendingUp, FiPackage, FiUser, FiGift, FiLogOut, FiGrid } from 'react-icons/fi'
+import { FiUsers, FiFileText, FiTrendingUp, FiPackage, FiUser, FiGift, FiLogOut, FiGrid, FiBox } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -56,6 +56,15 @@ export default function Sidebar({onTag, choosen}) {
           >
             <FiUsers />
           </li>
+
+          <li
+            className={`SidebarItem ${choosen === 'inventory' ? 'active' : ''}`}
+            data-label="Tồn kho"
+            onClick={() => onTag('inventory')}
+          >
+            <FiBox />
+          </li>
+
           <li
             className={`SidebarItem ${choosen === 'promotion' ? 'active' : ''}`}
             data-label="Mã giảm giá"
