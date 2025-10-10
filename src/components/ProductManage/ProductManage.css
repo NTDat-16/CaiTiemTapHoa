@@ -6,8 +6,8 @@
 
 .product-manage-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 16px;
   margin-bottom: 24px;
   padding: 20px;
   background-color: #ffffff;
@@ -22,17 +22,18 @@
   color: #1890ff;
 }
 
-/* Added search section styling */
-.product-search-section {
-  margin-bottom: 24px;
-  padding: 20px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* New container for search input and button */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
 }
 
+/* Search input takes 40% width */
 .product-search-input {
-  width: 100%;
+  width: 40%;
+  flex-shrink: 0;
 }
 
 .product-search-input .ant-input-search-button {
@@ -53,6 +54,11 @@
 .product-search-input .ant-input::placeholder {
   color: #bfbfbf;
   font-size: 14px;
+}
+
+/* Button positioned at the right using margin-left auto */
+.header-actions .ant-btn {
+  margin-left: auto;
 }
 
 .product-manage-table {
@@ -123,18 +129,26 @@
   }
 
   .product-manage-header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
+    gap: 12px;
   }
 
   .product-manage-header h2 {
     font-size: 20px;
   }
 
-  /* Added responsive styling for search section */
-  .product-search-section {
-    padding: 16px;
+  /* Stack search and button vertically on mobile */
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .product-search-input {
+    width: 100%;
+  }
+
+  .header-actions .ant-btn {
+    margin-left: 0;
+    width: 100%;
   }
 
   .product-search-input .ant-input::placeholder {

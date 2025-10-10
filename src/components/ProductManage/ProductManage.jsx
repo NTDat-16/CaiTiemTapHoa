@@ -330,21 +330,20 @@ export default function ProductManage() {
     <div className="product-manage-container">
       <div className="product-manage-header">
         <h2>Quản lý sản phẩm</h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large">
-          Thêm sản phẩm
-        </Button>
-      </div>
-
-      <div className="product-search-section">
-        <Input.Search
-          placeholder="Tìm kiếm theo tên sản phẩm, barcode, giá, đơn vị, danh mục, nhà cung cấp..."
-          allowClear
-          enterButton={<SearchOutlined />}
-          size="large"
-          onSearch={handleSearch}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="product-search-input"
-        />
+        <div className="header-actions">
+          <Input.Search
+            placeholder="Tìm kiếm theo tên sản phẩm, barcode, giá, đơn vị, danh mục, nhà cung cấp..."
+            allowClear
+            enterButton={<SearchOutlined />}
+            size="large"
+            onSearch={handleSearch}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="product-search-input"
+          />
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large">
+            Thêm sản phẩm
+          </Button>
+        </div>
       </div>
 
       <div className="product-manage-table">
