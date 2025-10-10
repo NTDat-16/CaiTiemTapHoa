@@ -1,23 +1,24 @@
-import { useAuth } from '../../context/AuthContext';
+import { useState } from 'react';
 import './DropDown.css'
 import { FiLock, FiLogOut } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom'
 
-export default function DropDown() {
-    const { logout } = useAuth();
-    const navigate = useNavigate();
-
-    const HandleLogOut = async () => {
-        logout();
-        navigate('/login');
-    }
-
+export default function DropDown({ CancleDrop, OpenPass, OpenInfo }) {
     return (
-        <div className='DropDownWrapper'>
-            <ul className="DropDownList">
-                <li className="DropDownItem" > <FiLock size={18}/>Đổi mật khẩu</li>
-                <li className="DropDownItem" onClick={HandleLogOut}> <FiLogOut size={18}/>Đăng xuất</li>
-            </ul>
-        </div>
+        <>
+            <div className='DropDownWrapper'>
+                <ul className="DropDownList">
+                    <li className="DropDownItem" 
+                        onClick={OpenPass}
+                    > 
+                        <FiLock size={18}/>Đổi mật khẩu
+                    </li>
+                    <li className="DropDownItem"
+                        onClick={OpenInfo} 
+                    > 
+                        <FiLogOut size={18}/>Thông tin cá nhân
+                    </li>
+                </ul>
+            </div>
+        </>
     )
 }

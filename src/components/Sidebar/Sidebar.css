@@ -99,7 +99,7 @@
 .SidebarItem.active {
   background: linear-gradient(135deg, #a5adb1, #9ba2a6);
   color: #ffffff;
-  border-left: 4px solid #4fc3f7;
+  border-left: 4px solid #008f5a;
   /* box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.25),
               0 0 6px rgba(79, 195, 247, 0.4); */
   transform: scale(1.05);
