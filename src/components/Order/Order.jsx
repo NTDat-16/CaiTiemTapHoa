@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "./Order.css";
 
 // Dữ liệu giả lập sản phẩm
@@ -26,108 +26,164 @@ const mockPromotions = [
 // Dữ liệu giả lập cho Nhân viên/Khách hàng (Tùy chọn)
 const mockUsers = [{ user_id: 1, name: "Nguyễn Văn A" }];
 const mockCustomers = [{ customer_id: 1, phone: "0901234567", name: "Trần Thị B" }];
-
+const mockQrCodeImage= "https://i.imgur.com/kS5x87J.png"
 
 export default function Order() {
     const [category, setCategory] = useState("all");
     const [cart, setCart] = useState([]);
     const [search, setSearch] = useState("");
-    const [loading, setLoading] = useState(true); // Thêm state loading
-
-    // States cho dữ liệu từ API giả lập
+    const [loading, setLoading] = useState(true);
+    const [selectedPromoId, setSelectedPromoId] = useState("");
     const [products, setProducts] = useState([]);
     const [promotions, setPromotions] = useState([]);
     const [users, setUsers] = useState([]);
     const [customers, setCustomers] = useState([]);
+    const [paymentMethod, setPaymentMethod] = useState("Tiền mặt"); 
 
-    // States cho phân trang
     const [currentPage, setCurrentPage] = useState(1);
-    const productsPerPage = 8; // Số sản phẩm trên mỗi trang
+    const productsPerPage = 8;
 
-    // ✅ Hàm giả lập gọi API để tải tất cả dữ liệu cần thiết
     const fetchData = async () => {
         setLoading(true);
-        console.log("Đang giả lập gọi API...");
-        // Mô phỏng độ trễ
-        await new Promise(resolve => setTimeout(resolve, 800));
+        console.log("Đang gọi API...");
+        
+        // =================== LỆNH GỌI API THẬT (ĐÃ COMMENT) ===================
+        /*
+        try {
+            // Gọi nhiều API cùng lúc để tăng tốc độ tải
+            const [productsRes, promotionsRes, usersRes, customersRes] = await Promise.all([
+                fetch('/api/products'),
+                fetch('/api/promotions'),
+                fetch('/api/users'),
+                fetch('/api/customers')
+            ]);
 
-        // ⛔️ CHỖ NÀY SẼ ĐƯỢC THAY THẾ BẰNG LỆNH GỌI API THẬT
+            // Kiểm tra lỗi cho từng response
+            if (!productsRes.ok) throw new Error('Lỗi tải sản phẩm');
+            if (!promotionsRes.ok) throw new Error('Lỗi tải khuyến mãi');
+            if (!usersRes.ok) throw new Error('Lỗi tải nhân viên');
+            if (!customersRes.ok) throw new Error('Lỗi tải khách hàng');
+
+            // Chuyển đổi response thành JSON
+            const productsData = await productsRes.json();
+            const promotionsData = await promotionsRes.json();
+            const usersData = await usersRes.json();
+            const customersData = await customersRes.json();
+
+            // Cập nhật state
+            setProducts(productsData);
+            setPromotions(promotionsData);
+            setUsers(usersData);
+            setCustomers(customersData);
+
+        } catch (error) {
+            console.error("Lỗi khi fetch dữ liệu:", error);
+            // Có thể thêm thông báo lỗi cho người dùng ở đây
+        } finally {
+            setLoading(false);
+        }
+        */
+        // ======================================================================
+
+        // ------------ Code giả lập gọi API (giữ lại để test) ------------------
+        await new Promise(resolve => setTimeout(resolve, 800));
         setProducts(mockProducts);
         setPromotions(mockPromotions);
         setUsers(mockUsers);
         setCustomers(mockCustomers);
-        // -----------------------------------------------------
-
         setLoading(false);
         console.log("Hoàn thành giả lập gọi API.");
+        // -----------------------------------------------------------------------
     };
 
     useEffect(() => {
         fetchData();
     }, []);
 
+    // ... (Phần còn lại của code không thay đổi) ...
     // 1. Lọc sản phẩm theo loại và tìm kiếm
-    const filteredProducts = products.filter((p) => {
+             const filteredProducts = products.filter((p) => {
         const matchCategory = category === "all" || p.type === category;
         const matchSearch = p.product_name.toLowerCase().includes(search.toLowerCase());
         return matchCategory && matchSearch;
-    });
-
-    // 2. Logic Phân trang
-    const indexOfLastProduct = currentPage * productsPerPage;
-    const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-    const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
-    const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
-
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-    // Xử lý khi bộ lọc thay đổi, reset về trang 1
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [category, search]);
-
-
-    // ✅ Các hàm quản lý giỏ hàng (giữ nguyên)
-    const handleAddToCart = (product) => {
-        setCart((prev) => {
-            const existing = prev.find((item) => item.product_id === product.product_id);
-            if (existing) {
-                return prev.map((item) =>
-                    item.product_id === product.product_id
-                        ? { ...item, quantity: item.quantity + 1 }
-                        : item
-                );
-            } else {
-                return [...prev, { ...product, quantity: 1 }];
-            }
         });
-    };
 
-    const updateQuantity = (id, delta) => {
-        setCart((prev) =>
-            prev
-                .map((item) =>
-                    item.product_id === id
-                        ? { ...item, quantity: Math.max(item.quantity + delta, 0) }
-                        : item
-                )
-                .filter((item) => item.quantity > 0)
+ // 2. Logic Phân trang
+ const indexOfLastProduct = currentPage * productsPerPage;
+const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+         
+        useEffect(() => {
+            setCurrentPage(1);
+        }, [category, search]);
+
+
+  const handleAddToCart = (product) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.product_id === product.product_id);
+      if (existing) {
+        return prev.map((item) =>
+          item.product_id === product.product_id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
-    };
+      } else {
+        return [...prev, { ...product, quantity: 1 }];
+      }
+    });
+  };
+  const updateQuantity = (id, delta) => {
+    setCart((prev) =>
+      prev
+        .map((item) =>
+          item.product_id === id
+            ? { ...item, quantity: Math.max(item.quantity + delta, 0) }             : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+ };
 
-    const removeFromCart = (id) => {
+ const removeFromCart = (id) => {
         setCart((prev) => prev.filter((item) => item.product_id !== id));
-    };
+};
 
-    // ✅ Tính toán tổng tiền (giả định chưa áp dụng KM)
-    const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const discountAmount = 0; // Tạm thời để 0
-    const total = subtotal - discountAmount;
+  const { subtotal, discountAmount, total } = useMemo(() => {
+    // 1. Lỗi cú pháp: Dùng `sum` thay vì `Summarize` để nhất quán
+    const currentSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    // Hiển thị màn hình loading
-    if (loading) {
-        return <div className="loading-screen">Đang tải dữ liệu...</div>;
+    // 2. Tìm khuyến mãi, đảm bảo tên biến `selectedPromoId` đúng (thường là camelCase)
+    const selectedPromo = promotions.find(p => p.promo_id === Number(selectedPromoId));
+
+    // 3. Khởi tạo giảm giá bằng 0 để xử lý trường hợp không có khuyến mãi
+    let currentDiscount = 0; 
+
+    // 4. Chỉ tính toán khi đã tìm thấy khuyến mãi để tránh lỗi
+    if (selectedPromo) {
+        // 5. Sửa lỗi chính tả: 'percent' thay vì 'precent'
+        if (selectedPromo.discount_type === 'percent') {
+            currentDiscount = (currentSubtotal * selectedPromo.discount_value) / 100;
+        } else if (selectedPromo.discount_type === 'amount') {
+            currentDiscount = selectedPromo.discount_value;
+        }
     }
+
+    // Tính tổng cuối cùng, đảm bảo không nhỏ hơn 0
+    const currentTotal = Math.max(0, currentSubtotal - currentDiscount);
+    
+    return {
+        subtotal: currentSubtotal,
+        discountAmount: currentDiscount,
+        total: currentTotal,
+    };
+}, [cart, selectedPromoId, promotions]);
+
+  // Hiển thị màn hình loading
+  if (loading) {
+    return <div className="loading-screen">Đang tải dữ liệu...</div>;
+  }
 
     return (
         <div className="order-page">
@@ -149,7 +205,11 @@ export default function Order() {
 
                         <div className="input-group">
                             <label>Mã Khuyến mãi (promo_id)</label>
-                            <select>
+                            <select 
+                            value={selectedPromoId} onChange={(e)=> setSelectedPromoId(e.target.value)
+                                
+                            }>
+                            
                                 <option value="">Không áp dụng</option>
                                 {promotions.map(promo => (
                                     <option key={promo.promo_id} value={promo.promo_id}>
@@ -206,13 +266,29 @@ export default function Order() {
 
                         <div className="input-group payment-method">
                             <label>Phương thức thanh toán</label>
-                            <select>
+                           <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                                 <option>Tiền mặt</option>
                                 <option>Chuyển khoản</option>
                                 <option>Thẻ</option>
                             </select>
                         </div>
                         
+                         {paymentMethod === 'Chuyển khoản' && (
+                            <div className="qr-code-box">
+                                <h4>Scan QR để thanh toán</h4>
+                                <img 
+                                    src={mockQrCodeImage} 
+                                    alt="Mã QR Thanh toán" 
+                                    className="qr-code-image"
+                                />
+                                <p className="qr-info">
+                                    Ngân hàng: **Vietcombank**<br/>
+                                    STK: **0987654321**<br/>
+                                    Nội dung: **THANHTOAN**
+                                </p>
+                            </div>
+                        )}
+
                         <div className="total-price">
                             <strong>Tổng thanh toán: </strong>
                             <span className="text-final-total">
