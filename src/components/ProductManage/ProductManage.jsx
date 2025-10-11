@@ -1,7 +1,8 @@
+"use client"
+
 import { useState, useEffect } from "react"
-import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm,InputNumber } from "antd"
-import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons"
-import '@ant-design/v5-patch-for-react-19'
+import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm } from "antd"
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons"
 import "./ProductManage.css"
 
 const { Option } = Select
@@ -82,6 +83,7 @@ export default function ProductManage() {
   const [loading, setLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
+  const [searchTerm, setSearchTerm] = useState("")
   const [form] = Form.useForm()
 
   // Fetch products from API (currently using mock data)
@@ -296,25 +298,64 @@ export default function ProductManage() {
     setEditingProduct(null)
   }
 
+  const filteredProducts = products.filter((product) => {
+    if (!searchTerm) return true
+
+    const searchLower = searchTerm.toLowerCase()
+
+    // Get category name
+    const category = categories.find((c) => c.category_id === product.category_id)
+    const categoryName = category ? category.category_name.toLowerCase() : ""
+
+    // Get supplier name
+    const supplier = suppliers.find((s) => s.supplier_id === product.supplier_id)
+    const supplierName = supplier ? supplier.name.toLowerCase() : ""
+
+    // Search in all fields
+    return (
+      product.product_name.toLowerCase().includes(searchLower) ||
+      product.barcode.toLowerCase().includes(searchLower) ||
+      product.price.toString().includes(searchLower) ||
+      product.unit.toLowerCase().includes(searchLower) ||
+      categoryName.includes(searchLower) ||
+      supplierName.includes(searchLower)
+    )
+  })
+
+  const handleSearch = (value) => {
+    setSearchTerm(value)
+  }
+
   return (
     <div className="product-manage-container">
       <div className="product-manage-header">
         <h2>Quản lý sản phẩm</h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large">
-          Thêm sản phẩm
-        </Button>
+        <div className="header-actions">
+          <Input.Search
+            placeholder="Tìm kiếm theo tên sản phẩm, barcode, giá, đơn vị, danh mục, nhà cung cấp..."
+            allowClear
+            enterButton={<SearchOutlined />}
+            size="large"
+            onSearch={handleSearch}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="product-search-input"
+          />
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large">
+            Thêm sản phẩm
+          </Button>
+        </div>
       </div>
 
       <div className="product-manage-table">
         <Table
           columns={columns}
-          dataSource={products}
+          dataSource={filteredProducts}
           rowKey="product_id"
           loading={loading}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
-            showTotal: (total) => `Tổng ${total} sản phẩm`,
+            showTotal: (total) => `Tổng ${total} sản phẩm${searchTerm ? " (đã lọc)" : ""}`,
           }}
           scroll={{ x: 1200 }}
         />
@@ -362,7 +403,7 @@ export default function ProductManage() {
               },
             ]}
           >
-            <InputNumber style={{ width: "100%" }} type="number" placeholder="Nhập giá" />
+            <Input type="number" placeholder="Nhập giá" />
           </Form.Item>
 
           <Form.Item

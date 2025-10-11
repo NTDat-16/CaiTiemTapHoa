@@ -1,0 +1,213 @@
+/* === Overlay === */
+.EmployeeProfileOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  font-family: 'Inter', sans-serif;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* === Hộp chính === */
+.EmployeeProfile {
+  background: #fff;
+  border-radius: 16px;
+  width: 700px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: scaleIn 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* === KHỐI 1: Header === */
+.ProfileHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #008f5a;
+  color: white;
+  padding: 28px 24px;
+  border-bottom: 3px solid #006f45;
+}
+
+.ProfileAvatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  margin-right: 20px;
+  object-fit: cover;
+}
+
+.ProfileInfo h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.ProfileInfo p {
+  margin-top: 6px;
+  opacity: 0.9;
+}
+
+/* === Icon đóng === */
+/* .CloseIcon {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-size: 22px;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.CloseIcon:hover {
+  transform: scale(1.2);
+  color: #ffdddd;
+} */
+
+.CloseButton {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  color: #fff;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  padding: 6px;
+  transition: 0.2s ease;
+  z-index: 10;
+}
+
+.CloseButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+
+/* === KHỐI 2: Thông tin liên hệ === */
+.ProfileContact {
+  padding: 24px 32px;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+}
+
+.ProfileContact h3 {
+  font-size: 18px;
+  color: #008f5a;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.ContactRow {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.ContactRow span {
+  font-weight: 600;
+  color: #333;
+  margin-right: 6px;
+}
+
+/* === KHỐI 3: Cập nhật thông tin === */
+.ProfileUpdate {
+  padding: 24px 32px 32px;
+}
+
+.ProfileUpdate h3 {
+  font-size: 18px;
+  color: #008f5a;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.FormRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.FormRow label {
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+}
+
+.FormRow input {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #ddd;
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.FormRow input:focus {
+  border-color: #008f5a;
+  box-shadow: 0 0 0 3px rgba(0, 143, 90, 0.15);
+  outline: none;
+}
+
+/* === Button nhóm === */
+/* .ProfileActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.btnCancel,
+.btnSave {
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s ease;
+}
+
+.btnCancel {
+  background: #f2f2f2;
+  color: #444;
+}
+
+.btnCancel:hover {
+  background: #e0e0e0;
+}
+
+.btnSave {
+  background: #008f5a;
+  color: white;
+}
+
+.btnSave:hover {
+  background: #007a4d;
+} */
+
+/* === Responsive === */
+@media (max-width: 480px) {
+  .EmployeeProfile {
+    width: 90%;
+  }
+
+  .ProfileAvatar {
+    width: 70px;
+    height: 70px;
+  }
+}

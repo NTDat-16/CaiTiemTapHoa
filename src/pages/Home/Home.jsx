@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar/Navbar";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import UserManage from "../../components/UserManage/UserManage";
@@ -15,7 +15,6 @@ export default function Home() {
   function handleChoosen(frame) {
     setChoosen(frame);
   }
-
   return (
     <div className="home-container">
       <Navbar />
