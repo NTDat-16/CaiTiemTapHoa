@@ -13,6 +13,7 @@
     font-weight: bold;
     color: #007bff;
     z-index: 999;
+    /* Loại bỏ margin nếu không cần thiết */
     margin-top: 60px;
     margin-left: 70px;
 
@@ -20,27 +21,12 @@
 
 /* --- Container và Layout --- */
 .order-page {
- display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 20px;
-  background-color: #f4f7f6;
-  /* box-sizing: border-box; */
-  /* margin-top: 25px; */
-}
-
-/* .order-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-} */
-
-/* .order-header h1 {
-    margin: 0;
-    color: #333;
-} */
-
+    flex-direction: column;
+    height: 100%; /* Đảm bảo trang có chiều cao đầy đủ */
+    padding: 20px;
+    background-color: #f4f7f6;
+}
 
 .order-main {
     display: flex;
@@ -49,16 +35,20 @@
     min-height: 0;
 }
 
-/* --- Cột bên trái (Giỏ hàng) --- */
+/* ------------------------------------------- */
+/* --- Cột bên trái (Giỏ hàng) - Quan trọng --- */
+/* ------------------------------------------- */
 .order-left {
     flex: 0 0 350px; /* Chiều rộng cố định cho giỏ hàng */
     display: flex;
-    flex-direction: column;
-    /* justify-content: space-between; */
+    flex-direction: column; /* Thiết lập bố cục cột để quản lý không gian dọc */
     background-color: white;
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    /* Đặt chiều cao tương đối để flex hoạt động tốt */
+    min-height: 90vh; 
+    max-height: 90vh; /* Giới hạn chiều cao */
 }
 
 .input-group {
@@ -81,38 +71,37 @@
     box-sizing: border-box;
 }
 
+/* Container cho Danh sách sản phẩm */
 .product-list {
     display: flex;
     flex-direction: column;
-    height: 100%; 
-    flex: 1;
-    min-height: 200px;
-    overflow-y: auto;
+    flex: 1; /* Cho phép nó mở rộng lấp đầy không gian còn lại */
+    min-height: 0; /* Quan trọng để flex hoạt động */
     border-top: 1px solid #eee;
     padding-top: 15px;
 }
-.cart-scroll-area {
-    /* Kích hoạt cuộn và mở rộng */
-    flex-grow: 1;
-    overflow-y: auto; 
-    
-    
-    /* Tạo khoảng đệm để thanh cuộn không che nội dung */
-    padding-right: 10px; 
-    
-    /* Tùy chọn: Ẩn thanh cuộn mặc định khi không cuộn (chỉ Webkit) */
-    /* visibility: hidden; */ 
+
+.product-list h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
 }
 
+/* Vùng chứa giỏ hàng (Cart) */
 .product-box {
     flex-grow: 1; 
     min-height: 0; /* Ngăn container này bị tràn */
     display: flex;
     flex-direction: column;
-    display: flex;
-    flex-direction: column;
     gap: 10px;
 }
+
+/* Vùng cuộn - Thay đổi then chốt */
+.cart-scroll-area {
+    flex-grow: 1; /* Cho phép nó chiếm toàn bộ không gian còn lại */
+    overflow-y: auto; /* Bật thanh cuộn dọc */
+    padding-right: 10px; /* Thêm padding để tạo khoảng cách cho thanh cuộn */
+}
+
 
 .empty-cart-message {
     text-align: center;
@@ -120,55 +109,47 @@
     padding: 20px;
 }
 
-.cart-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border: 1px solid #f0f0f0;
-    border-radius: 4px;
-}
+/* ------------------------------------- */
+/* --- Thanh cuộn tùy chỉnh (Webkit) --- */
 .cart-scroll-area::-webkit-scrollbar {
-    width: 8px; /* Chiều rộng thanh cuộn */
+    width: 8px; 
 }
 
-/* Track (Phần nền của thanh cuộn) */
 .cart-scroll-area::-webkit-scrollbar-track {
-    background: #f5f5f5; /* Màu nền nhẹ */
+    background: #f5f5f5; 
     border-radius: 10px;
 }
 
-/* Thumb (Phần kéo của thanh cuộn) */
 .cart-scroll-area::-webkit-scrollbar-thumb {
-    background-color: #c0c0c0; /* Màu xám Ant Design nhẹ */
+    background-color: #c0c0c0; 
     border-radius: 10px;
-    border: 2px solid #f5f5f5; /* Tạo khoảng cách và hiệu ứng nổi */
+    border: 2px solid #f5f5f5; 
 }
 
-/* Thay đổi màu khi di chuột qua thanh cuộn */
 .cart-scroll-area::-webkit-scrollbar-thumb:hover {
     background-color: #999999;
 }
 
-
-/* 2. Thiết kế cho trình duyệt Firefox */
-
+/* Thanh cuộn tùy chỉnh (Firefox) */
 .cart-scroll-area {
-    /* Tùy chỉnh độ dày và màu sắc */
-    scrollbar-width: thin; /* 'auto' hoặc 'thin' */
-    scrollbar-color: #c0c0c0 #f5f5f5; /* thumb color track color */
+    scrollbar-width: thin; 
+    scrollbar-color: #c0c0c0 #f5f5f5; 
 }
-
 /* ------------------------------------- */
+
+
 /* --- Các mục giỏ hàng (Cart Item) --- */
 .cart-item {
-    /* ... Giữ nguyên các style hiển thị item (flex, padding, border) ... */
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
     border-bottom: 1px dashed #eee;
 }
+.cart-item:last-child {
+    border-bottom: none; /* Bỏ border cho item cuối cùng */
+}
+
 .cart-info strong {
     font-size: 14px;
     display: block;
@@ -185,6 +166,12 @@
     font-weight: bold;
 }
 
+.cart-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
 .cart-actions button {
     background: #e9ecef;
     border: none;
@@ -192,12 +179,12 @@
     cursor: pointer;
     border-radius: 4px;
     font-size: 12px;
-    margin-left: 5px;
+    /* margin-left: 5px; */
 }
 
 .cart-actions span {
     font-weight: bold;
-    margin: 0 5px;
+    /* margin: 0 5px; */
 }
 
 .cart-actions .delete-btn {
@@ -207,6 +194,8 @@
 
 /* --- Thanh toán --- */
 .payment-section {
+    /* Đảm bảo nó luôn ở dưới cùng */
+    flex-shrink: 0; 
     padding-top: 15px;
     border-top: 1px solid #eee;
     margin-top: 15px;
@@ -226,13 +215,6 @@
 .summary-row.discount-row span:last-child {
     color: #28a745;
     font-weight: bold;
-}
-
-.payment-title {
-    font-weight: bold;
-    margin-bottom: 5px;
-    font-size: 14px;
-    color: #333;
 }
 
 .total-price {
@@ -266,7 +248,9 @@
     background-color: #218838;
 }
 
+/* ----------------------------------- */
 /* --- Cột bên phải (Sản phẩm) --- */
+/* ----------------------------------- */
 .order-right {
     flex: 1;
     display: flex;
@@ -275,6 +259,8 @@
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    min-height: 90vh; 
+    max-height: 90vh;
 }
 
 .product-header {
@@ -285,14 +271,13 @@
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
     flex-wrap: wrap;
+    flex-shrink: 0; /* Giữ cố định header */
 }
 .product-header input{
     width: 300px;
     border: 1px solid #ccc;
     border-radius:6px ;
     padding: 10px;
-
-
 }
 .product-header h2 {
     margin-bottom:10px;
@@ -307,11 +292,11 @@
 }
 
 .product-grid {
-    flex: 1;
+    flex: 1; /* Cho phép grid chiếm không gian còn lại */
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px;
-    overflow-y: auto;
+    overflow-y: auto; /* Bật cuộn cho danh sách sản phẩm */
     padding: 5px;
 }
 
@@ -355,6 +340,7 @@
 
 /* --- Phân trang --- */
 .pagination {
+    flex-shrink: 0; /* Giữ cố định phân trang */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -385,7 +371,7 @@
 
 .pagination span {
     font-weight: bold;
-    color: #555;
+    color: black;
     font-size: 14px;
 }
 

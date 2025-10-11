@@ -160,7 +160,7 @@ export default function Order() {
                         </div>
                     </div>
                         <div className="product-list">
-                            <h2>🛒 Giỏ hàng ({cart.length} món)</h2>
+                            {/* <h2>🛒 Giỏ hàng ({cart.length} món)</h2> */}
                             <div className="product-box">
                                 
                                 <div className="cart-scroll-area"> 
