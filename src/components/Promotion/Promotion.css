@@ -276,6 +276,8 @@
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
+     transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+     
 }
 
 .modal-header {
@@ -342,11 +344,19 @@
         justify-content: center;
         align-items: center;
          height: 30px;
+       
         gap: 40px;
     /* background-color: red; */
 }
 .ModalForm .form-actions button{
     height: 30px;
-    width: 60px;
-
+    width: auto;
+    border: 1px solid #1890ff ;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    /* display: flex;
+    flex-wrap: wrap;
+    flex-wrap: 1 1 100%; */
     }

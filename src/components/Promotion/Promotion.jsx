@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './Promotion.css' 
+import { Popconfirm } from 'antd'; 
 
 
 // Dữ liệu giả lập khuyến mãi
@@ -168,26 +169,25 @@ export default function Promotion() {
         setIsModalOpen(true)
     }
 
-    // ✅ Đã cập nhật: Đồng bộ Loading
-    const handleDelete = async (id) => {
-        if (window.confirm('Bạn có chắc chắn muốn xóa khuyến mãi này?')) {
-            setLoading(true); // Bắt đầu loading khi xóa
-            await new Promise(resolve => setTimeout(resolve, 500)); // Độ trễ 500ms
-            
-            // ✅ Mock DELETE API
-            const updatedPromotions = promotions.filter(p => p.promo_id !== id);
-            setPromotions(updatedPromotions)
-            console.log(`Giả lập: Xóa khuyến mãi ID ${id} thành công`);
-            
-            setLoading(false);
-            
-            // Cập nhật lại trang sau khi xóa
-            const newTotalPages = Math.ceil((updatedPromotions.length) / itemsPerPage);
-            if (currentPage > newTotalPages && newTotalPages > 0) {
-                setCurrentPage(newTotalPages);
-            }
-        }
+  // Hàm handleDelete không cần window.confirm nữa vì Popconfirm đã làm việc đó
+const handleDelete = async (id) => {
+    // 🔑 Bỏ window.confirm()
+    setLoading(true); // Bắt đầu loading khi xóa
+    await new Promise(resolve => setTimeout(resolve, 500)); // Độ trễ 500ms
+    
+    // ✅ Mock DELETE API
+    const updatedPromotions = promotions.filter(p => p.promo_id !== id);
+    setPromotions(updatedPromotions)
+    console.log(`Giả lập: Xóa khuyến mãi ID ${id} thành công`);
+    
+    setLoading(false);
+    
+    // Cập nhật lại trang sau khi xóa
+    const newTotalPages = Math.ceil((updatedPromotions.length) / itemsPerPage);
+    if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
     }
+}
 
     // ✅ Hiển thị loading screen
     if (loading) {
@@ -252,12 +252,32 @@ export default function Promotion() {
                                     <td>{p.usage_limit}</td>
                                     <td>{p.used_count}</td>
                                     <td><span className={`status-${p.status}`}>{p.status === 'active' ? 'Đang hoạt động' : 'Hết hạn'}</span></td>
-                                    <td>
-                                        <button className="edit-button" onClick={() => handleEdit(p)}>Sửa</button>
-                                        <button className="delete-button" onClick={() => handleDelete(p.promo_id)}>Xóa</button>
-                                    </td>
-                                </tr>
-                            ))
+                                  <td>
+                                    <button 
+                                        className="edit-button" 
+                                        onClick={() => handleEdit(p)}
+                                    >
+                                        Sửa
+                                    </button>
+                                    
+                                    {/* 🔑 THAY THẾ NÚT XÓA BẰNG POPCONFIRM */}
+                                    <Popconfirm
+                                        title="Xóa khuyến mãi"
+                                        description={`Bạn có chắc chắn muốn xóa mã KM: ${p.promo_code}?`} // Thêm mã KM vào thông báo
+                                        onConfirm={() => handleDelete(p.promo_id)} // Gọi hàm xóa khi xác nhận
+                                        okText="Xóa"
+                                        cancelText="Hủy"
+                                        // Màu sắc nút "Xóa" trong Popconfirm (Mặc định Ant Design là xanh, đây là cách đổi sang đỏ)
+                                        okButtonProps={{ danger: true }} 
+                                    >
+                                        {/* Nút trigger Popconfirm */}
+                                        <button className="delete-button">
+                                            Xóa
+                                        </button>
+                                    </Popconfirm>
+                                </td>
+                            </tr>
+                        ))
                         )}
                     </tbody>
                 </table>
