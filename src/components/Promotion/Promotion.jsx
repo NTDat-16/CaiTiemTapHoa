@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import './Promotion.css' // Đảm bảo bạn có file CSS này để tạo kiểu
-// Lưu ý: Các import từ Ant Design (Table, Button, Modal, Form,...) không cần thiết ở đây vì bạn muốn giữ lại HTML custom.
+import './Promotion.css' 
+
 
 // Dữ liệu giả lập khuyến mãi
 const mockPromotions = [
@@ -18,13 +18,14 @@ const mockPromotions = [
     { promo_id: 11, promo_code: 'EXTRA1', description: 'Thêm mục 1', discount_type: 'percent', discount_value: 10, start_date: '2025-10-01', end_date: '2025-10-31', min_order_amount: 100000, usage_limit: 50, used_count: 5, status: 'active' },
 ];
 
-// Component Modal đơn giản (giữ nguyên)
 const Modal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null
 
     return (
-        <div className="modal-overlay">
-            <div className="modal-content">
+        // Thêm onClick vào modal-overlay để đóng modal
+        <div className="modal-overlay" onClick={onClose}>
+            {/* Thêm onClick={(e) => e.stopPropagation()} để ngăn click từ modal-content lan ra overlay */}
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <h3>{title}</h3>
                     <button className="close-button" onClick={onClose}>&times;</button>
@@ -32,6 +33,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
                 <div className="modal-body">
                     {children}
                 </div>
+                {/* Lưu ý: Các nút hành động (Hủy, Lưu) nằm trong form, không nằm ở đây */}
             </div>
         </div>
     )
