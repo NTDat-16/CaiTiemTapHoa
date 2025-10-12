@@ -1,0 +1,82 @@
+/* CONTAINER VÀ HEADER */
+.dashboard-container {
+  position: fixed;
+  top: 5%;
+  left: 5%;
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: calc(100vh - 64px);
+  width: 95%;
+}
+
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+/* TAB BUTTONS */
+.dashboard-tabs {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.dashboard-tab-button {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 6px 12px;
+}
+
+.dashboard-tab-button.active {
+  background-color: #1890ff;
+  color: white;
+}
+
+/* NỘI DUNG */
+.dashboard-content {
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: calc(100vh - 205px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-container {
+    width: 100%;
+    left: 0;
+    top: 0;
+    padding: 16px;
+    min-height: 100vh;
+  }
+
+  .dashboard-header {
+    padding: 16px;
+  }
+
+  .dashboard-header h2 {
+    font-size: 20px;
+  }
+
+  .dashboard-content {
+    padding: 16px;
+  }
+
+  .dashboard-tabs {
+    flex-wrap: wrap;
+  }
+}

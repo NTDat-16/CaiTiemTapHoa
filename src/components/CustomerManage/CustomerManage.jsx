@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { FaSearch, FaUsers, FaUserFriends } from 'react-icons/fa';
 import './CustomerManage.css';
 
-export default function CustomerManage() {
-  const [customers, setCustomers] = useState([
-    {
+const mockCustomers = [
+  {
       customer_id: 1,
       name: "Nguyễn Văn An",
       phone: "0901234567",
@@ -164,8 +163,10 @@ export default function CustomerManage() {
       house: "45 Hai Bà Trưng",
       created_at: "2025-10-02",
     },
-  ]);
+]
+export default function CustomerManage() {
 
+  const [customers, setCustomers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCustomer, setNewCustomer] = useState({
@@ -182,7 +183,14 @@ export default function CustomerManage() {
   const [provinces, setProvinces] = useState([]);
   const [wards, setWards] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  
+  useEffect(() => {
+    setLoading(true)
+    setTimeout(() => {
+      setCustomers(mockCustomers)
+      setLoading(false)
+    }, 800) // giả lập 0.8 giây load dữ liệu
+  }, [])
   // ==================== API CALLS ====================
   const fetchProvinces = async () => {
     setLoading(true);
@@ -341,7 +349,7 @@ export default function CustomerManage() {
         <div className="CustomerBottom">
           <div className="CustomerTableContainer">
             <div className="CustomerTableWrapper">
-              <table className="CustomerTable">
+              <table className="CustomerTable" loading={loading}>
                 <thead>
                   <tr>
                     <th>ID</th>

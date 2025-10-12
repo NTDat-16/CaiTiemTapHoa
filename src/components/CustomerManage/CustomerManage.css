@@ -10,8 +10,6 @@
     background-color: #f8f9fa;
     padding: 10px 20px;
     overflow: hidden;
-    /* tránh scrollbar kép */
-    font-family: "Segoe UI", sans-serif;
 }
 
 /* =======================================================

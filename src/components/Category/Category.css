@@ -1,0 +1,287 @@
+/* Container tổng */
+.category-manage-container {
+  position: fixed;
+  top: 60px;
+  left: 70px;
+  width: calc(100% - 70px);
+  min-height: calc(100vh - 60px);
+  padding: 10px 20px;
+  background-color: #f8f9fa;
+}
+
+/* Header */
+.category-manage-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.category-manage-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #198754;
+}
+
+/* Container search + button */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+/* Input search */
+.category-search-input {
+  width: 40%;
+  flex-shrink: 0;
+}
+
+.category-search-input .ant-input-search-button,
+.category-search-input .ant-input-search-button:hover,
+.category-search-input .ant-input-search-button:focus {
+  background-color: #198754 !important;
+  border-color: #198754 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.category-search-input .ant-input,
+.category-search-input .ant-input:hover,
+.category-search-input .ant-input:focus {
+  border-color: #198754 !important;
+  box-shadow: none !important;
+  font-size: 15px;
+}
+
+.category-search-input .ant-input::placeholder {
+  color: #bfbfbf;
+  font-size: 14px;
+}
+
+/* Button thêm danh mục */
+.header-actions .ant-btn {
+  margin-left: auto;
+}
+.btnAddCategory, .btnModel {
+  background-color: #198754 !important;
+  border-color: #198754 !important;
+  color: #fff !important;
+}
+
+/* Bỏ hiệu ứng hover & focus */
+.btnAddCategory:hover,
+.btnAddCategory:focus,
+.btnAddCategory:active {
+  background-color: #198754 !important;
+  border-color: #198754 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+.btnEdit{
+    background-color: #1890ff !important;
+    border-color: #1890ff !important;
+    color: #fff !important;
+}
+.btnEdit:hover,
+.btnEdit:focus,
+.btnEdit:active {
+  background-color: #1890ff !important;
+  border-color: #1890ff !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+
+.btnDelete{
+    background-color: red !important;
+    border-color: red !important;
+    color: #fff !important;
+}
+.btnDelete:hover,
+.btnDelete:focus,
+.btnDelete:active {
+  background-color: red !important;
+  border-color: red !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+/* Table container */
+.category-manage-table {
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Table */
+.category-manage-table .ant-table {
+  font-size: 14px;
+}
+
+.category-manage-table .ant-table-thead > tr > th {
+  background-color: #fafafa;
+  font-weight: 600;
+  color: #262626;
+  text-align: center;
+}
+
+/* Hover row */
+.category-manage-table .ant-table-tbody > tr:hover > td {
+  background-color: #e6f4ea !important; /* xanh lá nhạt */
+}
+
+/* Modal */
+.ant-modal-header {
+  background-color: #198754;
+}
+
+.ant-modal-title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.ant-modal-close-x {
+  color: #ffffff;
+}
+
+/* Form */
+.ant-form-item-label > label {
+  font-weight: 500;
+}
+
+.form-actions {
+  margin-bottom: 0;
+  margin-top: 24px;
+}
+
+.form-actions .ant-space {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+/* Input focus */
+.ant-input,
+.ant-select-selector {
+  border-radius: 4px;
+}
+
+.ant-input:focus,
+.ant-select-focused .ant-select-selector {
+  border-color: #198754 !important;
+  box-shadow: 0 0 0 2px rgba(24, 135, 72, 0.2) !important;
+}
+
+/* Popconfirm */
+.ant-popover-message-title {
+  padding-left: 22px;
+}
+
+/* Loading & empty state */
+.ant-spin-container {
+  min-height: 400px;
+}
+
+.ant-empty {
+  padding: 40px 0;
+}
+
+/* Pagination */
+.ant-pagination {
+  margin-top: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .category-manage-container {
+    padding: 16px;
+  }
+
+  .category-manage-header {
+    gap: 12px;
+  }
+
+  .category-manage-header h2 {
+    font-size: 20px;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .category-search-input {
+    width: 100%;
+  }
+
+  .header-actions .ant-btn {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .category-search-input .ant-input::placeholder {
+    font-size: 12px;
+  }
+
+  .category-manage-table {
+    padding: 16px;
+  }
+}
+
+/* Loại bỏ padding/margin mặc định */
+.custom-modal .ant-modal-content {
+    padding: 0 !important;
+    border-radius: 8px; /* hoặc 0 nếu muốn sát hoàn toàn */
+}
+
+.custom-modal-header {
+    width: 100%;
+    background-color: #198754;
+    color: #fff;
+    font-weight: 600;
+    font-size: 18px;
+    padding: 12px 20px;
+    margin: 0;
+}
+
+.custom-modal-body {
+    padding: 16px 20px;
+}
+
+.custom-modal-footer {
+    padding: 12px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* Nút primary */
+.custom-modal-footer .ant-btn-primary {
+    background-color: #1890ff;
+    border-color: #1890ff;
+}
+
+.custom-modal-footer .ant-btn-primary:hover {
+    background-color: #40a9ff;
+    border-color: #40a9ff;
+}
+
+.btnCancel {
+  background-color: #f5f5f5; /* màu nền mặc định */
+  border: 1px solid #d9d9d9; /* viền nhẹ */
+  color: #000; /* màu chữ */
+}
+
+.btnCancel:hover,
+.btnCancel:focus {
+  background-color: #f5f5f5 !important; /* giữ nguyên màu khi hover */
+  border-color: #d9d9d9 !important;   /* giữ nguyên viền */
+  color: #000 !important;             /* giữ nguyên màu chữ */
+  box-shadow: none !important;        /* loại bỏ bóng */
+}
