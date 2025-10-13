@@ -15,11 +15,15 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.product-manage-title {
+  color: green !important;
+}
+
 .product-manage-header h2 {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-  color: #1890ff;
+  color: green;
 }
 
 /* New container for search input and button */
@@ -37,15 +41,23 @@
 }
 
 .product-search-input .ant-input-search-button {
-  background-color: #1890ff;
-  border-color: #1890ff;
+  background-color: green;
+  border-color: green;
   height: 40px;
 }
 
 .product-search-input .ant-input-search-button:hover {
-  background-color: #40a9ff;
-  border-color: #40a9ff;
+  background-color: green !important;
+  border-color: green;
 }
+
+.product-search-btn {
+  background-color: green !important;
+}
+
+/* .product-search-btn:hover {
+  color: green !important;
+} */
 
 .product-search-input .ant-input {
   font-size: 15px;
@@ -74,14 +86,21 @@
 }
 
 .product-manage-table .ant-table-thead > tr > th {
-  background-color: #fafafa;
+  background-color: green !important;
   font-weight: 600;
   color: #262626;
 }
 
 .product-manage-table .ant-table-tbody > tr:hover > td {
-  background-color: #e6f7ff;
+  background-color: #e6f4ea  !important;
 }
+
+/* Ẩn pseudo-element ::before ngăn cột trong bảng Ant Design */
+.product-manage-table .ant-table-thead > tr > th::before,
+.product-manage-table .ant-table-tbody > tr > td::before {
+  content: none !important;
+}
+
 
 /* Modal form styling */
 .ant-modal-header {
@@ -110,6 +129,30 @@
   width: 100%;
   justify-content: flex-end;
 }
+
+.ant-modal-content{
+  padding: 0 !important;
+}
+
+/* Làm header modal chiếm full chiều rộng và tô nền xanh */
+.ant-modal-header {
+  background-color: #008000 !important; /* Màu xanh lá */
+  padding: 12px 24px !important; /* Tăng padding cho đẹp */
+  border-bottom: none !important;
+  border-radius: 8px 8px 0 0 !important; /* Bo góc trên */
+}
+
+/* Chỉnh màu chữ tiêu đề */
+.ant-modal-title {
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+
+.ant-modal-body {
+  padding: 20px 24px !important;
+}
+
 
 /* Button styling */
 .ant-btn-primary {

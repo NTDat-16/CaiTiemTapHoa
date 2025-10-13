@@ -338,7 +338,7 @@ export default function ProductManage() {
             onChange={(e) => handleSearch(e.target.value)}
             className="product-search-input"
           />
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large">
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large" className="product-search-btn">
             Thêm sản phẩm
           </Button>
         </div>
@@ -365,6 +365,7 @@ export default function ProductManage() {
         onCancel={handleCancel}
         footer={null}
         width={600}
+        closable={false}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off">
           <Form.Item
@@ -444,7 +445,7 @@ export default function ProductManage() {
           <Form.Item className="form-actions">
             <Space>
               <Button onClick={handleCancel}>Hủy</Button>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" className="product-search-btn">
                 {editingProduct ? "Cập nhật" : "Thêm mới"}
               </Button>
             </Space>
