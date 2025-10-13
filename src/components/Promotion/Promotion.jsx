@@ -3,29 +3,17 @@ import './Promotion.css'
 import { Popconfirm } from 'antd'; 
 
 
-// Dữ liệu giả lập khuyến mãi
+// Dữ liệu giả lập khuyến mãi (Giữ nguyên để dự phòng)
 const mockPromotions = [
     { promo_id: 1, promo_code: 'SALE10', description: 'Giảm 10% cho mọi đơn hàng', discount_type: 'percent', discount_value: 10, start_date: '2025-10-01', end_date: '2025-10-31', min_order_amount: 100000, usage_limit: 50, used_count: 5, status: 'active' },
-    { promo_id: 2, promo_code: 'FREE30K', description: 'Giảm 30.000 VNĐ', discount_type: 'amount', discount_value: 30000, start_date: '2025-11-01', end_date: '2025-11-15', min_order_amount: 200000, usage_limit: 20, used_count: 12, status: 'expired' },
-    { promo_id: 3, promo_code: 'NEWUSER50', description: 'Giảm 50% cho khách hàng mới', discount_type: 'percent', discount_value: 50, start_date: '2025-09-01', end_date: '2025-12-31', min_order_amount: 50000, usage_limit: 100, used_count: 55, status: 'active' },
-    { promo_id: 4, promo_code: 'BLACKFRIDAY', description: 'Giảm cố định 50K', discount_type: 'amount', discount_value: 50000, start_date: '2025-11-25', end_date: '2025-11-28', min_order_amount: 300000, usage_limit: 10, used_count: 10, status: 'expired' },
-    { promo_id: 5, promo_code: 'TET2026', description: 'Khuyến mãi Tết Nguyên Đán', discount_type: 'percent', discount_value: 15, start_date: '2026-01-01', end_date: '2026-02-10', min_order_amount: 150000, usage_limit: 75, used_count: 0, status: 'active' },
-    // Thêm một số mock data để kiểm tra phân trang 10 mục/trang
-    { promo_id: 6, promo_code: 'SUMMER', description: 'Giảm 20% Hè', discount_type: 'percent', discount_value: 20, start_date: '2026-06-01', end_date: '2026-08-31', min_order_amount: 120000, usage_limit: 60, used_count: 10, status: 'active' },
-    { promo_id: 7, promo_code: 'WINTER', description: 'Giảm 10K Đông', discount_type: 'amount', discount_value: 10000, start_date: '2026-12-01', end_date: '2026-12-31', min_order_amount: 50000, usage_limit: 40, used_count: 15, status: 'active' },
-    { promo_id: 8, promo_code: 'GIFT5K', description: 'Quà 5.000 VNĐ', discount_type: 'amount', discount_value: 5000, start_date: '2025-10-01', end_date: '2025-10-05', min_order_amount: 20000, usage_limit: 200, used_count: 150, status: 'active' },
-    { promo_id: 9, promo_code: 'LASTCHANCE', description: 'Cơ hội cuối', discount_type: 'percent', discount_value: 5, start_date: '2025-12-25', end_date: '2025-12-30', min_order_amount: 500000, usage_limit: 5, used_count: 0, status: 'active' },
-    { promo_id: 10, promo_code: 'VIPUSER', description: 'Dành cho thành viên VIP', discount_type: 'percent', discount_value: 25, start_date: '2025-01-01', end_date: '2026-01-01', min_order_amount: 0, usage_limit: 999, used_count: 100, status: 'active' },
-    { promo_id: 11, promo_code: 'EXTRA1', description: 'Thêm mục 1', discount_type: 'percent', discount_value: 10, start_date: '2025-10-01', end_date: '2025-10-31', min_order_amount: 100000, usage_limit: 50, used_count: 5, status: 'active' },
+    // ... dữ liệu mock khác
 ];
 
 const Modal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null
 
     return (
-        // Thêm onClick vào modal-overlay để đóng modal
         <div className="modal-overlay" onClick={onClose}>
-            {/* Thêm onClick={(e) => e.stopPropagation()} để ngăn click từ modal-content lan ra overlay */}
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <h3>{title}</h3>
@@ -34,129 +22,192 @@ const Modal = ({ isOpen, onClose, title, children }) => {
                 <div className="modal-body">
                     {children}
                 </div>
-                {/* Lưu ý: Các nút hành động (Hủy, Lưu) nằm trong form, không nằm ở đây */}
             </div>
         </div>
     )
 }
 
-export default function Promotion() {
-    const [promotions, setPromotions] = useState([])
-    const [loading, setLoading] = useState(true) 
+export default function App() {
+    // URL API (Giả định là endpoint Promotions)
+    const PROMOTION_API_URL = "http://localhost:5000/api/Promotion";
+
+    const [promotions, setPromotions] = useState([]);
+    const [loading, setLoading] = useState(true); 
     const [search, setSearch] = useState("");
     const [formData, setFormData] = useState({
-        promo_code: '',
-        description: '',
-        discount_type: 'percent',
-        discount_value: '',
-        start_date: '',
-        end_date: '',
-        min_order_amount: '',
-        usage_limit: '',
-        used_count: '0',
-        status: 'active'
-    })
-    const [editingId, setEditingId] = useState(null)
-    const [isModalOpen, setIsModalOpen] = useState(false)
-
-    // ✅ Đã cập nhật: Đồng bộ Phân trang (10 mục/trang)
+        promo_code: '', description: '', discount_type: 'percent',
+        discount_value: '', start_date: '', end_date: '',
+        min_order_amount: '', usage_limit: '', used_count: '0', status: 'active'
+    });
+    const [editingId, setEditingId] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10; // Thay đổi từ 5 thành 10 (Giống Ant Design Table default)
-
-    // ✅ Đã cập nhật: Đồng bộ Loading
-    const fetchPromotions = async () => {
-        setLoading(true);
-        console.log("Đang giả lập gọi API fetch Khuyến mãi...");
-        
-        // Mô phỏng độ trễ của API: 500ms (Đồng bộ với ProductManage)
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // ⛔️ CHỖ NÀY SẼ ĐƯỢC THAY THẾ BẰNG LỆNH GỌI API THẬT
-        /*
-        try {
-            const response = await fetch('/api/promotions');
-            const data = await response.json();
-            setPromotions(data);
-        } catch (error) {
-            console.error("Lỗi khi fetch dữ liệu:", error);
-        }
-        */
-        
-        // Hiện tại: dùng dữ liệu giả lập
-        setPromotions(mockPromotions);
-        setLoading(false);
-        console.log("Hoàn thành giả lập gọi API.");
+    const itemsPerPage = 10; 
+    
+    // Hàm Lấy Token Xác thực từ LocalStorage
+    const getAuthToken = () => {
+        // Giả sử token được lưu với key 'authToken'
+        return localStorage.getItem('authToken');
     };
 
-    // ✅ Gọi API giả lập khi component mount
+    // Hàm gọi API TẢI DỮ LIỆU
+    const fetchPromotions = async () => {
+        setLoading(true);
+        console.log("Đang gọi API GET: " + PROMOTION_API_URL);
+        
+        const token = getAuthToken(); // Lấy token
+
+        if (!token) {
+            console.error("Lỗi: Không tìm thấy Token Xác thực.");
+            // Tạm thời hiển thị mock data nếu không có token (chỉ cho dev/test)
+            // setPromotions(mockPromotions); 
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const response = await fetch(PROMOTION_API_URL, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    
+                    'Authorization': `Bearer ${token}` 
+                }
+            });
+            
+            if (response.status === 401) {
+                // Xử lý lỗi 401: chuyển hướng người dùng về trang đăng nhập
+                console.error("Lỗi 401: Token hết hạn hoặc không hợp lệ. Cần đăng nhập lại.");
+                // alert("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
+                // window.location.href = '/login'; // Ví dụ chuyển hướng
+                throw new Error(`Lỗi HTTP! Status: ${response.status} (Unauthorized)`);
+            }
+            
+            if (!response.ok) {
+                throw new Error(`Lỗi HTTP! Status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            setPromotions(data);
+            console.log("Dữ liệu khuyến mãi đã được tải thành công.");
+        } catch (error) {
+            console.error("Lỗi khi tải dữ liệu khuyến mãi:", error);
+            setPromotions([]); 
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Gọi API khi component mount
     useEffect(() => {
-        fetchPromotions()
-    }, [])
+        fetchPromotions();
+    }, []);
     
-    // ✅ Logic Phân trang (Sử dụng 10 mục/trang)
+    // ... Logic Phân trang (Giữ nguyên) ...
+    const filteredPromotions = promotions.filter(p => 
+        p.promo_code.toLowerCase().includes(search.toLowerCase()) ||
+        p.description.toLowerCase().includes(search.toLowerCase())
+    );
+    
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentPromotions = promotions.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(promotions.length / itemsPerPage);
+    const currentPromotions = filteredPromotions.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredPromotions.length / itemsPerPage);
 
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+    const paginate = (pageNumber) => {
+        if (pageNumber < 1 || pageNumber > totalPages) return;
+        setCurrentPage(pageNumber);
+    }
+    
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search]);
 
-    // Hàm đặt lại form (giữ nguyên)
+
+    // ... Hàm đặt lại form, mở/đóng Modal (Giữ nguyên) ...
     const resetForm = () => {
         setFormData({
             promo_code: '', description: '', discount_type: 'percent',
             discount_value: '', start_date: '', end_date: '',
             min_order_amount: '', usage_limit: '', used_count: '0', status: 'active'
-        })
-        setEditingId(null)
-    }
+        });
+        setEditingId(null);
+    };
 
-    // Mở Modal cho việc thêm mới (giữ nguyên)
     const handleOpenAddModal = () => {
-        resetForm()
-        setIsModalOpen(true)
-    }
+        resetForm();
+        setIsModalOpen(true);
+    };
 
-    // Đóng Modal (giữ nguyên)
     const handleCloseModal = () => {
-        setIsModalOpen(false)
-        resetForm()
-    }
+        setIsModalOpen(false);
+        resetForm();
+    };
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value })
-    }
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
-    // ✅ Đã cập nhật: Đồng bộ Loading
+
+    // Hàm gọi API THÊM MỚI hoặc CẬP NHẬT
     const handleSubmit = async (e) => {
-        e.preventDefault()
-        setLoading(true); 
-        await new Promise(resolve => setTimeout(resolve, 500)); // Độ trễ 500ms
+        e.preventDefault();
+        setLoading(true);
+        
+        const token = getAuthToken(); // Lấy token
+
+        if (!token) {
+            console.error("Lỗi: Không tìm thấy Token Xác thực.");
+            setLoading(false);
+            return;
+        }
         
         const finalData = {
             ...formData,
             discount_value: Number(formData.discount_value),
             min_order_amount: Number(formData.min_order_amount),
             usage_limit: Number(formData.usage_limit),
-            used_count: Number(formData.used_count),
-        }
+            used_count: Number(formData.used_count || 0), 
+        };
 
-        if (editingId) {
-            // ✅ Mock PUT API
-            setPromotions(promotions.map(p => p.promo_id === editingId ? { ...p, ...finalData } : p))
-            console.log("Giả lập: Cập nhật khuyến mãi thành công", finalData);
-        } else {
-            // ✅ Mock POST API
-            const newPromo = { promo_id: Date.now(), ...finalData };
-            setPromotions([...promotions, newPromo]);
-            console.log("Giả lập: Thêm khuyến mãi thành công", newPromo);
-        }
-        
-        setLoading(false)
-        handleCloseModal();
-    }
+        try {
+            let url = PROMOTION_API_URL;
+            let method = 'POST';
 
-    // Mở Modal và điền dữ liệu cho việc chỉnh sửa (giữ nguyên)
+            if (editingId) {
+                url = `${PROMOTION_API_URL}/${editingId}`;
+                method = 'PUT';
+            }
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 
+                    'Content-Type': 'application/json',
+                    // 🔑 THÊM HEADER AUTHORIZATION VÀO ĐÂY
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify(finalData),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Lỗi ${method} API: ${response.status}. Chi tiết: ${errorText || response.statusText}`);
+            }
+
+            console.log(`Thao tác ${editingId ? 'cập nhật' : 'thêm mới'} thành công.`);
+            
+            await fetchPromotions(); 
+            handleCloseModal();
+
+        } catch (error) {
+            console.error("Lỗi khi gửi form:", error);
+            // TODO: Hiển thị lỗi này cho người dùng trên UI
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Mở Modal và điền dữ liệu cho việc chỉnh sửa (Giữ nguyên)
     const handleEdit = (promo) => {
         setFormData({
             ...promo,
@@ -164,42 +215,58 @@ export default function Promotion() {
             min_order_amount: String(promo.min_order_amount),
             usage_limit: String(promo.usage_limit),
             used_count: String(promo.used_count),
-        })
-        setEditingId(promo.promo_id)
-        setIsModalOpen(true)
+        });
+        setEditingId(promo.promo_id);
+        setIsModalOpen(true);
+    };
+
+    // Hàm gọi API XÓA
+    const handleDelete = async (id) => {
+        setLoading(true); 
+        const token = getAuthToken(); // Lấy token
+
+        if (!token) {
+            console.error("Lỗi: Không tìm thấy Token Xác thực.");
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${PROMOTION_API_URL}/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    // 🔑 THÊM HEADER AUTHORIZATION VÀO ĐÂY
+                    'Authorization': `Bearer ${token}` 
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Lỗi DELETE API: ${response.status}. Thao tác thất bại.`);
+            }
+
+            console.log(`Xóa khuyến mãi ID ${id} thành công.`);
+            
+            await fetchPromotions(); 
+            
+        } catch (error) {
+            console.error("Lỗi khi xóa khuyến mãi:", error);
+            // TODO: Hiển thị lỗi này cho người dùng trên UI
+        } finally {
+            setLoading(false);
+        }
     }
 
-  // Hàm handleDelete không cần window.confirm nữa vì Popconfirm đã làm việc đó
-const handleDelete = async (id) => {
-    // 🔑 Bỏ window.confirm()
-    setLoading(true); // Bắt đầu loading khi xóa
-    await new Promise(resolve => setTimeout(resolve, 500)); // Độ trễ 500ms
-    
-    // ✅ Mock DELETE API
-    const updatedPromotions = promotions.filter(p => p.promo_id !== id);
-    setPromotions(updatedPromotions)
-    console.log(`Giả lập: Xóa khuyến mãi ID ${id} thành công`);
-    
-    setLoading(false);
-    
-    // Cập nhật lại trang sau khi xóa
-    const newTotalPages = Math.ceil((updatedPromotions.length) / itemsPerPage);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-        setCurrentPage(newTotalPages);
-    }
-}
-
-    // ✅ Hiển thị loading screen
     if (loading) {
-        // Tương tự như ProductManage, chỉ hiển thị loading, không hiển thị bảng
-        return <div className="loading-screen">Đang tải dữ liệu Khuyến mãi...</div>;
+        return <div className="loading-screen">Đang tải dữ liệu Khuyến mãi từ Backend...</div>;
     }
+
 
     return (
         <div className="PromotionWrapper">
+            {/* ... Phần UI giữ nguyên ... */}
             <div className="header-bar">
                 <h2>Quản lý khuyến mãi</h2>
-              <input
+                <input
                     type="text"
                     placeholder="Tìm khuyến mãi theo tên..."
                     value={search}
@@ -252,40 +319,35 @@ const handleDelete = async (id) => {
                                     <td>{p.usage_limit}</td>
                                     <td>{p.used_count}</td>
                                     <td><span className={`status-${p.status}`}>{p.status === 'active' ? 'Đang hoạt động' : 'Hết hạn'}</span></td>
-                                  <td>
-                                    <button 
-                                        className="edit-button" 
-                                        onClick={() => handleEdit(p)}
-                                    >
-                                        Sửa
-                                    </button>
-                                    
-                                    {/* 🔑 THAY THẾ NÚT XÓA BẰNG POPCONFIRM */}
-                                    <Popconfirm
-                                        title="Xóa khuyến mãi"
-                                        description={`Bạn có chắc chắn muốn xóa mã KM: ${p.promo_code}?`} // Thêm mã KM vào thông báo
-                                        onConfirm={() => handleDelete(p.promo_id)} // Gọi hàm xóa khi xác nhận
-                                        okText="Xóa"
-                                        cancelText="Hủy"
-                                        // Màu sắc nút "Xóa" trong Popconfirm (Mặc định Ant Design là xanh, đây là cách đổi sang đỏ)
-                                        okButtonProps={{ danger: true }} 
-                                    >
-                                        {/* Nút trigger Popconfirm */}
-                                        <button className="delete-button">
-                                            Xóa
+                                    <td>
+                                        <button 
+                                            className="edit-button" 
+                                            onClick={() => handleEdit(p)}
+                                        >
+                                            Sửa
                                         </button>
-                                    </Popconfirm>
-                                </td>
-                            </tr>
-                        ))
+                                        
+                                        <Popconfirm
+                                            title="Xóa khuyến mãi"
+                                            description={`Bạn có chắc chắn muốn xóa mã KM: ${p.promo_code}?`} 
+                                            onConfirm={() => handleDelete(p.promo_id)} 
+                                            okText="Xóa"
+                                            cancelText="Hủy"
+                                            okButtonProps={{ danger: true }} 
+                                        >
+                                            <button className="delete-button">
+                                                Xóa
+                                            </button>
+                                        </Popconfirm>
+                                    </td>
+                                </tr>
+                            ))
                         )}
                     </tbody>
                 </table>
             </div>
             
-            {/* ✅ Đã cập nhật: Đồng bộ Footer và Phân trang */}
             <div className="table-footer">
-                {/* Giống ProductManage: "Tổng X sản phẩm" */}
                 <p>Tổng {promotions.length} khuyến mãi</p> 
                 <div className="pagination">
                     <button 
@@ -294,7 +356,6 @@ const handleDelete = async (id) => {
                     >
                         Trước
                     </button>
-                    {/* Giữ nguyên logic hiển thị trang */}
                     <span>Trang {currentPage} / {totalPages}</span> 
                     <button 
                         onClick={() => paginate(currentPage + 1)} 
@@ -302,15 +363,12 @@ const handleDelete = async (id) => {
                     >
                         Sau
                     </button>
-                    {/* Thêm chức năng chọn trang (để mô phỏng Select của Ant Design) */}
                     <select className='selectpage'
                         value={itemsPerPage} 
                         onChange={(e) => {
-                            // Cần điều chỉnh logic này nếu muốn thay đổi itemsPerPage
-                            // Hiện tại itemsPerPage đã được cố định là 10 để mô phỏng ProductManage
                             console.log("Tính năng thay đổi số mục/trang không được kích hoạt để đồng bộ với ProductManage (pageSize cố định là 10)");
                         }}
-                       
+                        
                     >
                         <option value="10">10 / trang</option>
                         <option value="20">20 / trang</option>
@@ -318,14 +376,12 @@ const handleDelete = async (id) => {
                 </div>
             </div>
 
-            {/* Modal Thêm/Sửa Khuyến mãi (giữ nguyên) */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 title={editingId ? 'Chỉnh sửa Khuyến mãi' : 'Thêm Khuyến mãi mới'}
             >
                 <form className="ModalForm" onSubmit={handleSubmit}>
-                    {/* ... Các trường Form giữ nguyên ... */}
                     <div className="form-group"><label>Mã Khuyến mãi *</label><input name="promo_code" value={formData.promo_code} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Mô tả</label><input name="description" value={formData.description} onChange={handleChange} /></div>
                     <div className="form-row">
