@@ -303,7 +303,7 @@ const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
                 {/* Cột bên phải: Danh sách sản phẩm */}
                 <section className="order-right">
                     <div className="product-header">
-                        <h2>Danh sách sản phẩm</h2>
+                        {/* <h2>Danh sách sản phẩm</h2> */}
                         
                 
                         <input

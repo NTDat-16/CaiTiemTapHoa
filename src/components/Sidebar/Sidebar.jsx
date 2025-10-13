@@ -37,7 +37,7 @@ export default function Sidebar({onTag, choosen}) {
 
           <li
             className={`SidebarItem ${choosen === 'category' ? 'active' : ''}`}
-            data-label="Loại sản phẩm"
+            data-label="Danh mục"
             onClick={() => onTag('category')}
           >
             <FiGrid />

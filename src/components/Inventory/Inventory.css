@@ -1,19 +1,20 @@
-/* CONTAINER VÀ HEADER */
-
-.product-manage-container {
+/* ========== LAYOUT CHUNG ========== */
+.inventory-manage-container {
   position: fixed;
-  top: 5%;
-  left: 5%;
-  padding: 24px;
-  background-color: #f5f5f5;
-  min-height: calc(100vh - 64px);
-  width: 95%;
+  top: 60px;
+  left: 70px;
+  width: calc(100% - 70px);
+  min-height: calc(100vh - 60px);
+  background-color: #f8f9fa;
+  padding: 10px 20px;
+  overflow: hidden;
 }
 
-.product-manage-header {
+/* ========== HEADER ========== */
+.inventory-manage-header {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: 16px;
   margin-bottom: 24px;
   padding: 20px;
   background-color: #ffffff;
@@ -21,116 +22,120 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-@media (max-width: 768px) {
-  .product-manage-container {
-    width: 100%;
-    padding: 16px;
-    min-height: 100vh;
-  }
-}
-
-.product-manage-header h2 {
+.inventory-manage-header h2 {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-  /* Xoá color để không ghi đè inventoryTitle */
+  color: #008f5a;
 }
 
-.product-manage-header .inventoryTitle {
-  font-family: "Roboto", "Segoe UI", sans-serif;
-  font-weight: 700;
-  font-size: 36px;
-  color: #198754;
-  display: flex;
+/* Label và Select filter */
+.inventory-manage-header label {
+  font-weight: 500;
+  color: #333;
+}
+
+.ant-select-selector {
+  border-radius: 6px !important;
+  height: 40px !important;
   align-items: center;
-  gap: 12px;
 }
 
-.inventoryTitle {
-  font-family: "Roboto", "Segoe UI", sans-serif;
-  font-weight: 700;
-  /* in đậm */
-  font-size: 36px;
-  /* to vừa phải */
-  color: #198754;
-  /* xanh nổi bật, dễ nhìn */
-  display: flex;
-  align-items: center;
-  gap: px;
-  /* khoảng cách icon và chữ */
+.ant-select-selector:hover,
+.ant-select-focused .ant-select-selector {
+  border-color: #008f5a !important;
+  box-shadow: 0 0 0 2px rgba(0, 143, 90, 0.2) !important;
 }
 
-/* TABLE STYLING */
-.product-manage-table {
+/* ========== CẢNH BÁO HẾT HÀNG ========== */
+.ant-alert {
+  border-radius: 6px !important;
+  border: 1px solid #ffecb3 !important;
+  background-color: #fff8e1 !important;
+}
+
+.ant-alert-message {
+  font-weight: 600;
+  color: #d48806 !important;
+}
+
+/* ========== BẢNG ========== */
+.inventory-manage-table {
   background-color: #ffffff;
   padding: 24px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Ant Design Table customization */
-.product-manage-table .ant-table {
+.inventory-manage-table .ant-table {
   font-size: 14px;
 }
 
-.product-manage-table .ant-table-thead > tr > th {
-  background-color: #fafafa;
+/* Tiêu đề bảng */
+.inventory-manage-table .ant-table-thead > tr > th {
+  background-color: #008f5a !important;
+  color: #ffffff !important;
   font-weight: 600;
-  color: #262626;
+  border: none !important;
+  text-align: center;
 }
 
-.product-manage-table .ant-table-tbody > tr:hover > td {
-  background-color: #e6f7ff;
+/* Hàng hover */
+.inventory-manage-table .ant-table-tbody > tr:hover > td {
+  background-color: #e6f4ea !important;
 }
 
-/* CÁC QUY TẮC PHỤ TRỢ */
-
-/* Loading state */
-.ant-spin-container {
-  min-height: 400px;
+/* Ẩn đường viền giữa các cột */
+.inventory-manage-table .ant-table-thead > tr > th::before,
+.inventory-manage-table .ant-table-tbody > tr > td::before {
+  content: none !important;
 }
 
-/* Empty state */
-.ant-empty {
-  padding: 40px 0;
+/* Căn giữa dữ liệu */
+.inventory-manage-table .ant-table-cell {
+  text-align: center;
 }
 
-/* Pagination styling */
+/* ========== PAGINATION ========== */
 .ant-pagination {
   margin-top: 16px;
 }
 
-/* Input and Select styling (Lọc) */
-.ant-input,
-.ant-select-selector {
-  border-radius: 4px;
+.ant-pagination-item-active {
+  border-color: #008f5a !important;
 }
 
-.ant-input:focus,
-.ant-select-focused .ant-select-selector {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+.ant-pagination-item-active a {
+  color: #008f5a !important;
 }
 
-/* Responsive design */
+/* ========== KHÁC ========== */
+.ant-spin-container {
+  min-height: 400px;
+}
+
+.ant-empty {
+  padding: 40px 0;
+}
+
+/* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
-  .product-manage-container {
-    width: 100%;
+  .inventory-manage-container {
+    padding: 16px;
     left: 0;
     top: 0;
-    padding: 16px;
-    min-height: 100vh;
+    width: 100%;
   }
 
-  .product-manage-header {
+  .inventory-manage-header {
     padding: 16px;
   }
 
-  .product-manage-header h2 {
+  .inventory-manage-header h2 {
     font-size: 20px;
   }
 
-  .product-manage-table {
+  .inventory-manage-table {
     padding: 16px;
   }
 }
