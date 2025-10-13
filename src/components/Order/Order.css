@@ -13,6 +13,7 @@
     font-weight: bold;
     color: #007bff;
     z-index: 999;
+    /* Loại bỏ margin nếu không cần thiết */
     margin-top: 60px;
     margin-left: 70px;
 
@@ -20,32 +21,11 @@
 
 /* --- Container và Layout --- */
 .order-page {
- display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 20px;
-  background-color: #f4f7f6;
-  /* box-sizing: border-box; */
-  /* margin-top: 25px; */
-}
-
-.order-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.order-header h1 {
-    margin: 0;
-    color: #333;
-}
-
-.order-header input {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    width: 300px;
+    flex-direction: column;
+    height: 100%; /* Đảm bảo trang có chiều cao đầy đủ */
+    padding: 20px;
+    background-color: #f4f7f6;
 }
 
 .order-main {
@@ -55,16 +35,20 @@
     min-height: 0;
 }
 
-/* --- Cột bên trái (Giỏ hàng) --- */
+/* ------------------------------------------- */
+/* --- Cột bên trái (Giỏ hàng) - Quan trọng --- */
+/* ------------------------------------------- */
 .order-left {
     flex: 0 0 350px; /* Chiều rộng cố định cho giỏ hàng */
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    flex-direction: column; /* Thiết lập bố cục cột để quản lý không gian dọc */
     background-color: white;
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    /* Đặt chiều cao tương đối để flex hoạt động tốt */
+    min-height: 90vh; 
+    max-height: 90vh; /* Giới hạn chiều cao */
 }
 
 .input-group {
@@ -87,19 +71,37 @@
     box-sizing: border-box;
 }
 
+/* Container cho Danh sách sản phẩm */
 .product-list {
-    flex: 1;
-    min-height: 200px;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Cho phép nó mở rộng lấp đầy không gian còn lại */
+    min-height: 0; /* Quan trọng để flex hoạt động */
     border-top: 1px solid #eee;
     padding-top: 15px;
 }
 
+.product-list h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+/* Vùng chứa giỏ hàng (Cart) */
 .product-box {
+    flex-grow: 1; 
+    min-height: 0; /* Ngăn container này bị tràn */
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
+
+/* Vùng cuộn - Thay đổi then chốt */
+.cart-scroll-area {
+    flex-grow: 1; /* Cho phép nó chiếm toàn bộ không gian còn lại */
+    overflow-y: auto; /* Bật thanh cuộn dọc */
+    padding-right: 10px; /* Thêm padding để tạo khoảng cách cho thanh cuộn */
+}
+
 
 .empty-cart-message {
     text-align: center;
@@ -107,13 +109,45 @@
     padding: 20px;
 }
 
+/* ------------------------------------- */
+/* --- Thanh cuộn tùy chỉnh (Webkit) --- */
+.cart-scroll-area::-webkit-scrollbar {
+    width: 8px; 
+}
+
+.cart-scroll-area::-webkit-scrollbar-track {
+    background: #f5f5f5; 
+    border-radius: 10px;
+}
+
+.cart-scroll-area::-webkit-scrollbar-thumb {
+    background-color: #c0c0c0; 
+    border-radius: 10px;
+    border: 2px solid #f5f5f5; 
+}
+
+.cart-scroll-area::-webkit-scrollbar-thumb:hover {
+    background-color: #999999;
+}
+
+/* Thanh cuộn tùy chỉnh (Firefox) */
+.cart-scroll-area {
+    scrollbar-width: thin; 
+    scrollbar-color: #c0c0c0 #f5f5f5; 
+}
+/* ------------------------------------- */
+
+
+/* --- Các mục giỏ hàng (Cart Item) --- */
 .cart-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
-    border: 1px solid #f0f0f0;
-    border-radius: 4px;
+    padding: 10px 0;
+    border-bottom: 1px dashed #eee;
+}
+.cart-item:last-child {
+    border-bottom: none; /* Bỏ border cho item cuối cùng */
 }
 
 .cart-info strong {
@@ -132,6 +166,12 @@
     font-weight: bold;
 }
 
+.cart-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
 .cart-actions button {
     background: #e9ecef;
     border: none;
@@ -139,12 +179,12 @@
     cursor: pointer;
     border-radius: 4px;
     font-size: 12px;
-    margin-left: 5px;
+    /* margin-left: 5px; */
 }
 
 .cart-actions span {
     font-weight: bold;
-    margin: 0 5px;
+    /* margin: 0 5px; */
 }
 
 .cart-actions .delete-btn {
@@ -154,6 +194,8 @@
 
 /* --- Thanh toán --- */
 .payment-section {
+    /* Đảm bảo nó luôn ở dưới cùng */
+    flex-shrink: 0; 
     padding-top: 15px;
     border-top: 1px solid #eee;
     margin-top: 15px;
@@ -173,13 +215,6 @@
 .summary-row.discount-row span:last-child {
     color: #28a745;
     font-weight: bold;
-}
-
-.payment-title {
-    font-weight: bold;
-    margin-bottom: 5px;
-    font-size: 14px;
-    color: #333;
 }
 
 .total-price {
@@ -213,7 +248,9 @@
     background-color: #218838;
 }
 
+/* ----------------------------------- */
 /* --- Cột bên phải (Sản phẩm) --- */
+/* ----------------------------------- */
 .order-right {
     flex: 1;
     display: flex;
@@ -222,6 +259,8 @@
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    min-height: 90vh; 
+    max-height: 90vh;
 }
 
 .product-header {
@@ -231,11 +270,19 @@
     margin-bottom: 15px;
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0; /* Giữ cố định header */
 }
-
+.product-header input{
+    width: 300px;
+    border: 1px solid #ccc;
+    border-radius:6px ;
+    padding: 10px;
+}
 .product-header h2 {
-    margin: 0;
+    margin-bottom:10px;
     font-size: 18px;
+    flex: 1 1 100%;
 }
 
 .type-product label {
@@ -245,11 +292,11 @@
 }
 
 .product-grid {
-    flex: 1;
+    flex: 1; /* Cho phép grid chiếm không gian còn lại */
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px;
-    overflow-y: auto;
+    overflow-y: auto; /* Bật cuộn cho danh sách sản phẩm */
     padding: 5px;
 }
 
@@ -293,6 +340,7 @@
 
 /* --- Phân trang --- */
 .pagination {
+    flex-shrink: 0; /* Giữ cố định phân trang */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -323,7 +371,7 @@
 
 .pagination span {
     font-weight: bold;
-    color: #555;
+    color: black;
     font-size: 14px;
 }
 
@@ -332,4 +380,37 @@
     text-align: center;
     padding: 50px;
     color: #999;
+}
+/* Order.css */
+
+/* Thêm vào cuối file Order.css */
+.qr-code-box {
+    text-align: center;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.qr-code-box h4 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.qr-code-image {
+    width: 150px; /* Điều chỉnh kích thước QR code */
+    height: 150px;
+    object-fit: contain;
+    margin: 10px auto;
+    border: 4px solid white; /* Giúp QR code nổi bật */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.qr-info {
+    font-size: 0.9em;
+    color: #555;
+    line-height: 1.5;
 }
