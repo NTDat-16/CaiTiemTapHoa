@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
-// Đã thêm Select và Space
 import { Table, Alert, Select, Space } from "antd";
 import "./Inventory.css";
-import { FaBox, FaUserFriends } from "react-icons/fa";
 
 // get don vi
 const getUniqueUnits = (data) => {
@@ -21,6 +19,13 @@ const mockProducts = [
   { product_id: 3, product_name: "Bánh mì thịt", quantity: 0, unit: "cái" },
   { product_id: 4, product_name: "Cà phê sữa", quantity: 7, unit: "ly" },
   { product_id: 5, product_name: "Túi xách da", quantity: 25, unit: "cái" },
+  { product_id: 6, product_name: "Túi xách da", quantity: 25, unit: "cái" },
+  { product_id: 7, product_name: "Túi xách da", quantity: 25, unit: "cái" },
+  { product_id: 8, product_name: "Túi xách da", quantity: 25, unit: "cái" },
+  { product_id: 9, product_name: "Túi xách da", quantity: 25, unit: "cái" },
+  { product_id: 10, product_name: "Túi xách da", quantity: 25, unit: "cái" },
+  { product_id: 11, product_name: "Túi xách da", quantity: 25, unit: "cái" },
+  { product_id: 12, product_name: "Túi xách da", quantity: 25, unit: "cái" },
 ];
 
 export default function InventoryManage() {
@@ -76,16 +81,12 @@ export default function InventoryManage() {
   ];
 
   return (
-    <div className="product-manage-container">
-      <div className="product-manage-header">
-        <h2 className="inventoryTitle">
-          <FaBox />
-          Quản lý tồn kho
-        </h2>
-
+    <div className="inventory-manage-container">
+      <div className="inventory-manage-header">
+        <h2 > Quản lý tồn kho</h2>
         {/* Di chuyển ô lọc vào đây */}
-        <Space style={{ marginBottom: 0, marginTop: 16 }}>
-          <label>Lọc theo Đơn vị:</label>
+        <Space>
+          <label>Bộ lọc:</label>
           <Select
             allowClear
             placeholder="Chọn đơn vị"
@@ -119,7 +120,7 @@ export default function InventoryManage() {
           style={{ marginBottom: 16 }}
         />
       )}
-      <div className="product-manage-table">
+      <div className="inventory-manage-table">
         <Table
           columns={columns}
           dataSource={filteredProducts}
@@ -130,7 +131,7 @@ export default function InventoryManage() {
             showSizeChanger: true,
             showTotal: (total) => `Tổng ${total} sản phẩm tồn kho`,
           }}
-          scroll={{ x: 800 }}
+          scroll={{ y: 280, x: 1200 }}
         />
       </div>
     </div>

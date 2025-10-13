@@ -143,7 +143,7 @@ export default function ProductManage() {
   // Table columns definition
   const columns = [
     {
-      title: "Mã sản phẩm",
+      title: "Mã SP",
       dataIndex: "product_id",
       key: "product_id",
       width: 100,

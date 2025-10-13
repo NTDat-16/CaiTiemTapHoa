@@ -1,9 +1,16 @@
+/* ========== LAYOUT CHUNG ========== */
 .product-manage-container {
-  padding: 24px;
-  background-color: #f5f5f5;
-  min-height: calc(100vh - 64px);
+  position: fixed;
+  top: 60px;
+  left: 70px;
+  width: calc(100% - 70px);
+  min-height: calc(100vh - 60px);
+  background-color: #f8f9fa;
+  padding: 10px 20px;
+  overflow: hidden;
 }
 
+/* ========== HEADER ========== */
 .product-manage-header {
   display: flex;
   flex-direction: column;
@@ -15,49 +22,26 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.product-manage-title {
-  color: green !important;
-}
-
 .product-manage-header h2 {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-  color: green;
+  color: #008f5a;
 }
 
-/* New container for search input and button */
+/* Thanh hành động: Search + Nút thêm */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between; /* 👈 Đẩy 2 phần ra 2 bên */
   width: 100%;
 }
 
-/* Search input takes 40% width */
+/* ========== SEARCH ========== */
 .product-search-input {
   width: 40%;
   flex-shrink: 0;
 }
-
-.product-search-input .ant-input-search-button {
-  background-color: green;
-  border-color: green;
-  height: 40px;
-}
-
-.product-search-input .ant-input-search-button:hover {
-  background-color: green !important;
-  border-color: green;
-}
-
-.product-search-btn {
-  background-color: green !important;
-}
-
-/* .product-search-btn:hover {
-  color: green !important;
-} */
 
 .product-search-input .ant-input {
   font-size: 15px;
@@ -68,11 +52,42 @@
   font-size: 14px;
 }
 
-/* Button positioned at the right using margin-left auto */
-.header-actions .ant-btn {
-  margin-left: auto;
+/* Bỏ viền xanh khi focus/hover */
+.ant-input:focus,
+.ant-input:hover,
+.ant-input-focused {
+  border-color: #d9d9d9 !important;
+  box-shadow: none !important;
 }
 
+/* Nút Search */
+.product-search-input .ant-input-search-button {
+  background-color: #008f5a !important;
+  border: none !important;
+  height: 40px;
+  transition: all 0.2s ease;
+}
+
+.product-search-input .ant-input-search-button:hover,
+.product-search-input .ant-input-search-button:focus {
+  background-color: #00b36b !important;
+  color: white !important;
+  transform: translateY(-1px);
+}
+
+/* Nút thêm sản phẩm */
+.header-actions .ant-btn {
+  background-color: #008f5a !important;
+  border: none !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.header-actions .ant-btn:hover {
+  background-color: #00b36b !important;
+  transform: translateY(-1px);
+}
+
+/* ========== BẢNG ========== */
 .product-manage-table {
   background-color: #ffffff;
   padding: 24px;
@@ -80,69 +95,41 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Ant Design Table customization */
 .product-manage-table .ant-table {
   font-size: 14px;
 }
 
+/* Tiêu đề bảng màu trắng */
 .product-manage-table .ant-table-thead > tr > th {
-  background-color: green !important;
+  background-color: #008f5a !important;
+  color: #ffffff !important;
   font-weight: 600;
-  color: #262626;
+  border: none !important;
 }
 
+/* Hover hàng */
 .product-manage-table .ant-table-tbody > tr:hover > td {
-  background-color: #e6f4ea  !important;
+  background-color: #e6f4ea !important;
 }
 
-/* Ẩn pseudo-element ::before ngăn cột trong bảng Ant Design */
+/* Ẩn viền chia cột */
 .product-manage-table .ant-table-thead > tr > th::before,
 .product-manage-table .ant-table-tbody > tr > td::before {
   content: none !important;
 }
 
-
-/* Modal form styling */
-.ant-modal-header {
-  background-color: #1890ff;
-}
-
-.ant-modal-title {
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.ant-modal-close-x {
-  color: #ffffff;
-}
-
-.ant-form-item-label > label {
-  font-weight: 500;
-}
-
-.form-actions {
-  margin-bottom: 0;
-  margin-top: 24px;
-}
-
-.form-actions .ant-space {
-  width: 100%;
-  justify-content: flex-end;
-}
-
-.ant-modal-content{
+/* ========== MODAL ========== */
+.ant-modal-content {
   padding: 0 !important;
 }
 
-/* Làm header modal chiếm full chiều rộng và tô nền xanh */
 .ant-modal-header {
-  background-color: #008000 !important; /* Màu xanh lá */
-  padding: 12px 24px !important; /* Tăng padding cho đẹp */
+  background-color: #008f5a !important;
+  padding: 12px 24px !important;
   border-bottom: none !important;
-  border-radius: 8px 8px 0 0 !important; /* Bo góc trên */
+  border-radius: 8px 8px 0 0 !important;
 }
 
-/* Chỉnh màu chữ tiêu đề */
 .ant-modal-title {
   color: white !important;
   font-weight: 600 !important;
@@ -153,19 +140,68 @@
   padding: 20px 24px !important;
 }
 
+/* ========== BUTTON ========== */
+.ant-btn-primary,
+.ant-btn-dangerous {
+  border: none !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease-in-out !important;
+}
 
-/* Button styling */
 .ant-btn-primary {
-  background-color: #1890ff;
-  border-color: #1890ff;
+  background-color: #008f5a !important;
 }
 
 .ant-btn-primary:hover {
-  background-color: #40a9ff;
-  border-color: #40a9ff;
+  background-color: #00b36b !important;
+  transform: translateY(-1px);
 }
 
-/* Responsive design */
+.ant-btn-dangerous {
+  background-color: #ff4d4f !important;
+}
+
+.ant-btn-dangerous:hover {
+  background-color: #ff7875 !important;
+  transform: translateY(-1px);
+}
+
+/* Loại bỏ viền focus */
+.ant-btn:focus,
+.ant-btn:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* ========== FORM ========== */
+.ant-form-item-label > label {
+  font-weight: 500;
+}
+
+.form-actions {
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+.form-actions .ant-space {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+/* ========== KHÁC ========== */
+.ant-spin-container {
+  min-height: 400px;
+}
+
+.ant-empty {
+  padding: 40px 0;
+}
+
+.ant-pagination {
+  margin-top: 16px;
+}
+
+/* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
   .product-manage-container {
     padding: 16px;
@@ -179,7 +215,6 @@
     font-size: 20px;
   }
 
-  /* Stack search and button vertically on mobile */
   .header-actions {
     flex-direction: column;
     align-items: stretch;
@@ -194,43 +229,29 @@
     width: 100%;
   }
 
-  .product-search-input .ant-input::placeholder {
-    font-size: 12px;
-  }
-
   .product-manage-table {
     padding: 16px;
   }
 }
+/* ========== CUSTOMIZE LOADING SPINNER (to #008f5a) ========== */
 
-/* Loading state */
-.ant-spin-container {
-  min-height: 400px;
+/* Vòng quay chính */
+.ant-spin-dot-item {
+  background-color: #008f5a !important;
 }
 
-/* Empty state */
-.ant-empty {
-  padding: 40px 0;
+/* Loading text (nếu có) */
+.ant-spin-text {
+  color: #008f5a !important;
+  font-weight: 500;
 }
 
-/* Pagination styling */
-.ant-pagination {
-  margin-top: 16px;
+/* Nút có loading */
+.ant-btn-loading .ant-spin-dot-item {
+  background-color: #ffffff !important; /* trắng cho spinner trên nút xanh */
 }
 
-/* Input and Select styling */
-.ant-input,
-.ant-select-selector {
-  border-radius: 4px;
-}
-
-.ant-input:focus,
-.ant-select-focused .ant-select-selector {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-}
-
-/* Popconfirm styling */
-.ant-popover-message-title {
-  padding-left: 22px;
+/* Loading overlay (màu mờ nền bảng) */
+.ant-spin-blur {
+  opacity: 0.4;
 }
