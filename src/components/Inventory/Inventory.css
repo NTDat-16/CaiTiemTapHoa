@@ -33,7 +33,31 @@
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-  color: #1890ff;
+  /* Xoá color để không ghi đè inventoryTitle */
+}
+
+.product-manage-header .inventoryTitle {
+  font-family: "Roboto", "Segoe UI", sans-serif;
+  font-weight: 700;
+  font-size: 36px;
+  color: #198754;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.inventoryTitle {
+  font-family: "Roboto", "Segoe UI", sans-serif;
+  font-weight: 700;
+  /* in đậm */
+  font-size: 36px;
+  /* to vừa phải */
+  color: #198754;
+  /* xanh nổi bật, dễ nhìn */
+  display: flex;
+  align-items: center;
+  gap: px;
+  /* khoảng cách icon và chữ */
 }
 
 /* TABLE STYLING */

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 // Đã thêm Select và Space
 import { Table, Alert, Select, Space } from "antd";
 import "./Inventory.css";
+import { FaBox, FaUserFriends } from "react-icons/fa";
 
 // get don vi
 const getUniqueUnits = (data) => {
@@ -77,7 +78,10 @@ export default function InventoryManage() {
   return (
     <div className="product-manage-container">
       <div className="product-manage-header">
-        <h2>Quản lý tồn kho</h2>
+        <h2 className="inventoryTitle">
+          <FaBox />
+          Quản lý tồn kho
+        </h2>
 
         {/* Di chuyển ô lọc vào đây */}
         <Space style={{ marginBottom: 0, marginTop: 16 }}>

@@ -8,6 +8,8 @@ import Promotion from "../../components/Promotion/Promotion";
 import "./Home.css";
 import ProductManage from "../../components/ProductManage/ProductManage";
 import Inventory from "../../components/Inventory/Inventory";
+import Dashboard from "../../components/Dashboard/Dashboard";
+import Category from "../../components/Category/Category";
 
 export default function Home() {
   const [choosen, setChoosen] = useState("order");
@@ -24,18 +26,14 @@ export default function Home() {
 
         {/* Khu vực nội dung chính thay đổi */}
         <div className="HomeContent">
-          {choosen === "category" && <UserManage />}
+          {choosen === "category" && <Category />}
           {choosen === "employee" && <UserManage />}
           {choosen === "customer" && <CustomerManage />}
           {choosen === "order" && <Order />}
           {choosen === "promotion" && <Promotion />}
           {choosen === "product" && <ProductManage />}
           {choosen === "inventory" && <Inventory />}
-          {choosen === "report" && (
-            <p style={{ textAlign: "center", marginTop: "100px" }}>
-              Trang Báo cáo
-            </p>
-          )}
+          {choosen === "report" && <Dashboard />}
         </div>
       </div>
     </div>
