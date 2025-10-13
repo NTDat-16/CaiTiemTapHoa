@@ -1,362 +1,277 @@
-/* =================================
- * CÁC LỚP CHUNG (Giữ nguyên hoặc chỉnh sửa nhẹ)
- * ================================= */
+/* ========== LAYOUT CHUNG ========== */
+.promotion-manage-container {
+  position: fixed;
+  top: 60px;
+  left: 70px;
+  width: calc(100% - 70px);
+  min-height: calc(100vh - 60px);
+  background-color: #f8f9fa;
+  padding: 10px 20px;
+  overflow: hidden;
+}
 
-/* --- Loading Screen --- */
-.loading-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
+/* ========== HEADER ========== */
+.promotion-manage-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.promotion-manage-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #008f5a;
+}
+
+/* Thanh hành động: Search + Nút thêm */
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 👈 Đẩy 2 phần ra 2 bên */
+  width: 100%;
+}
+
+/* ========== SEARCH ========== */
+.promotion-search-input {
+  width: 40%;
+  flex-shrink: 0;
+}
+
+.promotion-search-input .ant-input {
+  font-size: 15px;
+}
+
+.promotion-search-input .ant-input::placeholder {
+  color: #bfbfbf;
+  font-size: 14px;
+}
+
+/* Bỏ viền xanh khi focus/hover */
+.ant-input:focus,
+.ant-input:hover,
+.ant-input-focused {
+  border-color: #d9d9d9 !important;
+  box-shadow: none !important;
+}
+
+/* Nút Search */
+.promotion-search-input .ant-input-search-button {
+  background-color: #008f5a !important;
+  border: none !important;
+  height: 40px;
+  transition: all 0.2s ease;
+}
+
+.promotion-search-input .ant-input-search-button:hover,
+.promotion-search-input .ant-input-search-button:focus {
+  background-color: #00b36b !important;
+  color: white !important;
+  transform: translateY(-1px);
+}
+
+/* Nút thêm sản phẩm */
+.header-actions .ant-btn {
+  background-color: #008f5a !important;
+  border: none !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.header-actions .ant-btn:hover {
+  background-color: #00b36b !important;
+  transform: translateY(-1px);
+}
+
+/* ========== BẢNG ========== */
+.promotion-manage-table {
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.promotion-manage-table .ant-table {
+  font-size: 14px;
+}
+
+/* Tiêu đề bảng màu trắng */
+.promotion-manage-table .ant-table-thead > tr > th {
+  background-color: #008f5a !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border: none !important;
+}
+
+/* Hover hàng */
+.promotion-manage-table .ant-table-tbody > tr:hover > td {
+  background-color: #e6f4ea !important;
+}
+
+/* Ẩn viền chia cột */
+.promotion-manage-table .ant-table-thead > tr > th::before,
+.promotion-manage-table .ant-table-tbody > tr > td::before {
+  content: none !important;
+}
+
+/* ========== MODAL ========== */
+.ant-modal-content {
+  padding: 0 !important;
+}
+
+.ant-modal-header {
+  background-color: #008f5a !important;
+  padding: 12px 24px !important;
+  border-bottom: none !important;
+  border-radius: 8px 8px 0 0 !important;
+}
+
+.ant-modal-title {
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+
+.ant-modal-body {
+  padding: 20px 24px !important;
+}
+
+/* ========== BUTTON ========== */
+.ant-btn-primary,
+.ant-btn-dangerous {
+  border: none !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.ant-btn-primary {
+  background-color: #008f5a !important;
+}
+
+.ant-btn-primary:hover {
+  background-color: #00b36b !important;
+  transform: translateY(-1px);
+}
+
+.ant-btn-dangerous {
+  background-color: #ff4d4f !important;
+}
+
+.ant-btn-dangerous:hover {
+  background-color: #ff7875 !important;
+  transform: translateY(-1px);
+}
+
+/* Loại bỏ viền focus */
+.ant-btn:focus,
+.ant-btn:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* ========== FORM ========== */
+.ant-form-item-label > label {
+  font-weight: 500;
+}
+
+.form-actions {
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+.form-actions .ant-space {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+/* ========== KHÁC ========== */
+.ant-spin-container {
+  min-height: 400px;
+}
+
+.ant-empty {
+  padding: 40px 0;
+}
+
+.ant-pagination {
+  margin-top: 16px;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .promotion-manage-container {
+    padding: 16px;
+  }
+
+  .promotion-manage-header {
+    gap: 12px;
+  }
+
+  .promotion-manage-header h2 {
+    font-size: 20px;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .promotion-search-input {
     width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.9);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    font-weight: bold;
-    color: #1890ff; /* Chuyển sang màu xanh dương Ant Design */
-    z-index: 9999;
-}
+  }
 
-/* --- Wrapper và Header (Đã chỉnh sửa để giống Product Management) --- */
-.PromotionWrapper {
-    /* Đặt nền tổng thể giống như Product Management */
-    /* border: 4px solid black; */
-    background-color: #f5f5f5; 
-    padding: 24px;
-    height: 100%; /* Đảm bảo chiều cao tối thiểu */
-    font-family: Arial, sans-serif;
-}
-
-.header-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    /* Lấy style từ .product-manage-header */
-    margin-bottom: 24px; 
-    flex-wrap: wrap;
-    padding: 20px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
-    border-bottom: none; /* Loại bỏ border-bottom cũ */
-}
-
-.header-bar h2 {
-    /* Lấy style từ .product-manage-header h2 */
-    flex: 1 1 100%;
-    margin-bottom: 10px;
-    font-size: 24px;
-    font-weight: 600;
-    color: #1890ff; /* Màu xanh dương chủ đạo */
-}
-.header-bar input{
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    width: 300px;
-}
-
-.add-button {
-    /* Điều chỉnh style nút Thêm sản phẩm */
-    background-color: #1890ff; 
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 4px; /* Giảm nhẹ radius cho đồng bộ */
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    display: flex; /* Dùng flex để căn icon nếu có */
-    align-items: center;
-    gap: 5px;
-    transition: background-color 0.2s;
-}
-
-.add-button:hover {
-    background-color: #40a9ff;
-}
-
-/* --- Bảng Khuyến mãi (Table Block) --- */
-.table-container {
-    overflow-x: auto;
-    /* Lấy style từ .product-manage-table */
-    background-color: #ffffff; 
-    padding: 24px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.PromotionTable {
+  .header-actions .ant-btn {
+    margin-left: 0;
     width: 100%;
-    border-collapse: collapse;
-    /* Bỏ box-shadow con, dùng box-shadow của table-container */
-    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); */ 
-    background-color: white;
+  }
+
+  .promotion-manage-table {
+    padding: 16px;
+  }
+}
+/* ========== CUSTOMIZE LOADING SPINNER (to #008f5a) ========== */
+
+/* Vòng quay chính */
+.ant-spin-dot-item {
+  background-color: #008f5a !important;
 }
 
-.PromotionTable th, .PromotionTable td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #f0f0f0; /* Border nhẹ hơn */
-    font-size: 14px;
+/* Loading text (nếu có) */
+.ant-spin-text {
+  color: #008f5a !important;
+  font-weight: 500;
 }
 
-.PromotionTable thead tr {
-    /* Lấy style từ Ant Design table header */
-    background-color: #fafafa;
-    color: #262626;
-    font-weight: 600;
+/* Nút có loading */
+.ant-btn-loading .ant-spin-dot-item {
+  background-color: #ffffff !important; /* trắng cho spinner trên nút xanh */
 }
 
-.PromotionTable tbody tr:hover {
-    /* Lấy style hover từ Ant Design */
-    background-color: #e6f7ff;
+/* Loading overlay (màu mờ nền bảng) */
+.ant-spin-blur {
+  opacity: 0.4;
 }
 
-
-/* --- Các nút Thao tác trong bảng (Giữ nguyên màu xanh/đỏ) --- */
-.edit-button {
-    background-color: #1890ff; /* Xanh dương Ant Design */
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 5px;
-    font-size: 12px;
+/* Bỏ viền xanh khi hover/focus cho Select, DatePicker, InputNumber */
+.ant-select-selector,
+.ant-picker,
+.ant-input-number {
+  border-color: #d9d9d9 !important;
+  box-shadow: none !important;
+  transition: all 0.2s;
 }
 
-.delete-button {
-    background-color: #ff4d4f; /* Đỏ Ant Design */
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
+.ant-select-selector:hover,
+.ant-picker:hover,
+.ant-input-number:hover,
+.ant-select-focused,
+.ant-picker-focused,
+.ant-input-number-focused {
+  border-color: #d9d9d9 !important;
+  box-shadow: none !important;
+  background-color: #fff; /* giữ nền trắng khi hover/focus */
 }
-
-.edit-button:hover { background-color: #40a9ff; }
-.delete-button:hover { background-color: #f5222d; }
-
-
-/* --- Thanh Footer và Phân trang (Đã sửa lỗi căn hàng và giao diện) --- */
-.PromotionWrapper .table-footer { 
-    display: flex;
-    /* Căn Tổng số sản phẩm/khuyến mãi về bên trái và Phân trang về bên phải */
-    justify-content: space-between; 
-    align-items: center;
-    padding: 15px 0 0; /* Padding trên để tạo khoảng cách với bảng */
-    border-top: none; /* Loại bỏ border-top cứng nhắc */
-    font-size: 14px;
-    color: #666;
-    gap: 20px;
-}
-
-/* Đảm bảo căn chỉnh các phần tử bên trong footer */
-.PromotionWrapper .table-footer p {
-    margin: 0;
-}
-
-.PromotionWrapper .pagination {
-    display: flex;
-    gap: 8px; /* Giảm gap giữa các thành phần */
-    align-items: center;
-    margin-top: 0; /* Loại bỏ margin-top không cần thiết */
-}
-
-.PromotionWrapper .pagination button {
-    padding: 6px 10px;
-    /* Style nút phân trang để giống ảnh Product Management */
-    border: 1px solid #d9d9d9;
-    color: #000000d9;
-    background-color: #fff;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.2s;
-}
-
-/* Button Trước/Sau - Lấy style chung */
-.PromotionWrapper .pagination button:hover:not(:disabled) {
-    border-color: #1890ff;
-    color: #1890ff;
-}
-
-.PromotionWrapper .pagination button:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-    border-color: #d9d9d9;
-    color: #00000073;
-    background-color: #f5f5f5;
-}
-
-.PromotionWrapper .pagination span {
-    color: #000000d9;
-     border: 1px solid #d9d9d9;
-    padding: 0 4px;
-}
-.selectpage{
-     border: 1px solid #e1dcdc;
-
-
-}
-
-
-/* --- Trạng thái Khuyến mãi (Giữ nguyên) --- */
-.PromotionTable td .status-active, .PromotionTable td .status-expired {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: bold;
-    color: white;
-}
-
-.PromotionTable td .status-active {
-    background-color: #52c41a; /* Xanh lá Ant Design */
-}
-
-.PromotionTable td .status-expired {
-    background-color: #ff4d4f; /* Đỏ Ant Design */
-}
-
-.PromotionTable .no-data-row {
-    text-align: center;
-    padding: 20px;
-    font-style: italic;
-    color: #999;
-}
-
-
-.ModalForm .cancel-button {
-    background-color: #ffffff;
-    color: #000000d9;
-    border: 1px solid #d9d9d9;
-}
-
-.ModalForm .save-button {
-    background-color: #1890ff;
-    color: white;
-    border: 1px solid #1890ff;
-}
-
-.ModalForm .cancel-button:hover {
-    background-color: #f0f0f0;
-    border-color: #1890ff;
-    color: #1890ff;
-}
-
-.ModalForm .save-button:hover {
-    background-color: #40a9ff;
-    border-color: #40a9ff;
-}
-/* --- CSS THIẾT YẾU CHO MODAL CƠ BẢN --- */
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Nền mờ */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: white;
-    padding: 24px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    width: 90%;
-    max-width: 600px; /* Chiều rộng cố định cho form */
-    max-height: 90vh;
-    overflow-y: auto;
-    position: relative;
-     transition: transform 0.4s ease-out, opacity 0.4s ease-out;
-     
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.modal-header h3 {
-    margin: 0;
-    color: #1890ff;
-    font-size: 1.5em;
-}
-
-.close-button {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #999;
-}
-.close-button:hover {
-    color: #333;
-}
-
-/* Form Layout */
-.ModalForm .form-group {
-    margin-bottom: 15px;
-}
-.ModalForm label {
-    display: block;
-    font-weight: 500;
-    margin-bottom: 5px;
-    color: #333;
-}
-.ModalForm input, .ModalForm select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #d9d9d9;
-    border-radius: 4px;
-    box-sizing: border-box;
-    transition: border-color 0.2s;
-}
-.ModalForm input:focus, .ModalForm select:focus {
-    border-color: #ececec;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-}
-
-.ModalForm .form-row {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-.ModalForm .form-row .half-width {
-    flex: 1;
-}
-
-.ModalForm .form-actions{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-         height: 30px;
-       
-        gap: 40px;
-    /* background-color: red; */
-}
-.ModalForm .form-actions button{
-    height: 30px;
-    width: auto;
-    border: 1px solid #1890ff ;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    /* display: flex;
-    flex-wrap: wrap;
-    flex-wrap: 1 1 100%; */
-    }

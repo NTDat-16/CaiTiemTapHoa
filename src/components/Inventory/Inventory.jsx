@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Table, Alert, Select, Space } from "antd";
 import "./Inventory.css";
-
+const { Option } = Select
 // get don vi
 const getUniqueUnits = (data) => {
   const units = data.map((item) => item.unit);
@@ -93,8 +93,7 @@ export default function InventoryManage() {
             style={{ width: 150 }}
             onChange={handleUnitFilterChange}
             options={[
-              // Thêm tùy chọn "Tất cả"
-              { label: "Tất cả", value: null },
+              { label: "Tất cả", value: "" },
               ...unitOptions,
             ]}
           />
