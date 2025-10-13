@@ -14,16 +14,16 @@ export default function Navbar() {
 
     useEffect(() => {
         const updateDateTime = () => {
-        const now = new Date();
-        const days = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-        const dayOfWeek = days[now.getDay()];
-        const day = now.getDate();
-        const month = now.getMonth() + 1;
-        const year = now.getFullYear();
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
-        setCurrentTime(`${dayOfWeek}, ${day} tháng ${month} năm ${year} ${hours}:${minutes}:${seconds}`);
+            const now = new Date();
+            const days = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+            const dayOfWeek = days[now.getDay()];
+            const day = now.getDate();
+            const month = now.getMonth() + 1;
+            const year = now.getFullYear();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            setCurrentTime(`${dayOfWeek}, ${day} tháng ${month} năm ${year} ${hours}:${minutes}:${seconds}`);
         };
 
         updateDateTime();
@@ -49,20 +49,20 @@ export default function Navbar() {
         <>
             <div className="NavbarWrapper">
                 <div className="NavbarLogo">
-                <span className="LogoText">CaiTiemTapHoa</span>
+                    <span className="LogoText">CaiTiemTapHoa</span>
                 </div>
 
                 <div className="NavbarTime">
-                {currentTime}
+                    {currentTime}
                 </div>
 
                 <div className="NavbarUser" onClick={HandleDropDown}>
-                <span>{user.user?.fullName || user.fullName}</span>
-                <img
-                    className='UserAvatar'
-                    src="./img/AvtUser.png"
-                    alt=""
-                />
+                    <span>{user.user?.fullName || user.fullName}</span>
+                    <img
+                        className='UserAvatar'
+                        src="./img/AvtUser.png"
+                        alt=""
+                    />
                 </div>
             </div>
 
