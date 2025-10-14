@@ -327,7 +327,7 @@ export default function ProductManage() {
   return (
     <div className="product-manage-container">
       <div className="product-manage-header">
-        <h2 className="product-manage-title">Quản lý sản phẩm</h2>
+        <h2 className="product-manage-title">Quản Lý Sản Phẩm</h2>
         <div className="header-actions">
           <Input.Search
             placeholder="Tìm kiếm theo tên sản phẩm, barcode, giá, đơn vị, danh mục, nhà cung cấp..."
@@ -360,7 +360,7 @@ export default function ProductManage() {
       </div>
 
       <Modal
-        title={editingProduct ? "Sửa sản phẩm" : "Thêm sản phẩm mới"}
+        title={editingProduct ? "Sửa Thông Tin Sản Phẩm" : "Thêm Sản Phẩm Mới"}
         open={isModalOpen}
         onCancel={handleCancel}
         footer={null}

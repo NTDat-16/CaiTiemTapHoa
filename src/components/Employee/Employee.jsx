@@ -252,7 +252,7 @@ export default function Employee() {
     return (
         <div className="employee-manage-container">
             <div className="employee-manage-header">
-                <h2 className="employee-manage-title">Quản lý nhân viên</h2>
+                <h2 className="employee-manage-title">Quản Lý Nhân Viên</h2>
                 <div className="header-actions">
                     <Input.Search
                         placeholder="Tìm kiếm theo tên, tên đăng nhập, chức vụ"
@@ -285,7 +285,7 @@ export default function Employee() {
             </div>
 
             <Modal
-                title={editingCategory ? "Sửa nhân viên" : "Thêm nhân viên mới"}
+                title={editingCategory ? "Sửa Thông Tin Nhân Viên" : "Thêm Nhân Viên Mới"}
                 open={isModalOpen}
                 onCancel={handleCancel}
                 footer={null}

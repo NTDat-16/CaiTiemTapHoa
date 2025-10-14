@@ -43,7 +43,7 @@ export default function Dashboard() {
     <div className="dashboard-container">
       {/* HEADER */}
       <div className="dashboard-header">
-        <h2>Báo cáo & Phân tích bán hàng</h2>
+        <h2>Báo Cáo & Phân Tích Bán Hàng</h2>
 
         <div className="dashboard-tabs">
           {tabs.map((tab) => (

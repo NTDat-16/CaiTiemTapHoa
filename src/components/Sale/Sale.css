@@ -25,7 +25,7 @@
 .promotion-manage-header h2 {
   margin: 0;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   color: #008f5a;
 }
 
@@ -110,6 +110,12 @@
 /* Hover hàng */
 .promotion-manage-table .ant-table-tbody > tr:hover > td {
   background-color: #e6f4ea !important;
+}
+
+/* Ẩn viền chia cột */
+.promotion-manage-table .ant-table-thead > tr > th::before,
+.promotion-manage-table .ant-table-tbody > tr > td::before {
+  content: none !important;
 }
 
 /* ========== MODAL ========== */

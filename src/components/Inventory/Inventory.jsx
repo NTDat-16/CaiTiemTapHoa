@@ -124,6 +124,7 @@ export default function InventoryManage() {
             icon={<EditOutlined />}
             size="small"
             onClick={() => handleEdit(record)}
+            className="edit-button"
           >
             Sửa
           </Button>
@@ -135,7 +136,7 @@ export default function InventoryManage() {
   return (
     <div className="inventory-manage-container">
       <div className="inventory-manage-header">
-        <h2> Quản lý tồn kho</h2>
+        <h2> Quản Lý Tồn Kho</h2>
         <div
           style={{
             display: "flex",
@@ -144,7 +145,6 @@ export default function InventoryManage() {
           }}
         >
           <Space>
-            <label>Bộ lọc:</label>
             <Select
               allowClear
               placeholder="Chọn đơn vị"
@@ -213,6 +213,7 @@ export default function InventoryManage() {
         open={isEditModalOpen}
         onCancel={handleCancel}
         footer={null}
+        closable={false}
       >
         <Form
           form={form}
@@ -254,7 +255,7 @@ export default function InventoryManage() {
             <Input placeholder="Nhập đơn vị" />
           </Form.Item>
 
-          <Form.Item>
+          <Form.Item className="form-actions">
             <Space>
               <Button onClick={handleCancel}>Hủy</Button>
               <Button type="primary" htmlType="submit">
@@ -267,10 +268,11 @@ export default function InventoryManage() {
 
       {/* Modal nhập hàng */}
       <Modal
-        title="Nhập hàng"
+        title="Nhập Hàng"
         open={isImportModalOpen}
         onCancel={handleCancel}
         footer={null}
+        closable={false}
       >
         <Form
           form={form}
@@ -304,7 +306,7 @@ export default function InventoryManage() {
             <Input.TextArea placeholder="Nhập ghi chú (nếu có)" />
           </Form.Item>
 
-          <Form.Item>
+          <Form.Item className="form-actions">
             <Space>
               <Button onClick={handleCancel}>Đóng</Button>
               <Button type="primary" htmlType="submit">
@@ -317,16 +319,18 @@ export default function InventoryManage() {
 
       {/* Modal kiểm kê */}
       <Modal
-        title="Kiểm kê"
+        title="Kiểm Kê"
         open={isAuditModalOpen}
         onCancel={handleCancel}
         footer={null}
+        closable={false}
       >
         <Form
           form={form}
           layout="vertical"
           onFinish={handleAudit}
           autoComplete="off"
+          
         >
           <Form.Item
             label="Chọn sản phẩm"
@@ -356,7 +360,7 @@ export default function InventoryManage() {
             <Input.TextArea placeholder="Nhập ghi chú (nếu có)" />
           </Form.Item>
 
-          <Form.Item>
+          <Form.Item className="form-actions">
             <Space>
               <Button onClick={handleCancel}>Đóng</Button>
               <Button type="primary" htmlType="submit">

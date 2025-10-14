@@ -25,7 +25,7 @@
 .inventory-manage-header h2 {
   margin: 0;
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
   color: #008f5a;
 }
 
@@ -49,15 +49,26 @@
 
 /* ========== CẢNH BÁO HẾT HÀNG ========== */
 .ant-alert {
-  border-radius: 6px !important;
-  border: 1px solid #ffecb3 !important;
-  background-color: #fff8e1 !important;
+  border-radius: 8px !important;
+  border: 1px solid #008f5a !important; /* Viền xanh chủ đạo */
+  background-color: #e8f5ee !important; /* Xanh nhạt cùng tông */
+  box-shadow: 0 2px 6px rgba(0, 143, 90, 0.15); /* Đổ bóng nhẹ cho hiện đại */
 }
 
 .ant-alert-message {
   font-weight: 600;
-  color: #d48806 !important;
+  color: #006e45 !important; /* Đậm hơn màu chủ đạo, dễ đọc */
+  font-size: 15px;
 }
+
+.ant-alert-description {
+  color: #333 !important; /* Giữ mô tả trung tính, dễ đọc */
+}
+
+.ant-alert-icon {
+  color: #008f5a !important; /* Icon đồng bộ màu chủ đạo */
+}
+
 
 /* ========== BẢNG ========== */
 .inventory-manage-table {
@@ -83,12 +94,6 @@
 /* Hàng hover */
 .inventory-manage-table .ant-table-tbody > tr:hover > td {
   background-color: #e6f4ea !important;
-}
-
-/* Ẩn đường viền giữa các cột */
-.inventory-manage-table .ant-table-thead > tr > th::before,
-.inventory-manage-table .ant-table-tbody > tr > td::before {
-  content: none !important;
 }
 
 /* Căn giữa dữ liệu */

@@ -1,0 +1,154 @@
+/* ========== LAYOUT CHUNG ========== */
+.customer-manage-container {
+  position: fixed;
+  top: 60px;
+  left: 70px;
+  width: calc(100% - 70px);
+  min-height: calc(100vh - 60px);
+  background-color: #f8f9fa;
+  padding: 10px 20px;
+  overflow: hidden;
+}
+
+/* ========== HEADER ========== */
+.customer-manage-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.customer-manage-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #008f5a;
+}
+
+/* Thanh hành động: Search + Nút thêm */
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* ========== SEARCH ========== */
+.customer-search-input {
+  width: 40%;
+  flex-shrink: 0;
+}
+
+.customer-search-input .ant-input {
+  font-size: 15px;
+}
+
+.customer-search-input .ant-input::placeholder {
+  color: #bfbfbf;
+  font-size: 14px;
+}
+
+/* Bỏ viền xanh khi focus/hover */
+.ant-input:focus,
+.ant-input:hover,
+.ant-input-focused {
+  border-color: #d9d9d9 !important;
+  box-shadow: none !important;
+}
+
+/* Nút Search */
+.customer-search-input .ant-input-search-button {
+  background-color: #008f5a !important;
+  border: none !important;
+  height: 40px;
+  transition: all 0.2s ease;
+}
+
+.customer-search-input .ant-input-search-button:hover,
+.customer-search-input .ant-input-search-button:focus {
+  background-color: #00b36b !important;
+  color: white !important;
+  transform: translateY(-1px);
+}
+
+/* Nút thêm sản phẩm */
+.header-actions .ant-btn {
+  background-color: #008f5a !important;
+  border: none !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.header-actions .ant-btn:hover {
+  background-color: #00b36b !important;
+  transform: translateY(-1px);
+}
+
+/* ========== BẢNG ========== */
+.customer-manage-table {
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.customer-manage-table .ant-table {
+  font-size: 14px;
+}
+
+/* Tiêu đề bảng màu trắng */
+.customer-manage-table .ant-table-thead > tr > th {
+  background-color: #008f5a !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border: none !important;
+}
+
+/* Hover hàng */
+.customer-manage-table .ant-table-tbody > tr:hover > td {
+  background-color: #e6f4ea !important;
+}
+
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .customer-manage-container {
+    padding: 16px;
+  }
+
+  .customer-manage-header {
+    gap: 12px;
+  }
+
+  .customer-manage-header h2 {
+    font-size: 20px;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .customer-search-input {
+    width: 100%;
+  }
+
+  .header-actions .ant-btn {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .customer-manage-table {
+    padding: 16px;
+  }
+}
+
+.ant-modal .ant-modal-header .ant-modal-title {
+  text-align: center !important;
+  font-size: 20px !important;
+}
+
+

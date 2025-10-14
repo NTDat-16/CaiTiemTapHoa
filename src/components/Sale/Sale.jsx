@@ -1,18 +1,22 @@
 import { useState, useEffect } from "react"
 import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm,DatePicker, Tooltip, Tag } from "antd"
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons"
-import "./Promotion.css"
+import "./Sale.css"
 import dayjs from "dayjs";
 
 const { Option } = Select
 
-// Dữ liệu giả lập khuyến mãi (Giữ nguyên để dự phòng)
 const mockPromotions = [
-    { promo_id: 1, promo_code: 'SALE10', description: 'Giảm 10% cho mọi đơn hàng', discount_type: 'percent', discount_value: 10, start_date: '2025-10-01', end_date: '2025-10-31', min_order_amount: 100000, usage_limit: 50, used_count: 5, status: 'active' },
-    // ... dữ liệu mock khác
+    { promo_id: 1, promo_code: 'SALE10', description: 'Giảm 10% cho mọi đơn hàng', discount_type: 'percent', discount_value: 10000, start_date: '2025-10-01', end_date: '2025-10-31', min_order_amount: 100000, usage_limit: 50, used_count: 5, status: 'active' },
+    { promo_id: 2, promo_code: 'FREE30K', description: 'Giảm 30.000 VNĐ', discount_type: 'amount', discount_value: 30000, start_date: '2025-11-01', end_date: '2025-11-15', min_order_amount: 200000, usage_limit: 20, used_count: 12, status: 'expired' },
+    { promo_id: 3, promo_code: 'NEWUSER50', description: 'Giảm 50% cho khách hàng mới', discount_type: 'percent', discount_value: 5000, start_date: '2025-09-01', end_date: '2025-12-31', min_order_amount: 50000, usage_limit: 100, used_count: 55, status: 'active' },
+    { promo_id: 4, promo_code: 'BLACKFRIDAY', description: 'Giảm cố định 50K', discount_type: 'amount', discount_value: 50000, start_date: '2025-11-25', end_date: '2025-11-28', min_order_amount: 300000, usage_limit: 10, used_count: 10, status: 'expired' },
+    { promo_id: 5, promo_code: 'TET2026', description: 'Khuyến mãi Tết Nguyên Đán', discount_type: 'percent', discount_value: 1500, start_date: '2026-01-01', end_date: '2026-02-10', min_order_amount: 150000, usage_limit: 75, used_count: 0, status: 'active' },
 ];
 
-export default function Promotion() {
+
+
+export default function Sale() {
     const [loading, setLoading] = useState(false)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingPromotion, setEditingPromotion] = useState(null)
@@ -23,21 +27,16 @@ export default function Promotion() {
 
     // Fetch categories from API (currently using mock data)
     const fetchPromotions = async () => {
-        setLoading(true)
         try {
-          // TODO: Uncomment when API is ready
-          // const response = await fetch('/api/products');
-          // const data = await response.json();
-          // setProducts(data);
-    
-          // Using mock data for now
-          setTimeout(() => {
+            // TODO: Uncomment when API is ready
+            // const response = await fetch('/api/categories');
+            // const data = await response.json();
+            // setCategories(data);
+
+            // Using mock data for now
             setPromotion(mockPromotions)
-            setLoading(false)
-          }, 500)
         } catch (error) {
-          message.error("Lỗi khi tải danh sách sản phẩm")
-          setLoading(false)
+            message.error("Lỗi khi tải danh mục")
         }
     }
 
@@ -198,38 +197,38 @@ export default function Promotion() {
     }
 
     const handleSubmit = async (values) => {
-        try {
-            const formattedValues = {
-                ...values,
-                start_date: values.start_date ? values.start_date.format("YYYY-MM-DD") : null,
-                end_date: values.end_date ? values.end_date.format("YYYY-MM-DD") : null,
-            }
-
-            if (editingPromotion) {
-                setPromotion(prev =>
-                    prev.map(p =>
-                        p.promo_id === editingPromotion.promo_id ? { ...p, ...formattedValues } : p
-                    )
-                );
-                message.success("Cập nhật chương trình khuyến mãi thành công");
-            } else {
-                const newPromo = {
-                    promo_id: promotion.length + 1,
-                    ...formattedValues,
-                    created_at: new Date().toISOString(),
-                }
-                setPromotion(prev => [...prev, newPromo]);
-                message.success("Thêm chương trình khuyến mãi thành công");
-            }
-
-            setIsModalOpen(false);
-            form.resetFields();
-            setEditingPromotion(null);
-        } catch (error) {
-            console.error(error);
-            message.error("Có lỗi xảy ra khi lưu chương trình khuyến mãi");
+    try {
+        const formattedValues = {
+            ...values,
+            start_date: values.start_date ? values.start_date.format("YYYY-MM-DD") : null,
+            end_date: values.end_date ? values.end_date.format("YYYY-MM-DD") : null,
         }
-    };
+
+        if (editingPromotion) {
+            setPromotion(prev =>
+                prev.map(p =>
+                    p.promo_id === editingPromotion.promo_id ? { ...p, ...formattedValues } : p
+                )
+            );
+            message.success("Cập nhật chương trình khuyến mãi thành công");
+        } else {
+            const newPromo = {
+                promo_id: promotion.length + 1,
+                ...formattedValues,
+                created_at: new Date().toISOString(),
+            }
+            setPromotion(prev => [...prev, newPromo]);
+            message.success("Thêm chương trình khuyến mãi thành công");
+        }
+
+        setIsModalOpen(false);
+        form.resetFields();
+        setEditingPromotion(null);
+    } catch (error) {
+        console.error(error);
+        message.error("Có lỗi xảy ra khi lưu chương trình khuyến mãi");
+    }
+};
 
 
     // Handle modal cancel
@@ -265,11 +264,10 @@ export default function Promotion() {
         setSearchTerm(value)
     }
 
-
     return (
         <div className="promotion-manage-container">
             <div className="promotion-manage-header">
-                <h2 className="promotion-manage-title">Quản Lý Mã Khuyến Mãi</h2>
+                <h2 className="promotion-manage-title">Quản lý mã giảm giá</h2>
                 <div className="header-actions">
                 <Input.Search
                     placeholder="Tìm kiếm theo tên sản phẩm, barcode, giá, đơn vị, danh mục, nhà cung cấp..."
@@ -302,7 +300,7 @@ export default function Promotion() {
             </div>
 
             <Modal
-                title={editingPromotion ? "Sửa Chương Trình Khuyến Mãi" : "Thêm Chương Trình Khuyến Mãi Mới"}
+                title={editingPromotion ? "Sửa chương trình khuyến mãi" : "Thêm chương trình khuyến mãi mới"}
                 open={isModalOpen}
                 onCancel={handleCancel}
                 footer={null}

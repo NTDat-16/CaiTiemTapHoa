@@ -25,7 +25,7 @@
 .product-manage-header h2 {
   margin: 0;
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
   color: #008f5a;
 }
 
@@ -110,12 +110,6 @@
 /* Hover hàng */
 .product-manage-table .ant-table-tbody > tr:hover > td {
   background-color: #e6f4ea !important;
-}
-
-/* Ẩn viền chia cột */
-.product-manage-table .ant-table-thead > tr > th::before,
-.product-manage-table .ant-table-tbody > tr > td::before {
-  content: none !important;
 }
 
 /* ========== MODAL ========== */

@@ -43,7 +43,7 @@ export default function Category() {
       setLoading(false);
     }
   };
-  
+
   // Xóa danh mục nếu chưa là khóa ngoại
   const handleDelete = async (categoryId) => {
     try {
@@ -209,7 +209,7 @@ export default function Category() {
   return (
     <div className="category-manage-container">
       <div className="category-manage-header">
-        <h2 className="category-manage-title">Quản lý danh mục</h2>
+        <h2>Quản Lý Danh Mục</h2>
         <div className="header-actions">
           <Input.Search
             placeholder="Tìm kiếm theo tên danh mục"
@@ -242,12 +242,13 @@ export default function Category() {
       </div>
 
       <Modal
-        title={editingCategory ? "Sửa danh mục" : "Thêm danh mục mới"}
+        title={editingCategory ? "Sửa Thông Tin Danh Mục" : "Thêm Danh Mục Mới"}
         open={isModalOpen}
         onCancel={handleCancel}
         footer={null}
         width={600}
         closable={false}
+        style={{ top: 100 }} 
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off">
           <Form.Item
