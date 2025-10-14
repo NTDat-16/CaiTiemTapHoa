@@ -10,7 +10,7 @@
 }
 
 .dashboard-header {
-  display: flex;
+  display: flex;  
   flex-direction: column;
   align-items: flex-start;
   margin-bottom: 15px;
@@ -80,5 +80,6 @@
 
   .dashboard-tabs {
     flex-wrap: wrap;
+    border: 1px solid #ccc;
   }
 }

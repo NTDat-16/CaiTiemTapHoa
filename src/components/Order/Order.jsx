@@ -315,7 +315,7 @@ const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
             
                         <div className="type-product">
                             <label>Loại: </label>
-                            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                            <select className="choosetype" value={category} onChange={(e) => setCategory(e.target.value)}>
                                 <option value="all">Tất cả</option>
                                 <option value="do-uong">Đồ uống</option>
                                 <option value="thuc-pham">Thực phẩm</option>
