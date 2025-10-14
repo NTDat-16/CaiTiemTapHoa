@@ -12,9 +12,7 @@ const mockPromotions = [
     // ... dữ liệu mock khác
 ];
 
-
-
-export default function Sale() {
+export default function Promotion() {
     const [loading, setLoading] = useState(false)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingPromotion, setEditingPromotion] = useState(null)
