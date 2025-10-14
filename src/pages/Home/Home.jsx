@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Navbar from "../../components/Navbar/Navbar";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import Order from "../../components/Order/Order";
 import CustomerManage from "../../components/CustomerManage/CustomerManage";
 import Promotion from "../../components/Promotion/Promotion";
-import "./Home.css";
 import ProductManage from "../../components/ProductManage/ProductManage";
 import Inventory from "../../components/Inventory/Inventory";
 import Dashboard from "../../components/Dashboard/Dashboard";
 import Category from "../../components/Category/Category";
 import Employee from "../../components/Employee/Employee";
+import "./Home.css";
 
 export default function Home() {
   const [choosen, setChoosen] = useState("order");

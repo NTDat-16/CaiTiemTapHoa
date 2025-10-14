@@ -11,18 +11,6 @@ const mockCategories = [
   { category_id: 2, category_name: "Đồ ăn" },
   { category_id: 3, category_name: "Đồ uống" },
   { category_id: 4, category_name: "Phụ kiện" },
-  { category_id: 1, category_name: "Quần áo" },
-  { category_id: 2, category_name: "Đồ ăn" },
-  { category_id: 3, category_name: "Đồ uống" },
-  { category_id: 4, category_name: "Phụ kiện" },
-  { category_id: 1, category_name: "Quần áo" },
-  { category_id: 2, category_name: "Đồ ăn" },
-  { category_id: 3, category_name: "Đồ uống" },
-  { category_id: 4, category_name: "Phụ kiện" },
-  { category_id: 1, category_name: "Quần áo" },
-  { category_id: 2, category_name: "Đồ ăn" },
-  { category_id: 3, category_name: "Đồ uống" },
-  { category_id: 4, category_name: "Phụ kiện" },
 ]
 
 

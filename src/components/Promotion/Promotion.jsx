@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react'
-import './Promotion.css' 
-import { Popconfirm } from 'antd'; 
+import { useState, useEffect } from "react"
+import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm,DatePicker, Tooltip, Tag } from "antd"
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons"
+import "./Promotion.css"
+import dayjs from "dayjs";
 
+const { Option } = Select
 
 // Dữ liệu giả lập khuyến mãi (Giữ nguyên để dự phòng)
 const mockPromotions = [
@@ -9,436 +12,446 @@ const mockPromotions = [
     // ... dữ liệu mock khác
 ];
 
-const Modal = ({ isOpen, onClose, title, children }) => {
-    if (!isOpen) return null
 
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h3>{title}</h3>
-                    <button className="close-button" onClick={onClose}>&times;</button>
-                </div>
-                <div className="modal-body">
-                    {children}
-                </div>
-            </div>
-        </div>
-    )
-}
 
-export default function App() {
-    // URL API (Giả định là endpoint Promotions)
-    const PROMOTION_API_URL = "http://localhost:5000/api/Promotion";
+export default function Sale() {
+    const [loading, setLoading] = useState(false)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [editingPromotion, setEditingPromotion] = useState(null)
+    const [promotion, setPromotion] = useState([])
+    const [searchTerm, setSearchTerm] = useState("")
+    const [form] = Form.useForm()
 
-    const [promotions, setPromotions] = useState([]);
-    const [loading, setLoading] = useState(true); 
-    const [search, setSearch] = useState("");
-    const [formData, setFormData] = useState({
-        promo_code: '', description: '', discount_type: 'percent',
-        discount_value: '', start_date: '', end_date: '',
-        min_order_amount: '', usage_limit: '', used_count: '0', status: 'active'
-    });
-    const [editingId, setEditingId] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10; 
-    
-    // Hàm Lấy Token Xác thực từ LocalStorage
-    const getAuthToken = () => {
-        // Giả sử token được lưu với key 'authToken'
-        return localStorage.getItem('authToken');
-    };
 
-    // Hàm gọi API TẢI DỮ LIỆU
+    // Fetch categories from API (currently using mock data)
     const fetchPromotions = async () => {
-        setLoading(true);
-        console.log("Đang gọi API GET: " + PROMOTION_API_URL);
-        
-        const token = getAuthToken(); // Lấy token
-
-        if (!token) {
-            console.error("Lỗi: Không tìm thấy Token Xác thực.");
-            // Tạm thời hiển thị mock data nếu không có token (chỉ cho dev/test)
-            // setPromotions(mockPromotions); 
-            setLoading(false);
-            return;
-        }
-
+        setLoading(true)
         try {
-            const response = await fetch(PROMOTION_API_URL, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    
-                    'Authorization': `Bearer ${token}` 
-                }
-            });
-            
-            if (response.status === 401) {
-                // Xử lý lỗi 401: chuyển hướng người dùng về trang đăng nhập
-                console.error("Lỗi 401: Token hết hạn hoặc không hợp lệ. Cần đăng nhập lại.");
-                // alert("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
-                // window.location.href = '/login'; // Ví dụ chuyển hướng
-                throw new Error(`Lỗi HTTP! Status: ${response.status} (Unauthorized)`);
-            }
-            
-            if (!response.ok) {
-                throw new Error(`Lỗi HTTP! Status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            setPromotions(data);
-            console.log("Dữ liệu khuyến mãi đã được tải thành công.");
+          // TODO: Uncomment when API is ready
+          // const response = await fetch('/api/products');
+          // const data = await response.json();
+          // setProducts(data);
+    
+          // Using mock data for now
+          setTimeout(() => {
+            setPromotion(mockPromotions)
+            setLoading(false)
+          }, 500)
         } catch (error) {
-            console.error("Lỗi khi tải dữ liệu khuyến mãi:", error);
-            setPromotions([]); 
-        } finally {
-            setLoading(false);
+          message.error("Lỗi khi tải danh sách sản phẩm")
+          setLoading(false)
         }
-    };
-
-    // Gọi API khi component mount
-    useEffect(() => {
-        fetchPromotions();
-    }, []);
-    
-    // ... Logic Phân trang (Giữ nguyên) ...
-    const filteredPromotions = promotions.filter(p => 
-        p.promo_code.toLowerCase().includes(search.toLowerCase()) ||
-        p.description.toLowerCase().includes(search.toLowerCase())
-    );
-    
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentPromotions = filteredPromotions.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredPromotions.length / itemsPerPage);
-
-    const paginate = (pageNumber) => {
-        if (pageNumber < 1 || pageNumber > totalPages) return;
-        setCurrentPage(pageNumber);
     }
-    
+
     useEffect(() => {
-        setCurrentPage(1);
-    }, [search]);
+        fetchPromotions()
+    }, [])
+
+    const columns = [
+        {
+            title: "ID",
+            dataIndex: "promo_id",
+            key: "promo_id",
+            width: 60,       // hơi rộng hơn một chút cho dễ nhìn
+            align: "center",
+        },
+        {
+            title: "Mã KM",
+            dataIndex: "promo_code",
+            key: "promo_code",
+            width: 120,      // mã thường ngắn
+            align: "center",
+        },
+        {
+            title: "Mô tả",
+            dataIndex: "description",
+            key: "description",
+            width: 220,      // đủ rộng để đọc, vẫn có tooltip
+            ellipsis: true,
+            render: (text) => <Tooltip title={text}>{text}</Tooltip>,
+        },
+        {
+            title: "Loại",
+            dataIndex: "discount_type",
+            key: "discount_type",
+            width: 120,
+            align: "center",
+        },
+        {
+            title: "Giá trị",
+            dataIndex: "discount_value",
+            key: "discount_value",
+            width: 100,
+            align: "right",
+            render: (discount_value) => discount_value.toLocaleString("vi-VN"),
+        },
+        {
+            title: "Bắt đầu",
+            dataIndex: "start_date",
+            key: "start_date",
+            width: 100,
+            align: "center",
+        },
+        {
+            title: "Kết thúc",
+            dataIndex: "end_date",
+            key: "end_date",
+            width: 100,
+            align: "center",
+        },
+        {
+            title: "Đơn tối thiểu",
+            dataIndex: "min_order_amount",
+            key: "min_order_amount",
+            width: 120,
+            align: "right",
+            render: (amount) => amount.toLocaleString("vi-VN"),
+        },
+        {
+            title: "Giới hạn SL",
+            dataIndex: "usage_limit",
+            key: "usage_limit",
+            width: 100,
+            align: "center",
+        },
+        {
+            title: "Đã dùng",
+            dataIndex: "used_count",
+            key: "used_count",
+            width: 100,
+            align: "center",
+        },
+        {
+            title: "Trạng thái",
+            dataIndex: "status",
+            key: "status",
+            width: 110,
+            align: "center",
+            render: (status) => (
+            <Tag color={status === "active" ? "green" : "red"}>
+                {status === "active" ? "Hoạt động" : "Đã khóa"}
+            </Tag>
+            ),
+        },
+        {
+            title: "Thao tác",
+            key: "action",
+            width: 160,
+            fixed: "right",
+            render: (_, record) => (
+            <Space size="small">
+                <Button
+                type="primary"
+                icon={<EditOutlined />}
+                size="small"
+                onClick={() => handleEdit(record)}
+                >
+                Sửa
+                </Button>
+                <Popconfirm
+                title="Xóa chương trình"
+                description="Bạn có chắc chắn muốn xóa chương trình này?"
+                onConfirm={() => handleDelete(record.promo_id)}
+                okText="Xóa"
+                cancelText="Hủy"
+                >
+                <Button type="primary" danger icon={<DeleteOutlined />} size="small">
+                    Xóa
+                </Button>
+                </Popconfirm>
+            </Space>
+            ),
+        },
+    ];
 
 
-    // ... Hàm đặt lại form, mở/đóng Modal (Giữ nguyên) ...
-    const resetForm = () => {
-        setFormData({
-            promo_code: '', description: '', discount_type: 'percent',
-            discount_value: '', start_date: '', end_date: '',
-            min_order_amount: '', usage_limit: '', used_count: '0', status: 'active'
-        });
-        setEditingId(null);
-    };
 
-    const handleOpenAddModal = () => {
-        resetForm();
-        setIsModalOpen(true);
-    };
+    // Handle add new product
+    const handleAdd = () => {
+        setEditingPromotion(null)
+        form.resetFields()
+        setIsModalOpen(true)
+    }
 
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        resetForm();
-    };
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-
-    // Hàm gọi API THÊM MỚI hoặc CẬP NHẬT
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        
-        const token = getAuthToken(); // Lấy token
-
-        if (!token) {
-            console.error("Lỗi: Không tìm thấy Token Xác thực.");
-            setLoading(false);
-            return;
-        }
-        
-        const finalData = {
-            ...formData,
-            discount_value: Number(formData.discount_value),
-            min_order_amount: Number(formData.min_order_amount),
-            usage_limit: Number(formData.usage_limit),
-            used_count: Number(formData.used_count || 0), 
-        };
-
-        try {
-            let url = PROMOTION_API_URL;
-            let method = 'POST';
-
-            if (editingId) {
-                url = `${PROMOTION_API_URL}/${editingId}`;
-                method = 'PUT';
-            }
-
-            const response = await fetch(url, {
-                method: method,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    // 🔑 THÊM HEADER AUTHORIZATION VÀO ĐÂY
-                    'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify(finalData),
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Lỗi ${method} API: ${response.status}. Chi tiết: ${errorText || response.statusText}`);
-            }
-
-            console.log(`Thao tác ${editingId ? 'cập nhật' : 'thêm mới'} thành công.`);
-            
-            await fetchPromotions(); 
-            handleCloseModal();
-
-        } catch (error) {
-            console.error("Lỗi khi gửi form:", error);
-            // TODO: Hiển thị lỗi này cho người dùng trên UI
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Mở Modal và điền dữ liệu cho việc chỉnh sửa (Giữ nguyên)
+    // Handle edit product
     const handleEdit = (promo) => {
-        setFormData({
+        setEditingPromotion(promo)
+        form.setFieldsValue({
             ...promo,
-            discount_value: String(promo.discount_value),
-            min_order_amount: String(promo.min_order_amount),
-            usage_limit: String(promo.usage_limit),
-            used_count: String(promo.used_count),
-        });
-        setEditingId(promo.promo_id);
-        setIsModalOpen(true);
-    };
+            start_date: promo.start_date ? dayjs(promo.start_date) : null,
+            end_date: promo.end_date ? dayjs(promo.end_date) : null,
+        })
+        setIsModalOpen(true)
+    }
 
-    // Hàm gọi API XÓA
-    const handleDelete = async (id) => {
-        setLoading(true); 
-        const token = getAuthToken(); // Lấy token
 
-        if (!token) {
-            console.error("Lỗi: Không tìm thấy Token Xác thực.");
-            setLoading(false);
-            return;
-        }
-
+    // Handle delete product
+    const handleDelete = async (promotionId) => {
         try {
-            const response = await fetch(`${PROMOTION_API_URL}/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    // 🔑 THÊM HEADER AUTHORIZATION VÀO ĐÂY
-                    'Authorization': `Bearer ${token}` 
-                },
-            });
+            // TODO: Uncomment when API is ready
+            // await fetch(`/api/products/${productId}`, { method: 'DELETE' });
 
-            if (!response.ok) {
-                throw new Error(`Lỗi DELETE API: ${response.status}. Thao tác thất bại.`);
-            }
-
-            console.log(`Xóa khuyến mãi ID ${id} thành công.`);
-            
-            await fetchPromotions(); 
-            
+            // Mock delete
+            setPromotion(promotion.filter((p) => p.promo_id !== promotionId))
+            message.success("Xóa khuyến mãi thành công")
         } catch (error) {
-            console.error("Lỗi khi xóa khuyến mãi:", error);
-            // TODO: Hiển thị lỗi này cho người dùng trên UI
-        } finally {
-            setLoading(false);
+            message.error("Lỗi khi xóa khuyến mãi")
         }
     }
 
-    if (loading) {
-        return <div className="loading-screen">Đang tải dữ liệu Khuyến mãi từ Backend...</div>;
+    const handleSubmit = async (values) => {
+        try {
+            const formattedValues = {
+                ...values,
+                start_date: values.start_date ? values.start_date.format("YYYY-MM-DD") : null,
+                end_date: values.end_date ? values.end_date.format("YYYY-MM-DD") : null,
+            }
+
+            if (editingPromotion) {
+                setPromotion(prev =>
+                    prev.map(p =>
+                        p.promo_id === editingPromotion.promo_id ? { ...p, ...formattedValues } : p
+                    )
+                );
+                message.success("Cập nhật chương trình khuyến mãi thành công");
+            } else {
+                const newPromo = {
+                    promo_id: promotion.length + 1,
+                    ...formattedValues,
+                    created_at: new Date().toISOString(),
+                }
+                setPromotion(prev => [...prev, newPromo]);
+                message.success("Thêm chương trình khuyến mãi thành công");
+            }
+
+            setIsModalOpen(false);
+            form.resetFields();
+            setEditingPromotion(null);
+        } catch (error) {
+            console.error(error);
+            message.error("Có lỗi xảy ra khi lưu chương trình khuyến mãi");
+        }
+    };
+
+
+    // Handle modal cancel
+    const handleCancel = () => {
+        setIsModalOpen(false)
+        form.resetFields()
+        setEditingPromotion(null)
+    }
+
+    // filteredPromotions dựa trên searchTerm
+    const filteredPromotions = promotion.filter((promo) => {
+        if (!searchTerm) return true; // nếu search rỗng, giữ tất cả
+
+        const searchLower = searchTerm.toLowerCase();
+
+        // Lấy các trường cần tìm
+        const promoCode = promo.promo_code?.toLowerCase() || "";
+        const discountType = promo.discount_type?.toLowerCase() || "";
+        const status = promo.status?.toLowerCase() || "";
+        const description = promo.description?.toLowerCase() || "";
+
+        // Kiểm tra có khớp với searchTerm không
+        return (
+            promoCode.includes(searchLower) ||
+            discountType.includes(searchLower) ||
+            status.includes(searchLower) ||
+            description.includes(searchLower)
+        );
+    });
+
+
+    const handleSearch = (value) => {
+        setSearchTerm(value)
     }
 
 
     return (
-        <div className="PromotionWrapper">
-            {/* ... Phần UI giữ nguyên ... */}
-            <div className="header-bar">
-                <h2>Quản lý khuyến mãi</h2>
-                <input
-                    type="text"
-                    placeholder="Tìm khuyến mãi theo tên..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+        <div className="promotion-manage-container">
+            <div className="promotion-manage-header">
+                <h2 className="promotion-manage-title">Quản lý mã giảm giá</h2>
+                <div className="header-actions">
+                <Input.Search
+                    placeholder="Tìm kiếm theo tên sản phẩm, barcode, giá, đơn vị, danh mục, nhà cung cấp..."
+                    allowClear
+                    enterButton={<SearchOutlined />}
+                    size="large"
+                    onSearch={handleSearch}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="promotion-search-input"
                 />
-                <button className="add-button" onClick={handleOpenAddModal}>
-                    + Thêm khuyến mãi
-                </button>
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large" className="product-search-btn">
+                    Thêm mã giảm giá
+                </Button>
+                </div>
             </div>
 
-            <div className="table-container">
-                <table className="PromotionTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Mã KM</th>
-                            <th>Mô tả</th>
-                            <th>Loại</th>
-                            <th>Giá trị</th>
-                            <th>Bắt đầu</th>
-                            <th>Kết thúc</th>
-                            <th>Đơn tối thiểu</th>
-                            <th>Giới hạn SL</th>
-                            <th>Đã dùng</th>
-                            <th>Trạng thái</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentPromotions.length === 0 ? (
-                            <tr>
-                                <td colSpan="12" className="no-data-row">Không có dữ liệu khuyến mãi.</td>
-                            </tr>
-                        ) : (
-                            currentPromotions.map(p => (
-                                <tr key={p.promo_id}>
-                                    <td>{p.promo_id}</td>
-                                    <td>{p.promo_code}</td>
-                                    <td>{p.description}</td>
-                                    <td>{p.discount_type === 'percent' ? 'Phần trăm' : 'Số tiền'}</td>
-                                    <td>
-                                        {p.discount_type === 'percent'
-                                            ? `${p.discount_value}%`
-                                            : `${p.discount_value.toLocaleString('vi-VN')} VNĐ`
-                                        }
-                                    </td>
-                                    <td>{p.start_date}</td>
-                                    <td>{p.end_date}</td>
-                                    <td>{p.min_order_amount.toLocaleString('vi-VN')} VNĐ</td>
-                                    <td>{p.usage_limit}</td>
-                                    <td>{p.used_count}</td>
-                                    <td><span className={`status-${p.status}`}>{p.status === 'active' ? 'Đang hoạt động' : 'Hết hạn'}</span></td>
-                                    <td>
-                                        <button 
-                                            className="edit-button" 
-                                            onClick={() => handleEdit(p)}
-                                        >
-                                            Sửa
-                                        </button>
-                                        
-                                        <Popconfirm
-                                            title="Xóa khuyến mãi"
-                                            description={`Bạn có chắc chắn muốn xóa mã KM: ${p.promo_code}?`} 
-                                            onConfirm={() => handleDelete(p.promo_id)} 
-                                            okText="Xóa"
-                                            cancelText="Hủy"
-                                            okButtonProps={{ danger: true }} 
-                                        >
-                                            <button className="delete-button">
-                                                Xóa
-                                            </button>
-                                        </Popconfirm>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-            
-            <div className="table-footer">
-                <p>Tổng {promotions.length} khuyến mãi</p> 
-                <div className="pagination">
-                    <button 
-                        onClick={() => paginate(currentPage - 1)} 
-                        disabled={currentPage === 1}
-                    >
-                        Trước
-                    </button>
-                    <span>Trang {currentPage} / {totalPages}</span> 
-                    <button 
-                        onClick={() => paginate(currentPage + 1)} 
-                        disabled={currentPage === totalPages || totalPages === 0}
-                    >
-                        Sau
-                    </button>
-                    <select className='selectpage'
-                        value={itemsPerPage} 
-                        onChange={(e) => {
-                            console.log("Tính năng thay đổi số mục/trang không được kích hoạt để đồng bộ với ProductManage (pageSize cố định là 10)");
-                        }}
-                        
-                    >
-                        <option value="10">10 / trang</option>
-                        <option value="20">20 / trang</option>
-                    </select>
-                </div>
+            <div className="promotion-manage-table">
+                <Table
+                    columns={columns}
+                    dataSource={filteredPromotions}
+                    rowKey="promo_id"
+                    loading={loading}
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: true,
+                        showTotal: (total) => `Tổng ${total} mã giảm giá${searchTerm ? " (đã lọc)" : ""}`,
+                    }}
+                    scroll={{ y:400, x: 1200 }}
+                />
             </div>
 
             <Modal
-                isOpen={isModalOpen}
-                onClose={handleCloseModal}
-                title={editingId ? 'Chỉnh sửa Khuyến mãi' : 'Thêm Khuyến mãi mới'}
+                title={editingPromotion ? "Sửa chương trình khuyến mãi" : "Thêm chương trình khuyến mãi mới"}
+                open={isModalOpen}
+                onCancel={handleCancel}
+                footer={null}
+                width={700}
+                closable={false}
+                style={{ top: 70 }}
             >
-                <form className="ModalForm" onSubmit={handleSubmit}>
-                    <div className="form-group"><label>Mã Khuyến mãi *</label><input name="promo_code" value={formData.promo_code} onChange={handleChange} required /></div>
-                    <div className="form-group"><label>Mô tả</label><input name="description" value={formData.description} onChange={handleChange} /></div>
-                    <div className="form-row">
-                        <div className="form-group half-width">
-                            <label>Loại giảm giá *</label>
-                            <select name="discount_type" value={formData.discount_type} onChange={handleChange} required>
-                                <option value="percent">Phần trăm (%)</option>
-                                <option value="amount">Số tiền (VNĐ)</option>
-                            </select>
-                        </div>
-                        <div className="form-group half-width">
-                            <label>Giá trị giảm giá *</label>
-                            <input name="discount_value" type="number" value={formData.discount_value} onChange={handleChange} required min="0"/>
-                        </div>
-                    </div>
-                    
-                    <div className="form-row">
-                        <div className="form-group half-width">
-                            <label>Ngày bắt đầu *</label>
-                            <input name="start_date" type="date" value={formData.start_date} onChange={handleChange} required />
-                        </div>
-                        <div className="form-group half-width">
-                            <label>Ngày kết thúc *</label>
-                            <input name="end_date" type="date" value={formData.end_date} onChange={handleChange} required />
-                        </div>
+                <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off">
+                    <div
+                    style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: "10px", // khoảng cách gọn hơn
+                    }}
+                    >
+                    {/* Cột trái */}
+                    <Form.Item
+                        label="Mã KM"
+                        name="promo_code"
+                        rules={[
+                            { required: true, message: "Vui lòng nhập mã khuyến mãi" },
+                            { max: 50, message: "Mã không quá 50 ký tự" },
+                        ]}
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Input placeholder="Nhập mã khuyến mãi" style={{ height: 36 }} />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Loại giảm giá"
+                        name="discount_type"
+                        rules={[{ required: true, message: "Vui lòng chọn loại giảm giá" }]}
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Select placeholder="Chọn loại" style={{ height: 36 }}>
+                        <Select.Option value="percentage">Phần trăm (%)</Select.Option>
+                        <Select.Option value="fixed">Giá cố định (VNĐ)</Select.Option>
+                        </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Giá trị"
+                        name="discount_value"
+                        rules={[
+                            { required: true, message: "Vui lòng nhập giá trị giảm" },
+                            {
+                                validator: (_, value) =>
+                                    !value || Number(value) >= 1
+                                    ? Promise.resolve()
+                                    : Promise.reject(new Error("Giá trị phải ≥ 1")),
+                            },
+                        ]}
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Input type="number" placeholder="Nhập giá trị giảm" style={{ height: 36 }} />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Đơn tối thiểu (VNĐ)"
+                        name="min_order_amount"
+                        rules={[
+                            { required: true, message: "Vui lòng nhập đơn tối thiểu" },
+                            {
+                                validator: (_, value) =>
+                                    !value || Number(value) >= 1
+                                    ? Promise.resolve()
+                                    : Promise.reject(new Error("Giá trị phải ≥ 1")),
+                            },
+                        ]}
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Input type="number" placeholder="Nhập đơn tối thiểu" style={{ height: 36 }} />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Giới hạn số lượng"
+                        name="usage_limit"
+                        rules={[
+                            { required: true, message: "Vui lòng nhập giới hạn số lượng" },
+                            {
+                            validator: (_, value) =>
+                                !value || Number(value) >= 1
+                                    ? Promise.resolve()
+                                    : Promise.reject(new Error("Giá trị phải ≥ 1")),
+                            },
+                        ]}
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Input type="number" placeholder="Nhập giới hạn số lượng" style={{ height: 36 }} />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Trạng thái"
+                        name="status"
+                        rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Select placeholder="Chọn trạng thái" style={{ height: 36 }}>
+                        <Select.Option value="active">Hoạt động</Select.Option>
+                        <Select.Option value="inactive">Đã khóa</Select.Option>
+                        </Select>
+                    </Form.Item>
+
+                    {/* Mô tả chiếm full 2 cột */}
+                    <Form.Item
+                        label="Mô tả"
+                        name="description"
+                        rules={[
+                        { required: true, message: "Vui lòng nhập mô tả" },
+                        { max: 200, message: "Mô tả không quá 200 ký tự" },
+                        ]}
+                        style={{ gridColumn: "span 2", marginBottom: 0 }}
+                    >
+                        <Input.TextArea placeholder="Nhập mô tả chương trình" rows={4} />
+                    </Form.Item>
+
+                    {/* Ngày bắt đầu - kết thúc cùng hàng */}
+                    <Form.Item
+                        label="Ngày bắt đầu"
+                        name="start_date"
+                        rules={[{ required: true, message: "Vui lòng chọn ngày bắt đầu" }]}
+                        style={{ marginBottom: 0 }}
+                        initialValue={dayjs()}
+                    >
+                        <DatePicker style={{ width: "100%", height: 36 }} format="DD/MM/YYYY" /> 
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Ngày kết thúc"
+                        name="end_date"
+                        rules={[{ required: true, message: "Vui lòng chọn ngày kết thúc" }]}
+                        style={{ marginBottom: 0 }}
+                    >
+                        <DatePicker style={{ width: "100%", height: 36 }} format="DD/MM/YYYY" />
+                    </Form.Item>
                     </div>
 
-                    <div className="form-row">
-                        <div className="form-group half-width">
-                            <label>Đơn tối thiểu (VNĐ)</label>
-                            <input name="min_order_amount" type="number" value={formData.min_order_amount} onChange={handleChange} min="0"/>
-                        </div>
-                        <div className="form-group half-width">
-                            <label>Giới hạn sử dụng</label>
-                            <input name="usage_limit" type="number" value={formData.usage_limit} onChange={handleChange} min="1"/>
-                        </div>
-                    </div>
-                    
-                    <div className="form-row">
-                        <div className="form-group half-width">
-                            <label>Số lần đã dùng</label>
-                            <input name="used_count" type="number" value={formData.used_count} onChange={handleChange} readOnly={!editingId} min="0" />
-                        </div>
-                        <div className="form-group half-width">
-                            <label>Trạng thái *</label>
-                            <select name="status" value={formData.status} onChange={handleChange} required>
-                                <option value="active">Đang hoạt động</option>
-                                <option value="expired">Hết hạn</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="form-actions">
-                        <button type="button" className="cancel-button" onClick={handleCloseModal}>Hủy</button>
-                        <button type="submit" className="save-button">{editingId ? 'Cập nhật' : 'Lưu'}</button>
-                    </div>
-                </form>
+                    {/* Nút Hủy / Lưu */}
+                    <Form.Item style={{ marginTop: 6, textAlign: "right" }}>
+                    <Space size={6}>
+                        <Button onClick={handleCancel}>Hủy</Button>
+                        <Button type="primary" htmlType="submit">
+                        {editingPromotion ? "Cập nhật" : "Thêm mới"}
+                        </Button>
+                    </Space>
+                    </Form.Item>
+                </Form>
             </Modal>
         </div>
     )

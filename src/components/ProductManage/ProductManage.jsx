@@ -355,7 +355,7 @@ export default function ProductManage() {
             showSizeChanger: true,
             showTotal: (total) => `Tổng ${total} sản phẩm${searchTerm ? " (đã lọc)" : ""}`,
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ y:500, x: 1200 }}
         />
       </div>
 
