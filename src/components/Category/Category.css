@@ -25,7 +25,7 @@
 .category-manage-header h2 {
   margin: 0;
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
   color: #008f5a;
 }
 
@@ -115,11 +115,6 @@
   background-color: #e6f4ea !important;
 }
 
-/* Ẩn đường viền giữa các cột */
-.category-manage-table .ant-table-thead > tr > th::before,
-.category-manage-table .ant-table-tbody > tr > td::before {
-  content: none !important;
-}
 
 /* ========== MODAL ========== */
 .ant-modal-content {

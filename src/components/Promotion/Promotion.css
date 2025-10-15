@@ -112,12 +112,6 @@
   background-color: #e6f4ea !important;
 }
 
-/* Ẩn viền chia cột */
-.promotion-manage-table .ant-table-thead > tr > th::before,
-.promotion-manage-table .ant-table-tbody > tr > td::before {
-  content: none !important;
-}
-
 /* ========== MODAL ========== */
 .ant-modal-content {
   padding: 0 !important;

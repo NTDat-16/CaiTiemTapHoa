@@ -5,15 +5,6 @@ import "./Category.css"
 
 const { Option } = Select
 
-// Mock data for categories
-const mockCategories = [
-  { category_id: 1, category_name: "Quần áo" },
-  { category_id: 2, category_name: "Đồ ăn" },
-  { category_id: 3, category_name: "Đồ uống" },
-  { category_id: 4, category_name: "Phụ kiện" },
-]
-
-
 export default function Category() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(false)
@@ -22,53 +13,174 @@ export default function Category() {
   const [searchTerm, setSearchTerm] = useState("")
   const [form] = Form.useForm()
 
-  // Fetch products from API (currently using mock data)
+  //Lấy danh sách danh mục từ database
   const fetchCategories = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      // TODO: Uncomment when API is ready
-      // const response = await fetch('/api/products');
-      // const data = await response.json();
-      // setCategories(data);
+      const response = await fetch("http://localhost:5000/api/Categories", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-      // Using mock data for now
-      setTimeout(() => {
-        setCategories(mockCategories)
-        setLoading(false)
-      }, 500)
+      const result = await response.json();
+
+      if (result.success && Array.isArray(result.data?.items)) {
+        setCategories(result.data.items);
+      } else if (Array.isArray(result.data)) {
+        setCategories(result.data);
+      } else if (Array.isArray(result)) {
+        setCategories(result);
+      } else {
+        throw new Error("Phản hồi từ server không hợp lệ");
+      }
+
     } catch (error) {
-      message.error("Lỗi khi tải danh sách danh mục")
-      setLoading(false)
+      message.error(error.message || "Lỗi khi tải danh sách danh mục");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Xóa danh mục nếu chưa là khóa ngoại
+  const handleDelete = async (categoryId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/Categories/${categoryId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Xóa danh mục thất bại");
+      }
+
+      setCategories(categories.filter((p) => p.categoryId !== categoryId));
+      message.success("Xóa danh mục thành công");
+    } catch (error) {
+      message.error(error.message || "Danh mục đang được sử dụng, không thể xóa");
+    }
+  };
+
+  //Thêm danh mục
+  const handleAdd = () => {
+    setEditingCategory(null)
+    form.resetFields()
+    setIsModalOpen(true)
   }
 
+  //Sửa danh mục
+  const handleEdit = (category) => {
+    setEditingCategory(category)
+    form.setFieldsValue(category)
+    setIsModalOpen(true)
+  }
+  //Thêm hoặc cập nhật sản phẩm
+  const handleSubmit = async (values) => {
+    try {
+      const { categoryName } = values;
 
-  useEffect(() => {
-    fetchCategories()
-  }, [])
+      // Kiểm tra trùng tên (không phân biệt hoa thường)
+      const isDuplicate = categories.some(
+        (c) =>
+          c.categoryName.toLowerCase().trim() === categoryName.toLowerCase().trim() &&
+          (!editingCategory || c.categoryId !== editingCategory.categoryId)
+      );
 
-  // Table columns definition
+      if (isDuplicate) {
+        // Đặt lỗi ngay dưới Form.Item
+        form.setFields([
+          {
+            name: "categoryName",
+            errors: ["Tên danh mục đã tồn tại. Vui lòng nhập tên khác!"],
+          },
+        ]);
+        return;
+      }
+
+      if (editingCategory) {
+        // --- Sửa danh mục ---
+        const response = await fetch(`http://localhost:5000/api/Categories/${editingCategory.categoryId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ categoryName }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Sửa danh mục thất bại");
+        }
+
+        setCategories(categories.map((c) =>
+          c.categoryId === editingCategory.categoryId ? { ...c, categoryName: categoryName } : c
+        ));
+
+        message.success("Cập nhật danh mục thành công");
+      } else {
+        // --- Thêm danh mục ---
+        const response = await fetch("http://localhost:5000/api/Categories", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ categoryName }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Thêm danh mục thất bại");
+        }
+
+        const result = await response.json();
+        const newCategory = result.data;
+        setCategories([...categories, newCategory]);
+        message.success("Thêm danh mục thành công");
+      }
+
+      setIsModalOpen(false);
+      form.resetFields();
+    } catch (error) {
+      message.error(error.message || "Lỗi khi lưu danh mục");
+    }
+  };
+
+
+  //Nhấn cancel trong form
+  const handleCancel = () => {
+    setIsModalOpen(false)
+    form.resetFields()
+    setEditingCategory(null)
+  }
+
+  //Tìm kiếm các danh mục theo tên
+  const filteredCategories = categories.filter((category) => {
+    if (!searchTerm) return true
+
+    const searchLower = searchTerm.toLowerCase()
+
+    // Search in all fields
+    return (
+      category.categoryName.toLowerCase().includes(searchLower)
+    )
+  })
+
+  const handleSearch = (value) => {
+    setSearchTerm(value)
+  }
+
+  //Danh sách các cột trong bảng
   const columns = [
-    {
-      title: "Mã danh mục",
-      dataIndex: "category_id",
-      key: "category_id",
-      width: 150,
-      align: "center",
-    },
-    {
-      title: "Tên danh mục",
-      dataIndex: "category_name",
-      key: "category_name",
-      width: 700,
-      align: "center",
-    },
-    {
-      title: "Thao tác",
-      key: "action",
-      width: 150,
-      fixed: "right",
-      align: "center",
+    {title: "Mã danh mục",dataIndex: "categoryId",key: "categoryId",width: 150,align: "center",},
+    {title: "Tên danh mục",dataIndex: "categoryName",key: "categoryName",width: 700,align: "center",},
+    {title: "Thao tác",key: "action",width: 150,fixed: "right",align: "center",
       render: (_, record) => (
         <Space size="small">
           <Button type="primary" icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)}>
@@ -77,7 +189,7 @@ export default function Category() {
           <Popconfirm
             title="Xóa danh mục"
             description="Bạn có chắc chắn muốn xóa danh mục này?"
-            onConfirm={() => handleDelete(record.category_id)}
+            onConfirm={() => handleDelete(record.categoryId)}
             okText="Xóa"
             cancelText="Hủy"
           >
@@ -90,102 +202,14 @@ export default function Category() {
     },
   ]
 
-  // Handle add new product
-  const handleAdd = () => {
-    setEditingCategory(null)
-    form.resetFields()
-    setIsModalOpen(true)
-  }
-
-  // Handle edit product
-  const handleEdit = (product) => {
-    setEditingCategory(product)
-    form.setFieldsValue(product)
-    setIsModalOpen(true)
-  }
-
-  // Handle delete product
-  const handleDelete = async (categoryId) => {
-    try {
-      // TODO: Uncomment when API is ready
-      // await fetch(`/api/products/${productId}`, { method: 'DELETE' });
-
-      // Mock delete
-      setCategories(categories.filter((p) => p.category_id !== categoryId))
-      message.success("Xóa danh mục thành công")
-    } catch (error) {
-      message.error("Lỗi khi xóa danh mục")
-    }
-  }
-
-  // Handle form submit
-  const handleSubmit = async (values) => {
-    try {
-      if (editingProduct) {
-        // Update existing product
-        // TODO: Uncomment when API is ready
-        // await fetch(`/api/products/${editingProduct.product_id}`, {
-        //   method: 'PUT',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(values),
-        // });
-
-        // Mock update
-        setProducts(products.map((p) => (p.product_id === editingProduct.product_id ? { ...p, ...values } : p)))
-        message.success("Cập nhật sản phẩm thành công")
-      } else {
-        // Add new product
-        // TODO: Uncomment when API is ready
-        // const response = await fetch('/api/products', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(values),
-        // });
-        // const newProduct = await response.json();
-
-        // Mock add
-        const newProduct = {
-          product_id: products.length + 1,
-          ...values,
-          created_at: new Date().toISOString(),
-        }
-        setProducts([...products, newProduct])
-        message.success("Thêm sản phẩm thành công")
-      }
-
-      setIsModalOpen(false)
-      form.resetFields()
-    } catch (error) {
-      message.error("Lỗi khi lưu sản phẩm")
-    }
-  }
-
-  // Handle modal cancel
-  const handleCancel = () => {
-    setIsModalOpen(false)
-    form.resetFields()
-    setEditingProduct(null)
-  }
-
-  const filteredCategories = categories.filter((category) => {
-    if (!searchTerm) return true
-
-    const searchLower = searchTerm.toLowerCase()
-
-    // Search in all fields
-    return (
-      category.category_name.toLowerCase().includes(searchLower)
-    )
-  })
-
-  const handleSearch = (value) => {
-    setSearchTerm(value)
-  }
+  useEffect(() => {
+    fetchCategories()
+  }, [])
 
   return (
     <div className="category-manage-container">
       <div className="category-manage-header">
-        <h2 className="category-manage-title">Quản lý danh mục</h2>
+        <h2>Quản Lý Danh Mục</h2>
         <div className="header-actions">
           <Input.Search
             placeholder="Tìm kiếm theo tên danh mục"
@@ -206,7 +230,7 @@ export default function Category() {
         <Table
           columns={columns}
           dataSource={filteredCategories}
-          rowKey="category_id"
+          rowKey="categoryId"
           loading={loading}
           pagination={{
             pageSize: 10,
@@ -218,17 +242,18 @@ export default function Category() {
       </div>
 
       <Modal
-        title={editingCategory ? "Sửa danh mục" : "Thêm danh mục mới"}
+        title={editingCategory ? "Sửa Thông Tin Danh Mục" : "Thêm Danh Mục Mới"}
         open={isModalOpen}
         onCancel={handleCancel}
         footer={null}
         width={600}
         closable={false}
+        style={{ top: 100 }} 
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off">
           <Form.Item
             label="Tên danh mục"
-            name="category_name"
+            name="categoryName"
             rules={[
               { required: true, message: "Vui lòng nhập tên danh mục" },
               { max: 100, message: "Tên danh mục không quá 100 ký tự" },

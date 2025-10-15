@@ -455,7 +455,7 @@ const handleSubmit = async (values) => {
         <div className="promotion-manage-container">
             {/* Thanh tìm kiếm và nút thêm mới */}
             <div className="promotion-manage-header">
-                <h2 className="promotion-manage-title">Quản lý mã giảm giá</h2>
+                <h2 className="promotion-manage-title">Quản Lý Mã Khuyến Mãi</h2>
                 <div className="header-actions">
                     <Input.Search
                         placeholder="Tìm kiếm theo mã, loại, trạng thái, mô tả..."
@@ -492,7 +492,7 @@ const handleSubmit = async (values) => {
             {/* Modal Thêm/Sửa khuyến mãi */}
             {/* SỬA: form={form} và onFinish={handleSubmit} được truyền đúng cách */}
             <Modal
-                title={editingPromotion ? "Sửa chương trình khuyến mãi" : "Thêm chương trình khuyến mãi mới"}
+                title={editingPromotion ? "Sửa Chương Trình Khuyến Mãi" : "Thêm Chương Trình Khuyến Mãi Mới"}
                 open={isModalOpen}
                 onCancel={handleCancel}
                 footer={null}

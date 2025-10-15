@@ -1,5 +1,5 @@
 /* ========== LAYOUT CHUNG ========== */
-.product-manage-container {
+.promotion-manage-container {
   position: fixed;
   top: 60px;
   left: 70px;
@@ -11,7 +11,7 @@
 }
 
 /* ========== HEADER ========== */
-.product-manage-header {
+.promotion-manage-header {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -22,10 +22,10 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.product-manage-header h2 {
+.promotion-manage-header h2 {
   margin: 0;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   color: #008f5a;
 }
 
@@ -38,16 +38,16 @@
 }
 
 /* ========== SEARCH ========== */
-.product-search-input {
+.promotion-search-input {
   width: 40%;
   flex-shrink: 0;
 }
 
-.product-search-input .ant-input {
+.promotion-search-input .ant-input {
   font-size: 15px;
 }
 
-.product-search-input .ant-input::placeholder {
+.promotion-search-input .ant-input::placeholder {
   color: #bfbfbf;
   font-size: 14px;
 }
@@ -61,15 +61,15 @@
 }
 
 /* Nút Search */
-.product-search-input .ant-input-search-button {
+.promotion-search-input .ant-input-search-button {
   background-color: #008f5a !important;
   border: none !important;
   height: 40px;
   transition: all 0.2s ease;
 }
 
-.product-search-input .ant-input-search-button:hover,
-.product-search-input .ant-input-search-button:focus {
+.promotion-search-input .ant-input-search-button:hover,
+.promotion-search-input .ant-input-search-button:focus {
   background-color: #00b36b !important;
   color: white !important;
   transform: translateY(-1px);
@@ -88,19 +88,19 @@
 }
 
 /* ========== BẢNG ========== */
-.product-manage-table {
+.promotion-manage-table {
   background-color: #ffffff;
   padding: 24px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.product-manage-table .ant-table {
+.promotion-manage-table .ant-table {
   font-size: 14px;
 }
 
 /* Tiêu đề bảng màu trắng */
-.product-manage-table .ant-table-thead > tr > th {
+.promotion-manage-table .ant-table-thead > tr > th {
   background-color: #008f5a !important;
   color: #ffffff !important;
   font-weight: 600;
@@ -108,8 +108,14 @@
 }
 
 /* Hover hàng */
-.product-manage-table .ant-table-tbody > tr:hover > td {
+.promotion-manage-table .ant-table-tbody > tr:hover > td {
   background-color: #e6f4ea !important;
+}
+
+/* Ẩn viền chia cột */
+.promotion-manage-table .ant-table-thead > tr > th::before,
+.promotion-manage-table .ant-table-tbody > tr > td::before {
+  content: none !important;
 }
 
 /* ========== MODAL ========== */
@@ -197,15 +203,15 @@
 
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
-  .product-manage-container {
+  .promotion-manage-container {
     padding: 16px;
   }
 
-  .product-manage-header {
+  .promotion-manage-header {
     gap: 12px;
   }
 
-  .product-manage-header h2 {
+  .promotion-manage-header h2 {
     font-size: 20px;
   }
 
@@ -214,7 +220,7 @@
     align-items: stretch;
   }
 
-  .product-search-input {
+  .promotion-search-input {
     width: 100%;
   }
 
@@ -223,7 +229,7 @@
     width: 100%;
   }
 
-  .product-manage-table {
+  .promotion-manage-table {
     padding: 16px;
   }
 }
@@ -248,4 +254,24 @@
 /* Loading overlay (màu mờ nền bảng) */
 .ant-spin-blur {
   opacity: 0.4;
+}
+
+/* Bỏ viền xanh khi hover/focus cho Select, DatePicker, InputNumber */
+.ant-select-selector,
+.ant-picker,
+.ant-input-number {
+  border-color: #d9d9d9 !important;
+  box-shadow: none !important;
+  transition: all 0.2s;
+}
+
+.ant-select-selector:hover,
+.ant-picker:hover,
+.ant-input-number:hover,
+.ant-select-focused,
+.ant-picker-focused,
+.ant-input-number-focused {
+  border-color: #d9d9d9 !important;
+  box-shadow: none !important;
+  background-color: #fff; /* giữ nền trắng khi hover/focus */
 }
