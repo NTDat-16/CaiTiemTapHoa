@@ -25,7 +25,7 @@
 .promotion-manage-header h2 {
   margin: 0;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   color: #008f5a;
 }
 
@@ -226,6 +226,17 @@
   .promotion-manage-table {
     padding: 16px;
   }
+}
+.btnDelete{
+
+color: white;
+
+}
+.btnEdit{
+color: white;
+background-color:#008f5a;
+border-radius: 6px;
+
 }
 /* ========== CUSTOMIZE LOADING SPINNER (to #008f5a) ========== */
 

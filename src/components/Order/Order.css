@@ -1,24 +1,90 @@
 /* --- Loading Screen --- */
-.loading-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100% ;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.9);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    font-weight: bold;
-    color: #007bff;
-    z-index: 999;
-    /* Loại bỏ margin nếu không cần thiết */
-    margin-top: 60px;
-    margin-left: 70px;
-
+.order-right {
+    position: relative;
+    /* Giữ các thuộc tính khác */
 }
 
+/* 2. Lớp phủ (Overlay) cho khu vực loading */
+.product-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Sử dụng opacity thấp hơn để làm mờ nền (giống .ant-spin-blur) */
+    background-color: rgba(255, 255, 255, 0.4); 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+/* 3. Spinner chính (Ant Design dot-style) */
+.ant-spin-dot {
+    width: 20px; /* Kích thước tổng thể của spinner */
+    height: 20px;
+    position: relative;
+    /* Không cần transform: rotate(45deg) cho spinner tròn */
+    animation: antspin 1.2s infinite linear;
+}
+
+/* Keyframe cho animation quay của toàn bộ spinner */
+@keyframes antspin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 4. Các chấm tròn nhỏ (Vòng quay chính) */
+.ant-spin-dot-item {
+    width: 6px; 
+    height: 6px; 
+    background-color: #008f5a !important; /* Màu xanh lá cây của bạn */
+    border-radius: 100%;
+    position: absolute;
+    transform: scale(0.75); /* Kích thước ban đầu */
+    opacity: 0.3;
+    animation: antSpinMove 1.2s infinite linear alternate;
+}
+
+/* Vị trí của các chấm - Dùng 4 chấm tại 4 góc */
+.ant-spin-dot-item:nth-child(1) {
+    top: 0;
+    left: 0;
+}
+.ant-spin-dot-item:nth-child(2) {
+    top: 0;
+    right: 0;
+    animation-delay: 0.3s;
+}
+.ant-spin-dot-item:nth-child(3) {
+    bottom: 0;
+    right: 0;
+    animation-delay: 0.6s;
+}
+.ant-spin-dot-item:nth-child(4) {
+    bottom: 0;
+    left: 0;
+    animation-delay: 0.9s;
+}
+
+/* Keyframes cho hiệu ứng di chuyển/biến đổi của các chấm */
+@keyframes antSpinMove {
+    to {
+        opacity: 1; /* Sáng hơn khi ở điểm cuối */
+        transform: scale(1); /* Phóng to hơn khi ở điểm cuối */
+    }
+}
+
+/* Loại bỏ Loading text - Đặt kích thước 0 nếu bạn muốn đảm bảo không thấy */
+.ant-spin-text {
+    height: 0;
+    width: 0;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
 /* --- Container và Layout --- */
 .order-page {
   position: fixed;
@@ -320,27 +386,75 @@ border-color:#007bff;
 }
 
 .product-grid {
-    flex: 1; /* Cho phép grid chiếm không gian còn lại */
+    /* Đã tối ưu cho việc chiếm hết không gian còn lại và tự động xuống hàng */
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
-    overflow-y: auto; /* Bật cuộn cho danh sách sản phẩm */
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Tăng min-width lên 150px để thẻ to hơn */
+    gap: 15px; /* Tăng khoảng cách giữa các thẻ để thoáng hơn */
+    flex: 1; /* Quan trọng: Cho phép nó giãn nở trong container cha */
+    min-height: 0; /* Quan trọng: Cho phép nội dung cuộn */
+    overflow-y: auto; 
     padding: 5px;
 }
-
 .product-item {
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 10px;
+    background-color: #ffffff; /* Đổi màu nền trắng */
+    border: 1px solid #e0e0e0;
+    border-radius: 8px; /* Bo góc mềm mại hơn */
+    padding: 12px; /* Tăng padding để thoáng hơn */
     text-align: center;
     cursor: pointer;
-    transition: all 0.2s;
-    height: 120px;
+    transition: box-shadow 0.2s, transform 0.2s; /* Thêm hiệu ứng hover */
+    
+    /* Thiết kế lại: Chuyển sang bố cục DỌC */
+    display: flex;
+    flex-direction: column; /* Xếp chồng nội dung theo chiều dọc */
+    align-items: center; /* Căn giữa nội dung theo chiều ngang */
+    justify-content: space-between; /* Đẩy giá và tên cách nhau (tùy chọn) */
+    
+    height: 100%; /* Cho phép thẻ tự giãn theo nội dung, Grid sẽ quản lý chiều cao */
+    min-height: 160px; /* Chiều cao tối thiểu để đảm bảo đủ chỗ */
+}
+
+/* Hiệu ứng khi di chuột (thêm vào cho đẹp) */
+.product-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+.product-image-container {
+    width: 100%; /* Tăng chiều rộng ảnh thumbnail */
+    height: 200px; /* Tăng chiều cao ảnh thumbnail */
+    flex-shrink: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 8px; /* Thêm khoảng cách với tên sản phẩm */
+}
+
+.product-thumbnail {
+    /* Đảm bảo ảnh luôn nằm gọn trong container */
+    width: 100%; 
+    height: 100%;
+    object-fit: cover;
+}
+.product-info-wrapper {
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
+    justify-content: space-between;
+    align-self: stretch; /* Đảm bảo wrapper chiếm toàn bộ chiều cao item */
+    flex-grow: 1; /* Cho phép vùng này chiếm không gian còn lại */
+    min-width: 0; /* Giúp xử lý `text-overflow` */
 }
+.product-name {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #333;
+    white-space: normal; /* Cho phép xuống dòng */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Giới hạn tối đa 2 dòng */
+    -webkit-box-orient: vertical;
+}
+
 
 .product-item:hover {
     background-color: #e9ecef;
@@ -360,10 +474,19 @@ border-color:#007bff;
     -webkit-box-orient: vertical;
 }
 
+.pagination-antd-wrapper{
+/* background-color: red; */
+display: flex;
+justify-items: flex-end;
+margin-left: 1120px;
+
+}
 .product-price {
-    font-size: 13px;
-    color: #dc3545;
-    margin-top: 5px;
+    font-size: 12px;
+    color: #008855;
+    font-weight: 500;
+    margin-top: 4px;
+    flex-shrink: 0; /* Ngăn giá bị co lại */
 }
 
 /* --- Phân trang --- */
@@ -411,34 +534,95 @@ border-color:#007bff;
 }
 /* Order.css */
 
-/* Thêm vào cuối file Order.css */
-.qr-code-box {
-    text-align: center;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-    margin-top: 15px;
-    margin-bottom: 15px;
+.modal-overlay {
+    /* Đảm bảo modal nằm trên tất cả các thành phần khác */
+    position: fixed; 
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Màu nền đen mờ */
+    background-color: rgba(0, 0, 0, 0.7); 
+    /* Đặt z-index cao hơn các thành phần khác */
+    z-index: 1000; 
+    /* Căn giữa nội dung modal */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.qr-code-box h4 {
-    margin-top: 0;
+/* Container của nội dung modal */
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    /* Độ rộng tối đa để không chiếm hết màn hình */
+    max-width: 90%; 
+    max-height: 90%;
+    overflow-y: auto; /* Cho phép cuộn nếu nội dung quá dài */
+    position: relative;
+    /* Hiệu ứng trượt vào */
+    animation: slideIn 0.3s ease-out; 
+}
+
+/* Nút đóng */
+.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
     color: #333;
-    font-size: 1.1em;
+}
+
+/* Các kiểu dáng cho QR box và button */
+.qr-code-box {
+    text-align: center;
+    display: flex;
+    justify-content: center;
+
+    height: 400px;
 }
 
 .qr-code-image {
-    width: 150px; /* Điều chỉnh kích thước QR code */
-    height: 150px;
-    object-fit: contain;
-    margin: 10px auto;
-    border: 4px solid white; /* Giúp QR code nổi bật */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 300px; 
+    height: 300px;
+   margin:30px 60px 0 20px;
+    border: 1px solid #eee;
 }
 
 .qr-info {
-    font-size: 0.9em;
-    color: #555;
-    line-height: 1.5;
+    text-align: left;
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 4px;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.modal-confirm-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-top: 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+/* Hiệu ứng đơn giản khi modal xuất hiện */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
