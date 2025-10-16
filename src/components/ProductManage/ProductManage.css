@@ -38,6 +38,13 @@
 }
 
 /* ========== SEARCH ========== */
+
+.search-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Khoảng cách giữa Input và nút Filter */
+  flex: 1; /* Cho phép nhóm này co giãn theo chiều rộng */
+}
 .product-search-input {
   width: 40%;
   flex-shrink: 0;
@@ -80,10 +87,12 @@
   background-color: #008f5a !important;
   border: none !important;
   transition: all 0.2s ease-in-out;
+  color: white !important;
 }
 
 .header-actions .ant-btn:hover {
   background-color: #00b36b !important;
+  color: white !important;
   transform: translateY(-1px);
 }
 
@@ -99,6 +108,15 @@
   font-size: 14px;
 }
 
+.product-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+
 /* Tiêu đề bảng màu trắng */
 .product-manage-table .ant-table-thead > tr > th {
   background-color: #008f5a !important;
@@ -106,6 +124,14 @@
   font-weight: 600;
   border: none !important;
 }
+
+/* Nền màu xanh cho header Ant Design Table */
+.ant-table-thead > tr > th {
+  background-color: green !important;
+  color: white !important;
+  text-align: center;
+}
+
 
 /* Hover hàng */
 .product-manage-table .ant-table-tbody > tr:hover > td {
