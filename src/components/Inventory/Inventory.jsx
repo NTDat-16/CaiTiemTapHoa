@@ -1,21 +1,24 @@
 import { useState, useEffect } from "react";
-import { Table, Alert, Select, Space, Button, Modal, Form, Input } from "antd";
+import {
+  Table,
+  Alert,
+  Select,
+  Space,
+  Button,
+  Modal,
+  Form,
+  Input,
+  message,
+} from "antd";
 import {
   EditOutlined,
   PlusOutlined,
   FileSearchOutlined,
 } from "@ant-design/icons";
+import axios from "axios";
 import "./Inventory.css";
 
 const { Option } = Select;
-
-const mockProducts = [
-  { product_id: 1, product_name: "Áo thun nam", quantity: 12, unit: "cái" },
-  { product_id: 2, product_name: "Quần jean nữ", quantity: 3, unit: "cái" },
-  { product_id: 3, product_name: "Bánh mì thịt", quantity: 0, unit: "cái" },
-  { product_id: 4, product_name: "Cà phê sữa", quantity: 7, unit: "ly" },
-  { product_id: 5, product_name: "Túi xách da", quantity: 25, unit: "cái" },
-];
 
 export default function InventoryManage() {
   const [products, setProducts] = useState([]);
@@ -28,21 +31,57 @@ export default function InventoryManage() {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [form] = Form.useForm();
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
 
   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setProducts(mockProducts);
-      setLowStock(mockProducts.filter((item) => item.quantity <= 5));
-      setUnitOptions(
-        [...new Set(mockProducts.map((item) => item.unit))].map((unit) => ({
-          label: unit,
-          value: unit,
-        }))
-      );
-      setLoading(false);
-    }, 300);
-  }, []);
+    const fetchInventory = async (page = 1, pageSize = 10) => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token"); // Lấy token từ localStorage
+        const response = await axios.get(
+          `http://localhost:5000/api/inventory?pageNumber=${page}&pageSize=${pageSize}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.data.success) {
+          const items = response.data.data.items.map((item) => ({
+            product_id: item.product.productId,
+            product_name: item.product.productName,
+            quantity: item.quantity,
+            unit: item.product.unit,
+          }));
+          setProducts(items);
+          setLowStock(items.filter((item) => item.quantity <= 5));
+          setUnitOptions(
+            [...new Set(items.map((item) => item.unit))].map((unit) => ({
+              label: unit,
+              value: unit,
+            }))
+          );
+          setPagination({
+            current: response.data.data.pageNumber,
+            pageSize: response.data.data.pageSize,
+            total: response.data.data.totalCount,
+          });
+        } else {
+          message.error("Không thể tải dữ liệu tồn kho.");
+        }
+      } catch (error) {
+        message.error("Đã xảy ra lỗi khi gọi API.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInventory(pagination.current, pagination.pageSize);
+  }, [pagination.current, pagination.pageSize]);
 
   const filteredProducts = products.filter((product) => {
     if (!filterUnit || filterUnit === null) {
@@ -80,13 +119,43 @@ export default function InventoryManage() {
   };
 
   const handleImport = (values) => {
-    console.log("Nhập hàng:", values);
+    const productToUpdate = products.find(
+      (product) => product.product_id === values.product_id
+    );
+
+    if (productToUpdate) {
+      const updatedProducts = products.map((product) =>
+        product.product_id === values.product_id
+          ? { ...product, quantity: product.quantity + values.quantity }
+          : product
+      );
+      setProducts(updatedProducts);
+      message.success("Nhập hàng thành công!");
+    } else {
+      message.error("Sản phẩm không tồn tại!");
+    }
+
     setIsImportModalOpen(false);
     form.resetFields();
   };
 
   const handleAudit = (values) => {
-    console.log("Kiểm kê:", values);
+    const productToAudit = products.find(
+      (product) => product.product_id === values.product_id
+    );
+
+    if (productToAudit) {
+      const updatedProducts = products.map((product) =>
+        product.product_id === values.product_id
+          ? { ...product, quantity: values.actual_quantity }
+          : product
+      );
+      setProducts(updatedProducts);
+      message.success("Kiểm kê thành công!");
+    } else {
+      message.error("Sản phẩm không tồn tại!");
+    }
+
     setIsAuditModalOpen(false);
     form.resetFields();
   };
@@ -132,6 +201,10 @@ export default function InventoryManage() {
       ),
     },
   ];
+
+  const handleTableChange = (newPagination) => {
+    setPagination(newPagination);
+  };
 
   return (
     <div className="inventory-manage-container">
@@ -195,15 +268,15 @@ export default function InventoryManage() {
       <div className="inventory-manage-table">
         <Table
           columns={columns}
-          dataSource={products}
+          dataSource={filteredProducts}
           rowKey="product_id"
           loading={loading}
           pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Tổng ${total} sản phẩm tồn kho`,
+            ...pagination,
+            showTotal: (total, range) => `Tổng ${total} sản phẩm`,
           }}
-          scroll={{ y: 280, x: 1200 }}
+          onChange={handleTableChange}
+          scroll={{ y: 400, x: 1200 }}
         />
       </div>
 
@@ -330,7 +403,6 @@ export default function InventoryManage() {
           layout="vertical"
           onFinish={handleAudit}
           autoComplete="off"
-          
         >
           <Form.Item
             label="Chọn sản phẩm"
