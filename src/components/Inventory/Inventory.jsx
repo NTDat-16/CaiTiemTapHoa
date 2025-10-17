@@ -1,26 +1,30 @@
 import { useState, useEffect } from "react";
-import { Table, Alert, Select, Space, Button, Modal, Form, Input } from "antd";
+import {
+  Table,
+  Alert,
+  Select,
+  Space,
+  Button,
+  Modal,
+  Form,
+  Input,
+  InputNumber,
+  message,
+} from "antd";
 import {
   EditOutlined,
   PlusOutlined,
   FileSearchOutlined,
 } from "@ant-design/icons";
+import axios from "axios";
 import "./Inventory.css";
 
 const { Option } = Select;
 
-const mockProducts = [
-  { product_id: 1, product_name: "Áo thun nam", quantity: 12, unit: "cái" },
-  { product_id: 2, product_name: "Quần jean nữ", quantity: 3, unit: "cái" },
-  { product_id: 3, product_name: "Bánh mì thịt", quantity: 0, unit: "cái" },
-  { product_id: 4, product_name: "Cà phê sữa", quantity: 7, unit: "ly" },
-  { product_id: 5, product_name: "Túi xách da", quantity: 25, unit: "cái" },
-];
-
 export default function InventoryManage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [lowStock, setLowStock] = useState([]);
+  const [lowStock, setLowStock] = useState([]); // State này giờ sẽ được cập nhật từ API riêng
   const [filterUnit, setFilterUnit] = useState(null);
   const [unitOptions, setUnitOptions] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -28,21 +32,96 @@ export default function InventoryManage() {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [form] = Form.useForm();
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
 
+  // useEffect để lấy danh sách tồn kho chính (có phân trang)
   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setProducts(mockProducts);
-      setLowStock(mockProducts.filter((item) => item.quantity <= 5));
-      setUnitOptions(
-        [...new Set(mockProducts.map((item) => item.unit))].map((unit) => ({
-          label: unit,
-          value: unit,
-        }))
-      );
-      setLoading(false);
-    }, 300);
-  }, []);
+    const fetchInventory = async (page = 1, pageSize = 10) => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+          `http://localhost:5000/api/inventory?pageNumber=${page}&pageSize=${pageSize}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.data.success) {
+          const items = response.data.data.items.map((item) => ({
+            inventory_id: item.inventoryId,
+            product_id: item.product.productId,
+            product_name: item.product.productName,
+            quantity: item.quantity,
+            unit: item.product.unit,
+          }));
+          setProducts(items);
+
+          // BƯỚC 3: Xóa dòng filter low stock ở đây
+          // setLowStock(items.filter((item) => item.quantity <= 5));
+
+          setUnitOptions(
+            [...new Set(items.map((item) => item.unit))].map((unit) => ({
+              label: unit,
+              value: unit,
+            }))
+          );
+          setPagination({
+            current: response.data.data.pageNumber,
+            pageSize: response.data.data.pageSize,
+            total: response.data.data.totalCount,
+          });
+        } else {
+          message.error("Không thể tải dữ liệu tồn kho.");
+        }
+      } catch (error) {
+        message.error("Đã xảy ra lỗi khi gọi API tồn kho.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInventory(pagination.current, pagination.pageSize);
+  }, [pagination.current, pagination.pageSize]);
+
+  // BƯỚC 1 & 2: Tạo hàm mới và gọi trong useEffect riêng để lấy sản phẩm sắp hết hàng
+  useEffect(() => {
+    const fetchLowStock = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        // Giả sử đây là endpoint mới của bạn
+        const response = await axios.get(
+          `http://localhost:5000/api/inventory/low-stock`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.data.success) {
+          // Map lại dữ liệu nếu cần thiết để khớp với cấu trúc bạn đang dùng
+          const lowStockItems = response.data.data.map((item) => ({
+            inventory_id: item.inventoryId,
+            product_id: item.product.productId,
+            product_name: item.product.productName,
+            quantity: item.quantity,
+            unit: item.product.unit,
+          }));
+          setLowStock(lowStockItems);
+        }
+      } catch (error) {
+        // Có thể không hiển thị lỗi này để tránh làm phiền người dùng
+        console.error("Lỗi khi lấy dữ liệu sản phẩm sắp hết hàng:", error);
+      }
+    };
+
+    fetchLowStock();
+  }, []); // Mảng rỗng để đảm bảo nó chỉ chạy 1 lần khi component mount
 
   const filteredProducts = products.filter((product) => {
     if (!filterUnit || filterUnit === null) {
@@ -69,24 +148,101 @@ export default function InventoryManage() {
     setEditingProduct(null);
   };
 
-  const handleSubmit = (values) => {
-    const updatedProducts = products.map((p) =>
-      p.product_id === editingProduct.product_id ? { ...p, ...values } : p
+  const updateInventoryQuantity = async (inventoryId, quantity) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.put(
+        `http://localhost:5000/api/inventory/${inventoryId}`,
+        { Quantity: quantity },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        message.success("Cập nhật số lượng thành công!");
+        return true;
+      } else {
+        message.error("Không thể cập nhật số lượng.");
+        return false;
+      }
+    } catch (error) {
+      message.error("Đã xảy ra lỗi khi cập nhật số lượng.");
+      return false;
+    }
+  };
+
+  const handleSubmit = async (values) => {
+    if (!editingProduct || !editingProduct.inventory_id) {
+      message.error("Không thể xác định sản phẩm để sửa.");
+      return;
+    }
+
+    const success = await updateInventoryQuantity(
+      editingProduct.inventory_id,
+      values.quantity
     );
-    setProducts(updatedProducts);
+
+    if (success) {
+      const updatedProducts = products.map((product) =>
+        product.inventory_id === editingProduct.inventory_id
+          ? { ...product, ...values }
+          : product
+      );
+      setProducts(updatedProducts);
+      // Optional: Re-fetch low stock data if an item might have become low stock
+      // fetchLowStock();
+      message.success("Sửa sản phẩm thành công!");
+    } else {
+      message.error("Không thể cập nhật sản phẩm.");
+    }
+
     setIsEditModalOpen(false);
     form.resetFields();
     setEditingProduct(null);
   };
 
   const handleImport = (values) => {
-    console.log("Nhập hàng:", values);
+    const productToUpdate = products.find(
+      (product) => product.product_id === values.product_id
+    );
+
+    if (productToUpdate) {
+      const updatedProducts = products.map((product) =>
+        product.product_id === values.product_id
+          ? { ...product, quantity: product.quantity + values.quantity }
+          : product
+      );
+      setProducts(updatedProducts);
+      message.success("Nhập hàng thành công!");
+    } else {
+      message.error("Sản phẩm không tồn tại!");
+    }
+
     setIsImportModalOpen(false);
     form.resetFields();
   };
 
   const handleAudit = (values) => {
-    console.log("Kiểm kê:", values);
+    const productToAudit = products.find(
+      (product) => product.product_id === values.product_id
+    );
+
+    if (productToAudit) {
+      const updatedProducts = products.map((product) =>
+        product.product_id === values.product_id
+          ? { ...product, quantity: values.actual_quantity }
+          : product
+      );
+      setProducts(updatedProducts);
+      message.success("Kiểm kê thành công!");
+    } else {
+      message.error("Sản phẩm không tồn tại!");
+    }
+
     setIsAuditModalOpen(false);
     form.resetFields();
   };
@@ -133,6 +289,10 @@ export default function InventoryManage() {
     },
   ];
 
+  const handleTableChange = (newPagination) => {
+    setPagination(newPagination);
+  };
+
   return (
     <div className="inventory-manage-container">
       <div className="inventory-manage-header">
@@ -174,6 +334,7 @@ export default function InventoryManage() {
         </div>
       </div>
 
+      {/* Phần Alert này không cần thay đổi */}
       {lowStock.length > 0 && (
         <Alert
           message={`Có ${lowStock.length} sản phẩm sắp hết hàng!`}
@@ -195,15 +356,15 @@ export default function InventoryManage() {
       <div className="inventory-manage-table">
         <Table
           columns={columns}
-          dataSource={products}
+          dataSource={filteredProducts}
           rowKey="product_id"
           loading={loading}
           pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Tổng ${total} sản phẩm tồn kho`,
+            ...pagination,
+            showTotal: (total, range) => `Tổng ${total} sản phẩm`,
           }}
-          scroll={{ y: 280, x: 1200 }}
+          onChange={handleTableChange}
+          scroll={{ y: 400, x: 1200 }}
         />
       </div>
 
@@ -229,7 +390,7 @@ export default function InventoryManage() {
               { max: 100, message: "Tên sản phẩm không quá 100 ký tự" },
             ]}
           >
-            <Input placeholder="Nhập tên sản phẩm" />
+            <Input placeholder="Nhập tên sản phẩm" readOnly />
           </Form.Item>
 
           <Form.Item
@@ -244,7 +405,10 @@ export default function InventoryManage() {
               },
             ]}
           >
-            <Input type="number" placeholder="Nhập số lượng tồn" />
+            <InputNumber
+              placeholder="Nhập số lượng tồn"
+              style={{ width: "100%" }}
+            />
           </Form.Item>
 
           <Form.Item
@@ -252,7 +416,7 @@ export default function InventoryManage() {
             name="unit"
             rules={[{ required: true, message: "Vui lòng nhập đơn vị" }]}
           >
-            <Input placeholder="Nhập đơn vị" />
+            <Input placeholder="Nhập đơn vị" readOnly />
           </Form.Item>
 
           <Form.Item className="form-actions">
@@ -330,7 +494,6 @@ export default function InventoryManage() {
           layout="vertical"
           onFinish={handleAudit}
           autoComplete="off"
-          
         >
           <Form.Item
             label="Chọn sản phẩm"

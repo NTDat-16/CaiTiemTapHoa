@@ -1,119 +1,85 @@
-  import { useState, useEffect } from "react"
-  import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm } from "antd"
-  import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons"
+import { useState, useEffect } from "react"
+import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Dropdown, InputNumber,Upload } from "antd"
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, FilterOutlined } from "@ant-design/icons"
   import "./ProductManage.css"
 
   const { Option } = Select
 
-  // Mock data for categories
-  const mockCategories = [
-    { category_id: 1, category_name: "Quần áo" },
-    { category_id: 2, category_name: "Đồ ăn" },
-    { category_id: 3, category_name: "Đồ uống" },
-    { category_id: 4, category_name: "Phụ kiện" },
-  ]
 
-  // Mock data for suppliers
-  const mockSuppliers = [
-    { supplier_id: 1, name: "Nhà cung cấp A", phone: "0901234567", email: "nccA@example.com" },
-    { supplier_id: 2, name: "Nhà cung cấp B", phone: "0907654321", email: "nccB@example.com" },
-    { supplier_id: 3, name: "Nhà cung cấp C", phone: "0912345678", email: "nccC@example.com" },
-  ]
+export default function ProductManage() {
+  const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
+  const [suppliers, setSuppliers] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterType, setFilterType] = useState(null) // 'category' or 'supplier'
+  const [filterId, setFilterId] = useState(null) // selected categoryId or supplierId
+  const [form] = Form.useForm()
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null); // New state for selected file
 
-  // Mock data for products
-  const mockProducts = [
-    {
-      product_id: 1,
-      product_name: "Áo thun nam",
-      barcode: "PRD001",
-      price: 150000,
-      unit: "cái",
-      category_id: 1,
-      supplier_id: 1,
-      created_at: "2025-01-15T10:30:00",
-    },
-    {
-      product_id: 2,
-      product_name: "Quần jean nữ",
-      barcode: "PRD002",
-      price: 350000,
-      unit: "cái",
-      category_id: 1,
-      supplier_id: 1,
-      created_at: "2025-01-16T14:20:00",
-    },
-    {
-      product_id: 3,
-      product_name: "Bánh mì thịt",
-      barcode: "PRD003",
-      price: 25000,
-      unit: "cái",
-      category_id: 2,
-      supplier_id: 2,
-      created_at: "2025-01-17T08:15:00",
-    },
-    {
-      product_id: 4,
-      product_name: "Cà phê sữa",
-      barcode: "PRD004",
-      price: 30000,
-      unit: "ly",
-      category_id: 3,
-      supplier_id: 2,
-      created_at: "2025-01-18T09:45:00",
-    },
-    {
-      product_id: 5,
-      product_name: "Túi xách da",
-      barcode: "PRD005",
-      price: 450000,
-      unit: "cái",
-      category_id: 4,
-      supplier_id: 3,
-      created_at: "2025-01-19T11:00:00",
-    },
-  ]
 
-  export default function ProductManage() {
-    const [products, setProducts] = useState([])
-    const [categories, setCategories] = useState([])
-    const [suppliers, setSuppliers] = useState([])
-    const [loading, setLoading] = useState(false)
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [editingProduct, setEditingProduct] = useState(null)
-    const [searchTerm, setSearchTerm] = useState("")
-    const [form] = Form.useForm()
+
+
+const API_BASE = "http://localhost:5000/api";
+const API_IMAGE = "http://localhost:5000";
+const token = localStorage.getItem('token');
+  const authHeader = token
+    ? { Authorization: `Bearer ${token}` }
+    : {};
 
     // Fetch products from API (currently using mock data)
-    const fetchProducts = async () => {
-      setLoading(true)
+    const fetchProducts = async (page = pageNumber, size = pageSize) => {
+      setLoading(true);
       try {
-        // TODO: Uncomment when API is ready
-        // const response = await fetch('/api/products');
-        // const data = await response.json();
-        // setProducts(data);
+        const response = await fetch(`${API_BASE}/Products?PageNumber=${page}&PageSize=${size}`, {
+          headers: { ...authHeader },
+        });
+        const result = await response.json();
 
-        // Using mock data for now
-        setTimeout(() => {
-          setProducts(mockProducts)
-          setLoading(false)
-        }, 500)
+        const productsArray = Array.isArray(result?.data?.items)
+          ? result.data.items
+          : [];
+
+        setProducts(productsArray);
+
+        // ✅ Lưu tổng số phần tử để Ant Table hiển thị đúng phân trang
+        if (result?.data?.totalCount) {
+          setTotalItems(result.data.totalCount);
+        }
+
+        setPageNumber(page);
+        setPageSize(size);
       } catch (error) {
-        message.error("Lỗi khi tải danh sách sản phẩm")
-        setLoading(false)
+        console.error("Fetch products error:", error);
+        message.error("Lỗi khi tải danh sách sản phẩm");
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+
 
     // Fetch categories from API (currently using mock data)
     const fetchCategories = async () => {
       try {
         // TODO: Uncomment when API is ready
-        // const response = await fetch('/api/categories');
-        // const data = await response.json();
-        // setCategories(data);
+        const response = await fetch(`${API_BASE}/Categories`, {
+        headers: { ...authHeader },
+        });
+        const result = await response.json();
+        const categoriesArray = Array.isArray(result?.data?.items)
+          ? result.data.items
+          : [];
+        setCategories(categoriesArray);
 
         // Using mock data for now
-        setCategories(mockCategories)
+        // setCategories(mockCategories)
       } catch (error) {
         message.error("Lỗi khi tải danh mục")
       }
@@ -123,35 +89,86 @@
     const fetchSuppliers = async () => {
       try {
         // TODO: Uncomment when API is ready
-        // const response = await fetch('/api/suppliers');
-        // const data = await response.json();
-        // setSuppliers(data);
+        const response = await fetch(`${API_BASE}/Suppliers`, {
+        headers: { ...authHeader },
+        });
+        const result = await response.json();
+        const suppliersArray = Array.isArray(result?.data?.items)
+          ? result.data.items
+          : [];
+        setSuppliers(suppliersArray);
 
         // Using mock data for now
-        setSuppliers(mockSuppliers)
+        // setSuppliers(mockSuppliers)
       } catch (error) {
         message.error("Lỗi khi tải nhà cung cấp")
       }
     }
 
     useEffect(() => {
-      fetchProducts()
+      fetchProducts(pageNumber, pageSize)
       fetchCategories()
       fetchSuppliers()
-    }, [])
+      if (editingProduct) {
+      form.setFieldsValue({
+        productName: editingProduct.productName,
+        barcode: editingProduct.barcode,
+        price: editingProduct.price,
+        unit: editingProduct.unit,
+        categoryId: editingProduct.categoryId,
+        supplierId: editingProduct.supplierId,
+        imagePath: editingProduct.imagePath,
+      });
+      setPreviewImage(
+        editingProduct.imagePath && editingProduct.imagePath.trim() !== ""
+          ? editingProduct.imagePath
+          : "img/Default_Product.png"
+      );
+    } else {
+      form.resetFields();
+      setPreviewImage("img/Default_Product.png");
+    }
+  }, [editingProduct, form, pageNumber, pageSize]);
 
     // Table columns definition
     const columns = [
       {
+        title: "Hình ảnh",
+        dataIndex: "imagePath",
+        key: "imagePath",
+        width: 100,
+        render: (imagePath) => {
+          const imageUrl = imagePath
+            ? imagePath.startsWith("http")
+              ? imagePath // nếu backend đã trả về URL đầy đủ
+              : `${API_IMAGE}${imagePath}` // nối prefix server (VD: http://localhost:5000)
+            : "/img/Default_Product.png"; // fallback mặc định trong public
+          return (
+            <img
+              src={imageUrl}
+              alt="Product"
+              style={{
+                width: 60,
+                height: 60,
+                objectFit: "cover",
+                borderRadius: 8,
+                border: "1px solid #eee",
+              }}
+              onError={(e) => (e.target.src = "/img/Default_Product.png")}
+            />
+          );
+        },
+      },
+      {
         title: "Mã SP",
-        dataIndex: "product_id",
-        key: "product_id",
+        dataIndex: "productId",
+        key: "productId",
         width: 100,
       },
       {
         title: "Tên sản phẩm",
-        dataIndex: "product_name",
-        key: "product_name",
+        dataIndex: "productName",
+        key: "productName",
         width: 200,
       },
       {
@@ -165,7 +182,7 @@
         dataIndex: "price",
         key: "price",
         width: 150,
-        render: (price) => price.toLocaleString("vi-VN"),
+        render: (price) => `${price.toLocaleString("vi-VN")} ₫`,
       },
       {
         title: "Đơn vị",
@@ -175,22 +192,22 @@
       },
       {
         title: "Danh mục",
-        dataIndex: "category_id",
-        key: "category_id",
+        dataIndex: "categoryId",
+        key: "categoryId",
         width: 150,
-        render: (category_id) => {
-          const category = categories.find((c) => c.category_id === category_id)
-          return category ? category.category_name : "-"
+        render: (categoryId) => {
+          const category = categories.find((c) => c.categoryId === categoryId);
+          return category ? category.categoryName : "-";
         },
       },
       {
         title: "Nhà cung cấp",
-        dataIndex: "supplier_id",
-        key: "supplier_id",
+        dataIndex: "supplierId",
+        key: "supplierId",
         width: 150,
-        render: (supplier_id) => {
-          const supplier = suppliers.find((s) => s.supplier_id === supplier_id)
-          return supplier ? supplier.name : "-"
+        render: (supplierId) => {
+          const supplier = suppliers.find((s) => s.supplierId === supplierId);
+          return supplier ? supplier.name : "-";
         },
       },
       {
@@ -200,13 +217,18 @@
         fixed: "right",
         render: (_, record) => (
           <Space size="small">
-            <Button type="primary" icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)}>
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              size="small"
+              onClick={() => handleEdit(record)}
+            >
               Sửa
             </Button>
             <Popconfirm
               title="Xóa sản phẩm"
               description="Bạn có chắc chắn muốn xóa sản phẩm này?"
-              onConfirm={() => handleDelete(record.product_id)}
+              onConfirm={() => handleDelete(record.productId)} // ✅ sửa lại
               okText="Xóa"
               cancelText="Hủy"
             >
@@ -217,7 +239,8 @@
           </Space>
         ),
       },
-    ]
+    ];
+
 
     // Handle add new product
     const handleAdd = () => {
@@ -234,60 +257,96 @@
     }
 
     // Handle delete product
+    // DELETE product
     const handleDelete = async (productId) => {
       try {
-        // TODO: Uncomment when API is ready
-        // await fetch(`/api/products/${productId}`, { method: 'DELETE' });
+        const response = await fetch(`${API_BASE}/Products/${productId}`, {
+          method: "DELETE",
+          headers: { ...authHeader },
+        });
 
-        // Mock delete
-        setProducts(products.filter((p) => p.product_id !== productId))
-        message.success("Xóa sản phẩm thành công")
+        if (!response.ok) throw new Error("Delete failed");
+
+        message.success("Xóa sản phẩm thành công");
+        fetchProducts(); // ✅ Refresh danh sách
       } catch (error) {
-        message.error("Lỗi khi xóa sản phẩm")
+        console.error("Delete error:", error);
+        message.error("Lỗi khi xóa sản phẩm");
       }
-    }
+    };
 
-    // Handle form submit
+      const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        setSelectedFile(file);
+
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => setPreviewImage(reader.result); // hiển thị ảnh ngay
+          reader.readAsDataURL(file);
+        }
+      };
+
+    // ADD / UPDATE product
     const handleSubmit = async (values) => {
       try {
-        if (editingProduct) {
-          // Update existing product
-          // TODO: Uncomment when API is ready
-          // await fetch(`/api/products/${editingProduct.product_id}`, {
-          //   method: 'PUT',
-          //   headers: { 'Content-Type': 'application/json' },
-          //   body: JSON.stringify(values),
-          // });
 
-          // Mock update
-          setProducts(products.map((p) => (p.product_id === editingProduct.product_id ? { ...p, ...values } : p)))
-          message.success("Cập nhật sản phẩm thành công")
-        } else {
-          // Add new product
-          // TODO: Uncomment when API is ready
-          // const response = await fetch('/api/products', {
-          //   method: 'POST',
-          //   headers: { 'Content-Type': 'application/json' },
-          //   body: JSON.stringify(values),
-          // });
-          // const newProduct = await response.json();
-
-          // Mock add
-          const newProduct = {
-            product_id: products.length + 1,
-            ...values,
-            created_at: new Date().toISOString(),
-          }
-          setProducts([...products, newProduct])
-          message.success("Thêm sản phẩm thành công")
+        // Chuẩn bị FormData
+        const formData = new FormData();
+        formData.append("ProductName", values.productName);
+        formData.append("CategoryId", values.categoryId);
+        formData.append("SupplierId", values.supplierId);
+        formData.append("Barcode", values.barcode);
+        formData.append("Price", values.price);
+        formData.append("Unit", values.unit);
+        if (selectedFile) {
+          formData.append("Image", selectedFile); // selectedFile là File object từ input
         }
 
-        setIsModalOpen(false)
-        form.resetFields()
+        console.log("📦 Sending FormData:");
+        for (let [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
+
+        let response;
+        const url = editingProduct
+          ? `${API_BASE}/Products/${editingProduct.productId}`
+          : `${API_BASE}/Products`;
+        const method = editingProduct ? "PUT" : "POST";
+
+        response = await fetch(url, {
+          method,
+          headers: {
+            Accept: "application/json",
+            ...authHeader,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Server response:", errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log("✅ Server response:", result);
+
+        message.success(editingProduct ? "Cập nhật sản phẩm thành công" : "Thêm sản phẩm thành công");
+
+        setIsModalOpen(false);
+        form.resetFields();
+        setPreviewImage(null);
+        setSelectedFile(null);
+
+        setTimeout(() => fetchProducts(pageNumber, pageSize), 500);
       } catch (error) {
-        message.error("Lỗi khi lưu sản phẩm")
+        console.error("❌ Submit error:", error);
+        message.error(`Lỗi khi lưu sản phẩm: ${error.message}`);
       }
-    }
+    };
+
+
+
 
     // Handle modal cancel
     const handleCancel = () => {
@@ -296,22 +355,35 @@
       setEditingProduct(null)
     }
 
-    const filteredProducts = products.filter((product) => {
-      if (!searchTerm) return true
+
+
+
+
+  const filteredProducts = products.filter((product) => {
+    // Apply filter first
+    if (filterType === "category" && filterId !== null) {
+      if (product.categoryId !== filterId) return false
+    }
+    if (filterType === "supplier" && filterId !== null) {
+      if (product.supplierId !== filterId) return false
+    }
+
+    // Then apply search
+    if (!searchTerm) return true
 
       const searchLower = searchTerm.toLowerCase()
 
       // Get category name
-      const category = categories.find((c) => c.category_id === product.category_id)
-      const categoryName = category ? category.category_name.toLowerCase() : ""
+      const category = categories.find((c) => c.categoryId === product.categoryId)
+      const categoryName = category ? category.categoryName.toLowerCase() : ""
 
       // Get supplier name
-      const supplier = suppliers.find((s) => s.supplier_id === product.supplier_id)
+      const supplier = suppliers.find((s) => s.supplierId === product.supplierId)
       const supplierName = supplier ? supplier.name.toLowerCase() : ""
 
       // Search in all fields
       return (
-        product.product_name.toLowerCase().includes(searchLower) ||
+        product.productName.toLowerCase().includes(searchLower) ||
         product.barcode.toLowerCase().includes(searchLower) ||
         product.price.toString().includes(searchLower) ||
         product.unit.toLowerCase().includes(searchLower) ||
@@ -320,15 +392,83 @@
       )
     })
 
-    const handleSearch = (value) => {
-      setSearchTerm(value)
+  const handleSearch = (value) => {
+    setSearchTerm(value)
+  }
+
+  const handleFilterByCategory = (categoryId) => {
+    setFilterType("category")
+    setFilterId(categoryId)
+    const category = categories.find((c) => c.categoryId === categoryId)
+    message.success(`Đang lọc theo danh mục: ${category?.categoryName}`)
+  }
+
+  const handleFilterBySupplier = (supplierId) => {
+    setFilterType("supplier")
+    setFilterId(supplierId)
+    const supplier = suppliers.find((s) => s.supplierId === supplierId)
+    message.success(`Đang lọc theo nhà cung cấp: ${supplier?.name}`)
+  }
+
+  const handleClearFilter = () => {
+    setFilterType(null)
+    setFilterId(null)
+    message.info("Đã xóa bộ lọc")
+  }
+
+  const filterMenuItems = [
+    {
+      key: "category",
+      label: "Lọc theo Danh mục",
+      children: categories.map((cat) => ({
+        key: `category-${cat.categoryId}`,
+        label: cat.categoryName,
+        onClick: () => handleFilterByCategory(cat.categoryId),
+      })),
+    },
+    {
+      key: "supplier",
+      label: "Lọc theo Nhà cung cấp",
+      children: suppliers.map((sup) => ({
+        key: `supplier-${sup.supplierId}`,
+        label: sup.name,
+        onClick: () => handleFilterBySupplier(sup.supplierId),
+      })),
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "clear",
+      label: "Xóa bộ lọc",
+      onClick: handleClearFilter,
+      disabled: filterType === null,
+    },
+  ]
+
+  const getFilterDisplayName = () => {
+    if (!filterType || filterId === null) return "Lọc"
+
+    if (filterType === "category") {
+      const category = categories.find((c) => c.categoryId === filterId)
+      return category ? `Lọc: ${category.categoryName}` : "Lọc"
     }
 
-    return (
-      <div className="product-manage-container">
-        <div className="product-manage-header">
-          <h2 className="product-manage-title">Quản lý sản phẩm</h2>
-          <div className="header-actions">
+    if (filterType === "supplier") {
+      const supplier = suppliers.find((s) => s.supplierId === filterId)
+      return supplier ? `Lọc: ${supplier.name}` : "Lọc"
+    }
+
+    return "Lọc"
+  }
+
+  return (
+    <div className="product-manage-container">
+      <div className="product-manage-header">
+        <h2>Quản lý sản phẩm</h2>
+        <div className="header-actions">
+          {/* Nhóm bên trái: Search + Dropdown */}
+          <div className="search-filter-group">
             <Input.Search
               placeholder="Tìm kiếm theo tên sản phẩm, barcode, giá, đơn vị, danh mục, nhà cung cấp..."
               allowClear
@@ -338,24 +478,53 @@
               onChange={(e) => handleSearch(e.target.value)}
               className="product-search-input"
             />
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large" className="product-search-btn">
-              Thêm sản phẩm
-            </Button>
+
+            <Dropdown
+              menu={{ items: filterMenuItems }}
+              trigger={["click"]}
+              placement="bottomLeft"
+            >
+              <Button
+                icon={<FilterOutlined />}
+                size="large"
+                className="filter-button"
+                type={filterType ? "primary" : "default"}
+              >
+                {getFilterDisplayName()}
+              </Button>
+            </Dropdown>
           </div>
+
+          {/* Nút bên phải */}
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleAdd}
+            size="large"
+          >
+            Thêm sản phẩm
+          </Button>
         </div>
+
+      </div>
 
         <div className="product-manage-table">
           <Table
             columns={columns}
             dataSource={filteredProducts}
-            rowKey="product_id"
+            rowKey="productId"
             loading={loading}
             pagination={{
-              pageSize: 10,
+              current: pageNumber,
+              pageSize: pageSize,
+              total: totalItems,
               showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} sản phẩm${searchTerm ? " (đã lọc)" : ""}`,
+              showTotal: (total) => `Tổng ${total} sản phẩm`,
+              onChange: (page, size) => {
+                fetchProducts(page, size);
+              },
             }}
-            scroll={{ y:500, x: 1200 }}
+            scroll={{ y: 500, x: 1200 }}
           />
         </div>
 
@@ -368,9 +537,29 @@
           closable={false}
         >
           <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off">
+            <Form.Item label="Hình ảnh">
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {/* Ảnh Preview */}
+                <img
+                  src={previewImage || editingProduct?.imagePath || "/img/Default_Product.png"}
+                  alt="Preview"
+                  style={{
+                    width: "150px",
+                    height: "150px",
+                    objectFit: "cover",
+                    borderRadius: "8px",
+                    border: "1px solid #d9d9d9",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                  }}
+                />
+                {/* Input chọn file */}
+                <input type="file" accept="image/*" onChange={handleFileChange} />
+              </div>
+            </Form.Item>
+
             <Form.Item
               label="Tên sản phẩm"
-              name="product_name"
+              name="productName"
               rules={[
                 { required: true, message: "Vui lòng nhập tên sản phẩm" },
                 { max: 100, message: "Tên sản phẩm không quá 100 ký tự" },
@@ -402,7 +591,7 @@
                 },
               ]}
             >
-              <Input type="number" placeholder="Nhập giá" />
+              <InputNumber type="number" placeholder="Nhập giá" style={{ width: '100%' }} />
             </Form.Item>
 
             <Form.Item
@@ -416,13 +605,13 @@
 
             <Form.Item
               label="Danh mục"
-              name="category_id"
+              name="categoryId"
               rules={[{ required: true, message: "Vui lòng chọn danh mục" }]}
             >
               <Select placeholder="Chọn danh mục">
                 {categories.map((category) => (
-                  <Option key={category.category_id} value={category.category_id}>
-                    {category.category_name}
+                  <Option key={category.categoryId} value={category.categoryId}>
+                    {category.categoryName}
                   </Option>
                 ))}
               </Select>
@@ -430,12 +619,12 @@
 
             <Form.Item
               label="Nhà cung cấp"
-              name="supplier_id"
+              name="supplierId"
               rules={[{ required: true, message: "Vui lòng chọn nhà cung cấp" }]}
             >
               <Select placeholder="Chọn nhà cung cấp">
                 {suppliers.map((supplier) => (
-                  <Option key={supplier.supplier_id} value={supplier.supplier_id}>
+                  <Option key={supplier.supplierId} value={supplier.supplierId}>
                     {supplier.name}
                   </Option>
                 ))}
