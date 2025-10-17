@@ -34,3 +34,23 @@
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 12px;
 }
+
+.order-container .ant-table-thead > tr > th {
+  background-color: #008f5a !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border: none !important;
+}
+
+/* Nền màu xanh cho header Ant Design Table */
+.ant-table-thead > tr > th {
+  background-color: green !important;
+  color: white !important;
+  text-align: center;
+}
+
+/* Hover hàng */
+.order-container .ant-table-tbody > tr:hover > td {
+  background-color: #e6f4ea !important;
+  cursor: pointer;
+}

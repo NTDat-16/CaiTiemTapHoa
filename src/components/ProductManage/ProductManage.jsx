@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Dropdown, InputNumber,Upload } from "antd"
+import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Dropdown, InputNumber,Upload, Row,Col } from "antd"
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, FilterOutlined } from "@ant-design/icons"
   import "./ProductManage.css"
 
@@ -222,6 +222,7 @@ const token = localStorage.getItem('token');
               icon={<EditOutlined />}
               size="small"
               onClick={() => handleEdit(record)}
+              className="btn-edit"
             >
               Sửa
             </Button>
@@ -524,123 +525,132 @@ const token = localStorage.getItem('token');
                 fetchProducts(page, size);
               },
             }}
-            scroll={{ y: 500, x: 1200 }}
+            scroll={{ y: 420, x: 1200 }}
           />
         </div>
 
-        <Modal
-          title={editingProduct ? "Sửa sản phẩm" : "Thêm sản phẩm mới"}
-          open={isModalOpen}
-          onCancel={handleCancel}
-          footer={null}
-          width={600}
-          closable={false}
+<Modal
+  title={editingProduct ? "Sửa sản phẩm" : "Thêm sản phẩm mới"}
+  open={isModalOpen}
+  onCancel={handleCancel}
+  footer={null}
+  width={800}
+  closable={false}
+>
+  <Form
+    form={form}
+    layout="vertical"
+    onFinish={handleSubmit}
+    autoComplete="off"
+  >
+    <Row gutter={24}>
+      {/* Cột trái */}
+      <Col span={12}>
+        <Form.Item label="Hình ảnh">
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <img
+              src={previewImage || editingProduct?.imagePath || "/img/Default_Product.png"}
+              alt="Preview"
+              style={{
+                width: "150px",
+                height: "150px",
+                objectFit: "cover",
+                borderRadius: "8px",
+                border: "1px solid #d9d9d9",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+              }}
+            />
+            <input type="file" accept="image/*" onChange={handleFileChange} />
+          </div>
+        </Form.Item>
+
+        <Form.Item
+          label="Tên sản phẩm"
+          name="productName"
+          rules={[
+            { required: true, message: "Vui lòng nhập tên sản phẩm" },
+            { max: 100, message: "Tên sản phẩm không quá 100 ký tự" },
+          ]}
         >
-          <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off">
-            <Form.Item label="Hình ảnh">
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {/* Ảnh Preview */}
-                <img
-                  src={previewImage || editingProduct?.imagePath || "/img/Default_Product.png"}
-                  alt="Preview"
-                  style={{
-                    width: "150px",
-                    height: "150px",
-                    objectFit: "cover",
-                    borderRadius: "8px",
-                    border: "1px solid #d9d9d9",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-                  }}
-                />
-                {/* Input chọn file */}
-                <input type="file" accept="image/*" onChange={handleFileChange} />
-              </div>
-            </Form.Item>
+          <Input placeholder="Nhập tên sản phẩm" />
+        </Form.Item>
 
-            <Form.Item
-              label="Tên sản phẩm"
-              name="productName"
-              rules={[
-                { required: true, message: "Vui lòng nhập tên sản phẩm" },
-                { max: 100, message: "Tên sản phẩm không quá 100 ký tự" },
-              ]}
-            >
-              <Input placeholder="Nhập tên sản phẩm" />
-            </Form.Item>
+        <Form.Item
+          label="Barcode"
+          name="barcode"
+          rules={[
+            { required: true, message: "Vui lòng nhập barcode" },
+            { max: 50, message: "Barcode không quá 50 ký tự" },
+          ]}
+        >
+          <Input placeholder="Nhập barcode" />
+        </Form.Item>
+      </Col>
 
-            <Form.Item
-              label="Barcode"
-              name="barcode"
-              rules={[
-                { required: true, message: "Vui lòng nhập barcode" },
-                { max: 50, message: "Barcode không quá 50 ký tự" },
-              ]}
-            >
-              <Input placeholder="Nhập barcode" />
-            </Form.Item>
+      {/* Cột phải */}
+      <Col span={12}>
+        <Form.Item
+          label="Giá (VNĐ)"
+          name="price"
+          rules={[
+            { required: true, message: "Vui lòng nhập giá" },
+            { type: "number", min: 0, message: "Giá phải lớn hơn hoặc bằng 0" },
+          ]}
+        >
+          <InputNumber placeholder="Nhập giá" style={{ width: "100%" }} />
+        </Form.Item>
 
-            <Form.Item
-              label="Giá (VNĐ)"
-              name="price"
-              rules={[
-                { required: true, message: "Vui lòng nhập giá" },
-                {
-                  type: "number",
-                  min: 0,
-                  message: "Giá phải lớn hơn hoặc bằng 0",
-                },
-              ]}
-            >
-              <InputNumber type="number" placeholder="Nhập giá" style={{ width: '100%' }} />
-            </Form.Item>
+        <Form.Item
+          label="Đơn vị"
+          name="unit"
+          initialValue="cái"
+          rules={[{ required: true, message: "Vui lòng nhập đơn vị" }]}
+        >
+          <Input placeholder="Nhập đơn vị (cái, kg, ly...)" />
+        </Form.Item>
 
-            <Form.Item
-              label="Đơn vị"
-              name="unit"
-              initialValue="cái"
-              rules={[{ required: true, message: "Vui lòng nhập đơn vị" }]}
-            >
-              <Input placeholder="Nhập đơn vị (cái, kg, ly...)" />
-            </Form.Item>
+        <Form.Item
+          label="Danh mục"
+          name="categoryId"
+          rules={[{ required: true, message: "Vui lòng chọn danh mục" }]}
+        >
+          <Select placeholder="Chọn danh mục">
+            {categories.map((category) => (
+              <Option key={category.categoryId} value={category.categoryId}>
+                {category.categoryName}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
 
-            <Form.Item
-              label="Danh mục"
-              name="categoryId"
-              rules={[{ required: true, message: "Vui lòng chọn danh mục" }]}
-            >
-              <Select placeholder="Chọn danh mục">
-                {categories.map((category) => (
-                  <Option key={category.categoryId} value={category.categoryId}>
-                    {category.categoryName}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+        <Form.Item
+          label="Nhà cung cấp"
+          name="supplierId"
+          rules={[{ required: true, message: "Vui lòng chọn nhà cung cấp" }]}
+        >
+          <Select placeholder="Chọn nhà cung cấp">
+            {suppliers.map((supplier) => (
+              <Option key={supplier.supplierId} value={supplier.supplierId}>
+                {supplier.name}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+      </Col>
+    </Row>
 
-            <Form.Item
-              label="Nhà cung cấp"
-              name="supplierId"
-              rules={[{ required: true, message: "Vui lòng chọn nhà cung cấp" }]}
-            >
-              <Select placeholder="Chọn nhà cung cấp">
-                {suppliers.map((supplier) => (
-                  <Option key={supplier.supplierId} value={supplier.supplierId}>
-                    {supplier.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+    {/* Nút hành động */}
+    <Form.Item style={{ textAlign: "right", marginTop: 16 }}>
+      <Space>
+        <Button onClick={handleCancel}>Hủy</Button>
+        <Button type="primary" htmlType="submit" className="product-search-btn">
+          {editingProduct ? "Cập nhật" : "Thêm mới"}
+        </Button>
+      </Space>
+    </Form.Item>
+  </Form>
+</Modal>
 
-            <Form.Item className="form-actions">
-              <Space>
-                <Button onClick={handleCancel}>Hủy</Button>
-                <Button type="primary" htmlType="submit" className="product-search-btn">
-                  {editingProduct ? "Cập nhật" : "Thêm mới"}
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        </Modal>
       </div>
     )
   }

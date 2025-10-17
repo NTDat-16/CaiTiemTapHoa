@@ -280,7 +280,7 @@ export default function InventoryManage() {
             icon={<EditOutlined />}
             size="small"
             onClick={() => handleEdit(record)}
-            className="edit-button"
+            className="btn-edit"
           >
             Sửa
           </Button>

@@ -417,16 +417,15 @@ const handleSubmit = async (values) => {
             render: (_, record) => (
                 <Space size="middle">
                    <Tooltip title="Sửa">
-                        <Button
-                            className="btnEdit"
-                            icon={<EditOutlined />}
-                            onClick={() => handleEdit(record)}
-                            size="small"
-                        >
-                          
-                                Sửa
-                        </Button>
-                    </Tooltip>
+                        <Button
+                            className="btn-edit"
+                            icon={<EditOutlined />}
+                            onClick={() => handleEdit(record)}
+                            size="small"
+                        >
+                            Sửa
+                        </Button>
+                    </Tooltip>
                     <Popconfirm
                         title="Bạn có chắc chắn?"
                         description={`Bạn muốn xóa mã ${record.promo_code}?`}

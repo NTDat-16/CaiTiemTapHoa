@@ -154,6 +154,17 @@
   background-color: #00b36b !important;
   transform: translateY(-1px);
 }
+.btn-edit {
+  background-color: #f1cb33 !important; /* vàng tươi */
+  border: none !important;
+  color: white !important;
+}
+
+.btn-edit:hover,
+.btn-edit:focus {
+  background-color: #facc15 !important; /* vàng đậm hơn khi hover */
+  color: white !important;
+}
 
 /* Nút xóa */
 .ant-btn-dangerous {

@@ -6,153 +6,142 @@ import "./Employee.css"
 const { Option } = Select
 const { Text } = Typography
 
-// Mock data for categories
-const mockCategories = [
-    { user_id: 1, username: "admin01", full_name: "Nguyễn Văn A", role: "admin", created_at: "2025-10-01" },
-    { user_id: 2, username: "admin02", full_name: "Nguyễn Văn A", role: "admin", created_at: "2025-10-01" },
-    { user_id: 3, username: "staff01", full_name: "Trần Thị B", role: "staff", created_at: "2025-10-02" },
-    { user_id: 4, username: "staff02", full_name: "Lê Văn C", role: "staff", created_at: "2025-10-03" },
-    { user_id: 5, username: "admin03", full_name: "Phạm Văn D", role: "admin", created_at: "2025-10-04" },
-    { user_id: 6, username: "admin04", full_name: "Phạm Văn D", role: "admin", created_at: "2025-10-04" },
-    { user_id: 7, username: "admin05", full_name: "Phạm Văn D", role: "admin", created_at: "2025-10-04" },
-    { user_id: 8, username: "admin06", full_name: "Phạm Văn D", role: "admin", created_at: "2025-10-04" },
-    { user_id: 9, username: "admin07", full_name: "Phạm Văn D", role: "admin", created_at: "2025-10-04" },
-    { user_id: 10, username: "admin08", full_name: "Phạm Văn D", role: "admin", created_at: "2025-10-04" },
-    { user_id: 11, username: "admin09", full_name: "Phạm Văn D", role: "admin", created_at: "2025-10-04" },
-    { user_id: 12, username: "admin010", full_name: "Phạm Văn D", role: "admin", created_at: "2025-10-04" },
-]
-
-
 export default function Employee() {
     const [employees, setEmployees] = useState([])
     const [loading, setLoading] = useState(false)
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [editingCategory, setEditingCategory] = useState(null)
     const [editingEmployee, setEditingEmployee] = useState(null)
     const [searchTerm, setSearchTerm] = useState("")
     const [form] = Form.useForm()
     const [previewUsername, setPreviewUsername] = useState("")
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
 
-    // Fetch products from API (currently using mock data)
-    const fetchEmployees = async () => {
-        setLoading(true)
+    //Load dữ liệu nhân viên lên bảng
+    const fetchEmployees = async (page = 1, pageSize = 10) => {
+        setLoading(true);
         try {
-            // TODO: Uncomment when API is ready
-            // const response = await fetch('/api/products');
-            // const data = await response.json();
-            // setCategories(data);
+            const response = await fetch(`http://localhost:5000/api/Users?pageNumber=${page}&pageSize=${pageSize}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
 
-            // Using mock data for now
-            setTimeout(() => {
-                setEmployees(mockCategories)
-                setLoading(false)
-            }, 500)
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+            const data = await response.json();
+            console.log(data)
+            let items = [];
+            if (Array.isArray(data)) {
+                items = data;
+            } else if (Array.isArray(data?.data)) {
+                items = data.data;
+            } else if (Array.isArray(data?.data?.items)) {
+                items = data.data.items;
+            } else {
+                throw new Error("Phản hồi từ server không hợp lệ");
+            }
+
+            const mapped = items.map(u => ({
+                ...u,
+                userId: Number(u.userId),
+            }));
+
+            setEmployees(mapped);
+
+            setPagination({
+                current: data.data?.pageNumber || page,
+                pageSize: data.data?.pageSize || pageSize,
+                total: data.data?.totalCount || mapped.length,
+            });
         } catch (error) {
-            message.error("Lỗi khi tải danh sách nhân viên")
-            setLoading(false)
+            message.error("Lỗi khi tải danh sách nhân viên: " + error.message);
+        } finally {
+            setTimeout(() => setLoading(false), 1000);
         }
-    }
+    };
 
+    useEffect(() => {
+        fetchEmployees(pagination.current, pagination.pageSize);
+    }, []);
 
-  useEffect(() => {
-    fetchEmployees();
-  }, [])
+    const handleTableChange = (pag) => {
+        fetchEmployees(pag.current, pag.pageSize);
+    };
 
-    // Table columns definition
+    //Danh sách các cột
     const columns = [
-        {
-            title: "Mã nhân viên",
-            dataIndex: "user_id",
-            key: "user_id",
-            width: 120,
-            align: "center",
-        },
-        {
-            title: "Họ và Tên",
-            dataIndex: "full_name",
-            key: "full_name",
-            width: 250,
-            align: "center",
-        },
-        {
-            title: "Tên đăng nhập",
-            dataIndex: "username",
-            key: "username",
-            width: 220,
-            align: "center",
-        },
-        {
-            title: "Chức vụ",
-            dataIndex: "role",
-            key: "role",
-            width: 150,
-            align: "center",
+        {title: "Mã nhân viên",dataIndex: "userId",key: "userId",width: 120,align: "center",},
+        {title: "Họ và Tên",dataIndex: "fullName",key: "fullName",width: 250,align: "center",},
+        {title: "Tên đăng nhập",dataIndex: "username",key: "username",width: 220,align: "center",},
+        {title: "Chức vụ",dataIndex: "role",key: "role",width: 150,align: "center",
             render: (role) => (
-            <span
-                style={{
-                color: role === "admin" ? "#d93025" : "#00796b",
-                fontWeight: 600,
-                }}
-            >
-                {role}
-            </span>
+                <span style={{color: role === "Admin" ? "#d93025" : "#00796b",fontWeight: 600,}}>
+                    {role === "Admin" ? "Quản trị viên" : "Nhân viên"}
+                </span>
             ),
         },
         {
             title: "Ngày vào làm",
-            dataIndex: "created_at",
-            key: "created_at",
+            dataIndex: "createdAt",
+            key: "createdAt",
             width: 180,
             align: "center",
+            render: (date) => {
+                if (!date) return "-";
+                const d = new Date(date);
+                const day = d.getDate().toString().padStart(2, "0");
+                const month = (d.getMonth() + 1).toString().padStart(2, "0");
+                const year = d.getFullYear();
+                return `${day}-${month}-${year}`;
+            },
         },
-        {
-            title: "Thao tác",
-            key: "action",
-            width: 180,
-            fixed: "right",
-            align: "center",
+
+        {title: "Thao tác",key: "action",width: 180,fixed: "right",align: "center",
             render: (_, record) => (
-            <Space size="small">
-                <Button
-                type="primary"
-                icon={<EditOutlined />}
-                size="small"
-                onClick={() => handleEdit(record)}
-                >
-                Sửa
-                </Button>
-                <Popconfirm
-                title="Xóa nhân viên"
-                description="Bạn có chắc chắn muốn xóa nhân viên này?"
-                onConfirm={() => handleDelete(record.user_id)}
-                okText="Xóa"
-                cancelText="Hủy"
-                >
-                <Button type="primary" danger icon={<DeleteOutlined />} size="small">
-                    Xóa
-                </Button>
-                </Popconfirm>
-            </Space>
+                <Space size="small">
+                    <Button
+                        type="primary"
+                        icon={<EditOutlined />}
+                        size="small"
+                        onClick={() => handleEdit(record)}
+                        className="btn-edit"
+                    >
+                        Sửa
+                    </Button>
+                    <Popconfirm
+                        title="Xóa nhân viên"
+                        description="Bạn có chắc chắn muốn xóa nhân viên này?"
+                        onConfirm={() => handleDelete(record.user_id)}
+                        okText="Xóa"
+                        cancelText="Hủy"
+                    >
+                    <Button type="primary" danger icon={<DeleteOutlined />} size="small">
+                        Xóa
+                    </Button>
+                    </Popconfirm>
+                </Space>
             ),
         },
     ]
 
-
-    // Handle add new product
+    //Sự kiện thêm nhân viên
     const handleAdd = () => {
-        setEditingCategory(null)
+        setEditingEmployee(null)
         form.resetFields()
         setIsModalOpen(true)
+        setPreviewUsername("");
     }
 
-    // Handle edit product
-    const handleEdit = (product) => {
-        setEditingCategory(product)
-        form.setFieldsValue(product)
+    //Sự kiện sửa nhân viên
+    const handleEdit = (employee) => {
+        setEditingEmployee(employee)
+        form.setFieldsValue(employee)
         setIsModalOpen(true)
     }
 
-    // Handle delete product
+    // Handle delete employee
     const handleDelete = async (employeeId) => {
         try {
             // TODO: Uncomment when API is ready
@@ -166,53 +155,104 @@ export default function Employee() {
         }
     }
 
+    //Xử lý sự kiện thêm or sửa nhân viên
     const handleSubmit = async (values) => {
         try {
-            if (editingCategory) {
-                // Nếu đổi chức vụ → cập nhật lại username
-                let newUsername = editingCategory.username;
+            const { fullName, role } = values;
+            const isDuplicate = employees.some(
+                (e) =>
+                    e.fullName.toLowerCase().trim() === fullName.toLowerCase().trim() &&
+                    (!editingEmployee || e.userId !== editingEmployee.userId)
+            );
 
-                if (values.role !== editingCategory.role) {
-                    // Đếm số lượng hiện có theo chức vụ mới (bỏ qua chính user đang sửa)
+            if (isDuplicate) {
+                form.setFields([
+                    {
+                        name: "fullName",
+                        errors: ["Tên nhân viên đã tồn tại. Vui lòng nhập tên khác!"],
+                    },
+                ]);
+                return;
+            }
+
+            if (editingEmployee) {
+                let newUsername = editingEmployee.userName;
+
+                if (values.role !== editingEmployee.role) {
                     const sameRoleUsers = employees.filter(
-                    (e) => e.role === values.role && e.user_id !== editingCategory.user_id
+                        (e) => e.role === values.role && e.userId !== editingEmployee.userId
                     );
-
                     const nextIndex = sameRoleUsers.length + 1;
-                    const prefix = values.role === "admin" ? "admin" : "staff";
+                    const prefix = role === "Admin" ? "admin" : "staff";
                     newUsername = `${prefix}${nextIndex.toString().padStart(2, "0")}`;
                 }
 
-                const updatedEmployees = employees.map((e) =>
-                    e.user_id === editingCategory.user_id
-                    ? { ...e, ...values, username: newUsername }
-                    : e
+                const response = await fetch(
+                    `http://localhost:5000/api/Users/${editingEmployee.userId}`,
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        },
+                        body: JSON.stringify({
+                            fullName,
+                            role,
+                            userName: newUsername,
+                        }),
+                    }
                 );
 
-                setEmployees(updatedEmployees);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || "Cập nhật nhân viên thất bại");
+                }
+
+                const updated = employees.map((e) =>
+                    e.userId === editingEmployee.userId
+                        ? { ...e, fullName, role, userName: newUsername }
+                        : e
+                );
+                setEmployees(updated);
                 message.success("Cập nhật nhân viên thành công");
-            } else {
-                // Thêm mới nhân viên
-                const newEmployee = {
-                    user_id: employees.length + 1,
-                    full_name: values.full_name,
-                    role: values.role,
-                    username: previewUsername,
-                    created_at: new Date().toISOString().split("T")[0],
+            }else {
+                const employeeToAdd = {
+                    fullName,
+                    userName: previewUsername,
+                    password: "123456",
+                    role,
                 };
-                setEmployees([...employees, newEmployee]);
+
+                const response = await fetch("http://localhost:5000/api/Users", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify(employeeToAdd), // ❗ Không bọc thêm { newEmployee }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || "Thêm nhân viên thất bại");
+                }
+
+                const result = await response.json();
+                const addedEmployee = result.data || result;
+                setEmployees([...employees, addedEmployee]);
                 message.success("Thêm nhân viên thành công");
             }
 
             setIsModalOpen(false);
             form.resetFields();
             setPreviewUsername("");
+            setEditingEmployee(null);
         } catch (error) {
-            message.error("Lỗi khi lưu nhân viên");
+            message.error(error.message || "Lỗi khi lưu nhân viên");
         }
     };
 
-    // Handle modal cancel
+    //Xử lý sự kiện đóng form
     const handleCancel = () => {
         setIsModalOpen(false)
         form.resetFields()
@@ -220,35 +260,58 @@ export default function Employee() {
         setPreviewUsername("")
     }
 
+    //Tìm kiếm thông tin nhân viên
     const filteredUsers = employees.filter((user) => {
         if (!searchTerm) return true;
 
         const searchLower = searchTerm.toLowerCase();
 
         return (
-            user.full_name.toLowerCase().includes(searchLower) ||
-            user.username.toLowerCase().includes(searchLower) ||
-            user.role.toLowerCase().includes(searchLower)
+            user.fullName?.toLowerCase().includes(searchLower) ||
+            user.username?.toLowerCase().includes(searchLower) ||
+            user.role?.toLowerCase().includes(searchLower)
         );
     });
-
 
     const handleSearch = (value) => {
         setSearchTerm(value)
     }
 
-    const generateUsername = (role) => {
-        const sameRoleUsers = employees.filter((e) => e.role === role)
-        const nextIndex = sameRoleUsers.length + 1
-        const prefix = role === "admin" ? "admin" : "staff"
-        return `${prefix}${nextIndex.toString().padStart(2, "0")}`
-    }
+    //Tạo tên đăng nhập tự động cho nhân viên
+    const generateUsername = async (role) => {
+        if (!role) return "";
 
-    const handleRoleChange = (value) => {
-        const preview = generateUsername(value)
-        setPreviewUsername(preview)
-        form.setFieldsValue({ role: value })
-    }
+        try {
+            const response = await fetch("http://localhost:5000/api/Users/count-by-role", {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+            const result = await response.json();
+            const counts = result?.data?.counts || {};
+            const roleCount = counts[role] || 0;
+
+            const nextIndex = roleCount + 1;
+            const prefix = role === "Admin" ? "admin" : "staff";
+            return `${prefix}${nextIndex.toString().padStart(2, "0")}`;
+        } catch (error) {
+            console.error("Lỗi khi lấy số lượng nhân viên theo role:", error);
+            return "";
+        }
+    };
+
+    const handleRoleChange = async (value) => {
+        form.setFieldValue("role", value);
+        const username = await generateUsername(value);
+        setPreviewUsername(username);
+        form.setFieldValue("username", username);
+    };
+
+
     return (
         <div className="employee-manage-container">
             <div className="employee-manage-header">
@@ -273,19 +336,22 @@ export default function Employee() {
                 <Table
                     columns={columns}
                     dataSource={filteredUsers}
-                    rowKey="user_id"
+                    rowKey="userId"
                     loading={loading}
                     pagination={{
-                        pageSize: 10,
+                        current: pagination.current,
+                        pageSize: pagination.pageSize,
+                        total: pagination.total,
                         showSizeChanger: true,
-                        showTotal: (total) => `Tổng ${total} nhân viên${searchTerm ? " (đã lọc)" : ""}`,
+                        showTotal: total => `Tổng ${total} khách hàng`,
                     }}
-                scroll={{ y: 420, x: 1200 }}
+                    onChange={handleTableChange}
+                    scroll={{ y: 420, x: 1200 }}
                 />
             </div>
 
             <Modal
-                title={editingCategory ? "Sửa Thông Tin Nhân Viên" : "Thêm Nhân Viên Mới"}
+                title={editingEmployee ? "Sửa Thông Tin Nhân Viên" : "Thêm Nhân Viên Mới"}
                 open={isModalOpen}
                 onCancel={handleCancel}
                 footer={null}
@@ -295,7 +361,7 @@ export default function Employee() {
                 <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off">
                     <Form.Item
                         label="Họ và Tên"
-                        name="full_name"
+                        name="fullName"
                         rules={[
                         { required: true, message: "Vui lòng nhập tên nhân viên" },
                         { max: 100, message: "Tên nhân viên không quá 100 ký tự" },
@@ -310,8 +376,8 @@ export default function Employee() {
                         rules={[{ required: true, message: "Vui lòng chọn chức vụ" }]}
                     >
                         <Select placeholder="Chọn chức vụ" onChange={handleRoleChange}>
-                            <Option value="admin">Quản trị viên</Option>
-                            <Option value="staff">Nhân viên</Option>
+                            <Option value="Admin">Quản trị viên</Option>
+                            <Option value="Staff">Nhân viên</Option>
                         </Select>
                     </Form.Item>
 
@@ -325,7 +391,7 @@ export default function Employee() {
                         <Space>
                             <Button onClick={handleCancel}>Hủy</Button>
                             <Button type="primary" htmlType="submit" className="employee-search-btn">
-                                {editingCategory ? "Cập nhật" : "Thêm mới"}
+                                {editingEmployee ? "Cập nhật" : "Thêm mới"}
                             </Button>
                         </Space>
                     </Form.Item>

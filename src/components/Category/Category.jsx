@@ -40,7 +40,9 @@ export default function Category() {
     } catch (error) {
       message.error(error.message || "Lỗi khi tải danh sách danh mục");
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
     }
   };
 
@@ -79,6 +81,7 @@ export default function Category() {
     form.setFieldsValue(category)
     setIsModalOpen(true)
   }
+  
   //Thêm hoặc cập nhật sản phẩm
   const handleSubmit = async (values) => {
     try {
@@ -183,7 +186,7 @@ export default function Category() {
     {title: "Thao tác",key: "action",width: 150,fixed: "right",align: "center",
       render: (_, record) => (
         <Space size="small">
-          <Button type="primary" icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)}>
+          <Button className="btn-edit" type="primary" icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)}>
             Sửa
           </Button>
           <Popconfirm

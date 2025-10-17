@@ -54,16 +54,16 @@ export default function Order() {
   const [selectedPromoId, setSelectedPromoId] = useState("");
   const [products, setProducts] = useState([]);
   const [promotions, setPromotions] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [customers, setCustomers] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("Tiền mặt");
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage, setProductsPerPage] = useState(25);
   const [customerPaid, setCustomerPaid] = useState(0);
   const [chosenIds, setChosenIds] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm()
+  const [phone, setPhone] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [loadingCustomer, setLoadingCustomer] = useState(false);
 
 
   useEffect(() => {
@@ -103,7 +103,6 @@ export default function Order() {
       return [...prev, { ...product, quantity: 1 }];
     });
 
-    // Cập nhật chosenIds
     setChosenIds(prev => prev.includes(product.product_id)
       ? prev
       : [...prev, product.product_id]
@@ -171,6 +170,96 @@ export default function Order() {
     ),
     },
   ];
+
+  //Tìm kiếm tên khách hàng theo số điện thoại
+  let typingTimer;
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.trim();
+    setPhone(value);
+    setCustomerName("");
+
+    clearTimeout(typingTimer);
+    if (/^\d{9,10}$/.test(value)) {
+      typingTimer = setTimeout(() => {
+        fetchCustomerByPhone(value);
+      }, 500);
+    }
+  };
+
+  const fetchCustomerByPhone = async (phone) => {
+    try {
+      setLoadingCustomer(true);
+
+      const response = await fetch(`http://localhost:5000/api/Customer/by-phone/${phone}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result?.data) {
+        setCustomerName(result.data.name || ""); // lấy tên từ dữ liệu trả về
+      } else {
+        setCustomerName("");
+        message.warning("Không tìm thấy khách hàng này");
+      }
+    } catch (error) {
+      console.error("Lỗi khi tìm khách hàng:", error);
+      message.error("Không thể kết nối đến server");
+    } finally {
+      setLoadingCustomer(false);
+    }
+  };
+
+  //Thêm khách hàng mới
+  const AddNewCustomer = async (values) => {
+    try {
+      const { name, phone } = values;
+
+      const response = await fetch("http://localhost:5000/api/Customer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ name, phone }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Nếu server trả lỗi trùng số
+        if (data.message?.includes("Phone number already exists")) {
+          form.setFields([{ name: "phone", errors: ["Số điện thoại đã tồn tại!"] }]);
+          return;
+        }
+        throw new Error(data.message || "Thêm khách hàng thất bại");
+      }
+
+      message.success("Thêm khách hàng thành công");
+      form.resetFields();
+      setIsModalOpen(false);
+      setPhone(phone);
+      setCustomerName(name);
+
+    } catch (error) {
+      // Lỗi khác
+      message.error(error.message || "Lỗi khi thêm khách hàng");
+      console.error(error);
+    }
+  };
+
+  //Tính tiền thừa cho khách
+  function tienthua(tiendua, tongmua) {
+    const change = tiendua - tongmua;
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(change);
+  }
+
+
   return (
     <div className="order-container">
       <Row gutter={16}>
@@ -349,17 +438,27 @@ export default function Order() {
               <div style={{ display: "flex", padding: 16, gap: 16, flex: 1, overflowY: "auto", background: "#fff" }}>
                 {/* Cột trái */}
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
+
                   <Input
                     placeholder="Nhập SĐT khách hàng"
+                    value={phone}
                     addonAfter={
-                      <Button onClick={handleAdd} type="primary" style={{ padding: "0 12px", height: 28 }}>+ Thêm</Button>
+                      <Button onClick={handleAdd} type="primary" style={{ padding: "0 12px", height: 28 }}>
+                        + Thêm
+                      </Button>
                     }
+                    suffix={loadingCustomer ? <Spin size="small" /> : null}
                     style={{ height: 36, borderRadius: 6 }}
+                    onChange={handlePhoneChange}
                   />
+                  
                   <Input
-                    placeholder="Tên"
-                    style={{ height: 36, borderRadius: 6 }}
+                    placeholder="Tên khách hàng"
+                    value={customerName}
+                    readOnly
+                    style={{ height: 36, borderRadius: 6, marginTop: 8 }}
                   />
+                  
                   <Select
                     value={selectedPromoId}
                     onChange={(v) => setSelectedPromoId(v)}
@@ -396,6 +495,7 @@ export default function Order() {
                   <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: 18 }}>
                     <span>Tổng cộng:</span>
                     <span>{total.toLocaleString()} ₫</span>
+                    
                   </div>
                   {paymentMethod === "Tiền mặt" && 
                     <>
@@ -412,7 +512,11 @@ export default function Order() {
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "green" }}>
                         <span>Tiền thừa:</span>
+                        <span>
+                          {customerPaid != null && tienthua(customerPaid, total)}
+                        </span>
                       </div>
+
                     </>
                   }
                   {paymentMethod === "Chuyển khoản" && (
@@ -444,8 +548,9 @@ export default function Order() {
         footer={null}
         width={400}
         style={{ top: 100 }}
+        closeIcon={false}
       >
-        <Form form={form} layout="vertical" autoComplete="off">
+        <Form form={form} layout="vertical" autoComplete="off" onFinish={AddNewCustomer}>
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <Form.Item
               label="Họ và tên"
@@ -461,6 +566,7 @@ export default function Order() {
             <Form.Item
               label="Số điện thoại"
               name="phone"
+              validateTrigger="onSubmit"
               rules={[
                 { required: true, message: "Vui lòng nhập số điện thoại" },
                 { pattern: /^[0-9]{10}$/, message: "Số điện thoại không hợp lệ (10 số)" }
