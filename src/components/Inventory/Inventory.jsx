@@ -24,7 +24,7 @@ const { Option } = Select;
 export default function InventoryManage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [lowStock, setLowStock] = useState([]);
+  const [lowStock, setLowStock] = useState([]); // State này giờ sẽ được cập nhật từ API riêng
   const [filterUnit, setFilterUnit] = useState(null);
   const [unitOptions, setUnitOptions] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -38,11 +38,12 @@ export default function InventoryManage() {
     total: 0,
   });
 
+  // useEffect để lấy danh sách tồn kho chính (có phân trang)
   useEffect(() => {
     const fetchInventory = async (page = 1, pageSize = 10) => {
       setLoading(true);
       try {
-        const token = localStorage.getItem("token"); // Lấy token từ localStorage
+        const token = localStorage.getItem("token");
         const response = await axios.get(
           `http://localhost:5000/api/inventory?pageNumber=${page}&pageSize=${pageSize}`,
           {
@@ -53,14 +54,17 @@ export default function InventoryManage() {
         );
         if (response.data.success) {
           const items = response.data.data.items.map((item) => ({
-            inventory_id: item.inventoryId, // Ensure inventory_id is included
+            inventory_id: item.inventoryId,
             product_id: item.product.productId,
             product_name: item.product.productName,
             quantity: item.quantity,
             unit: item.product.unit,
           }));
           setProducts(items);
-          setLowStock(items.filter((item) => item.quantity <= 5));
+
+          // BƯỚC 3: Xóa dòng filter low stock ở đây
+          // setLowStock(items.filter((item) => item.quantity <= 5));
+
           setUnitOptions(
             [...new Set(items.map((item) => item.unit))].map((unit) => ({
               label: unit,
@@ -76,7 +80,7 @@ export default function InventoryManage() {
           message.error("Không thể tải dữ liệu tồn kho.");
         }
       } catch (error) {
-        message.error("Đã xảy ra lỗi khi gọi API.");
+        message.error("Đã xảy ra lỗi khi gọi API tồn kho.");
       } finally {
         setLoading(false);
       }
@@ -84,6 +88,40 @@ export default function InventoryManage() {
 
     fetchInventory(pagination.current, pagination.pageSize);
   }, [pagination.current, pagination.pageSize]);
+
+  // BƯỚC 1 & 2: Tạo hàm mới và gọi trong useEffect riêng để lấy sản phẩm sắp hết hàng
+  useEffect(() => {
+    const fetchLowStock = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        // Giả sử đây là endpoint mới của bạn
+        const response = await axios.get(
+          `http://localhost:5000/api/inventory/low-stock`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.data.success) {
+          // Map lại dữ liệu nếu cần thiết để khớp với cấu trúc bạn đang dùng
+          const lowStockItems = response.data.data.map((item) => ({
+            inventory_id: item.inventoryId,
+            product_id: item.product.productId,
+            product_name: item.product.productName,
+            quantity: item.quantity,
+            unit: item.product.unit,
+          }));
+          setLowStock(lowStockItems);
+        }
+      } catch (error) {
+        // Có thể không hiển thị lỗi này để tránh làm phiền người dùng
+        console.error("Lỗi khi lấy dữ liệu sản phẩm sắp hết hàng:", error);
+      }
+    };
+
+    fetchLowStock();
+  }, []); // Mảng rỗng để đảm bảo nó chỉ chạy 1 lần khi component mount
 
   const filteredProducts = products.filter((product) => {
     if (!filterUnit || filterUnit === null) {
@@ -96,7 +134,6 @@ export default function InventoryManage() {
     setFilterUnit(value);
   };
 
-  // Ensure the edit button integrates with the API update logic
   const handleEdit = (product) => {
     setEditingProduct(product);
     form.setFieldsValue(product);
@@ -111,10 +148,9 @@ export default function InventoryManage() {
     setEditingProduct(null);
   };
 
-  // Function to update inventory quantity via API
   const updateInventoryQuantity = async (inventoryId, quantity) => {
     try {
-      const token = localStorage.getItem("token"); // Lấy token từ localStorage
+      const token = localStorage.getItem("token");
       const response = await axios.put(
         `http://localhost:5000/api/inventory/${inventoryId}`,
         { Quantity: quantity },
@@ -157,6 +193,8 @@ export default function InventoryManage() {
           : product
       );
       setProducts(updatedProducts);
+      // Optional: Re-fetch low stock data if an item might have become low stock
+      // fetchLowStock();
       message.success("Sửa sản phẩm thành công!");
     } else {
       message.error("Không thể cập nhật sản phẩm.");
@@ -167,7 +205,6 @@ export default function InventoryManage() {
     setEditingProduct(null);
   };
 
-  // Handle form submission for importing stock
   const handleImport = (values) => {
     const productToUpdate = products.find(
       (product) => product.product_id === values.product_id
@@ -189,7 +226,6 @@ export default function InventoryManage() {
     form.resetFields();
   };
 
-  // Handle form submission for auditing stock
   const handleAudit = (values) => {
     const productToAudit = products.find(
       (product) => product.product_id === values.product_id
@@ -298,6 +334,7 @@ export default function InventoryManage() {
         </div>
       </div>
 
+      {/* Phần Alert này không cần thay đổi */}
       {lowStock.length > 0 && (
         <Alert
           message={`Có ${lowStock.length} sản phẩm sắp hết hàng!`}
