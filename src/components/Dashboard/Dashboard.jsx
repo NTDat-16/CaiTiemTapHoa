@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-// import SalesReport from "./SalesReport";
+import SalesReport from "../SalesReport/SaleReport";
 // import Forecast from "./Forecast";
 // import Inventory from "./Inventory";
 // import DeadStock from "./DeadStock";
@@ -27,7 +27,7 @@ export default function Dashboard() {
   const renderContent = () => {
     switch (activeTab) {
       case "sales":
-        // return <SalesReport />;
+        return <SalesReport />;
       case "forecast":
         // return <Forecast />;
       case "inventory":
