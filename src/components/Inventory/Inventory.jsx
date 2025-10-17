@@ -8,6 +8,7 @@ import {
   Modal,
   Form,
   Input,
+  InputNumber,
   message,
 } from "antd";
 import {
@@ -52,6 +53,7 @@ export default function InventoryManage() {
         );
         if (response.data.success) {
           const items = response.data.data.items.map((item) => ({
+            inventory_id: item.inventoryId, // Ensure inventory_id is included
             product_id: item.product.productId,
             product_name: item.product.productName,
             quantity: item.quantity,
@@ -94,6 +96,7 @@ export default function InventoryManage() {
     setFilterUnit(value);
   };
 
+  // Ensure the edit button integrates with the API update logic
   const handleEdit = (product) => {
     setEditingProduct(product);
     form.setFieldsValue(product);
@@ -108,16 +111,63 @@ export default function InventoryManage() {
     setEditingProduct(null);
   };
 
-  const handleSubmit = (values) => {
-    const updatedProducts = products.map((p) =>
-      p.product_id === editingProduct.product_id ? { ...p, ...values } : p
+  // Function to update inventory quantity via API
+  const updateInventoryQuantity = async (inventoryId, quantity) => {
+    try {
+      const token = localStorage.getItem("token"); // Lấy token từ localStorage
+      const response = await axios.put(
+        `http://localhost:5000/api/inventory/${inventoryId}`,
+        { Quantity: quantity },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        message.success("Cập nhật số lượng thành công!");
+        return true;
+      } else {
+        message.error("Không thể cập nhật số lượng.");
+        return false;
+      }
+    } catch (error) {
+      message.error("Đã xảy ra lỗi khi cập nhật số lượng.");
+      return false;
+    }
+  };
+
+  const handleSubmit = async (values) => {
+    if (!editingProduct || !editingProduct.inventory_id) {
+      message.error("Không thể xác định sản phẩm để sửa.");
+      return;
+    }
+
+    const success = await updateInventoryQuantity(
+      editingProduct.inventory_id,
+      values.quantity
     );
-    setProducts(updatedProducts);
+
+    if (success) {
+      const updatedProducts = products.map((product) =>
+        product.inventory_id === editingProduct.inventory_id
+          ? { ...product, ...values }
+          : product
+      );
+      setProducts(updatedProducts);
+      message.success("Sửa sản phẩm thành công!");
+    } else {
+      message.error("Không thể cập nhật sản phẩm.");
+    }
+
     setIsEditModalOpen(false);
     form.resetFields();
     setEditingProduct(null);
   };
 
+  // Handle form submission for importing stock
   const handleImport = (values) => {
     const productToUpdate = products.find(
       (product) => product.product_id === values.product_id
@@ -139,6 +189,7 @@ export default function InventoryManage() {
     form.resetFields();
   };
 
+  // Handle form submission for auditing stock
   const handleAudit = (values) => {
     const productToAudit = products.find(
       (product) => product.product_id === values.product_id
@@ -302,7 +353,7 @@ export default function InventoryManage() {
               { max: 100, message: "Tên sản phẩm không quá 100 ký tự" },
             ]}
           >
-            <Input placeholder="Nhập tên sản phẩm" />
+            <Input placeholder="Nhập tên sản phẩm" readOnly />
           </Form.Item>
 
           <Form.Item
@@ -317,7 +368,10 @@ export default function InventoryManage() {
               },
             ]}
           >
-            <Input type="number" placeholder="Nhập số lượng tồn" />
+            <InputNumber
+              placeholder="Nhập số lượng tồn"
+              style={{ width: "100%" }}
+            />
           </Form.Item>
 
           <Form.Item
@@ -325,7 +379,7 @@ export default function InventoryManage() {
             name="unit"
             rules={[{ required: true, message: "Vui lòng nhập đơn vị" }]}
           >
-            <Input placeholder="Nhập đơn vị" />
+            <Input placeholder="Nhập đơn vị" readOnly />
           </Form.Item>
 
           <Form.Item className="form-actions">
