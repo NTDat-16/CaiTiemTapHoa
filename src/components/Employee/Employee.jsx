@@ -31,7 +31,6 @@ export default function Employee() {
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
             const data = await response.json();
-            console.log(data)
             let items = [];
             if (Array.isArray(data)) {
                 items = data;
@@ -292,7 +291,7 @@ export default function Employee() {
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
             const result = await response.json();
-            const counts = result?.data?.counts || {};
+            const counts = result?.data?.roleCounts || {};
             const roleCount = counts[role] || 0;
 
             const nextIndex = roleCount + 1;
@@ -310,7 +309,6 @@ export default function Employee() {
         setPreviewUsername(username);
         form.setFieldValue("username", username);
     };
-
 
     return (
         <div className="employee-manage-container">
@@ -343,7 +341,11 @@ export default function Employee() {
                         pageSize: pagination.pageSize,
                         total: pagination.total,
                         showSizeChanger: true,
-                        showTotal: total => `Tổng ${total} khách hàng`,
+                        showTotal: (total) => (
+                            <span>
+                                Tổng <span style={{ color: 'red', fontWeight: 'bold' }}>{total}</span> nhân viên
+                            </span>
+                        ),
                     }}
                     onChange={handleTableChange}
                     scroll={{ y: 420, x: 1200 }}

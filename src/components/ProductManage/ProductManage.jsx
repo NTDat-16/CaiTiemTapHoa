@@ -48,7 +48,6 @@ const token = localStorage.getItem('token');
 
         setProducts(productsArray);
 
-        // ✅ Lưu tổng số phần tử để Ant Table hiển thị đúng phân trang
         if (result?.data?.totalCount) {
           setTotalItems(result.data.totalCount);
         }
@@ -121,8 +120,10 @@ const token = localStorage.getItem('token');
       });
       setPreviewImage(
         editingProduct.imagePath && editingProduct.imagePath.trim() !== ""
-          ? editingProduct.imagePath
-          : "img/Default_Product.png"
+          ? editingProduct.imagePath.startsWith("http")
+            ? editingProduct.imagePath
+            : `${API_IMAGE}${editingProduct.imagePath}`
+          : "/img/Default_Product.png"
       );
     } else {
       form.resetFields();
@@ -132,8 +133,7 @@ const token = localStorage.getItem('token');
 
     // Table columns definition
     const columns = [
-      {
-        title: "Hình ảnh",
+      {title: "Hình ảnh",
         dataIndex: "imagePath",
         key: "imagePath",
         width: 100,
@@ -346,19 +346,12 @@ const token = localStorage.getItem('token');
       }
     };
 
-
-
-
     // Handle modal cancel
     const handleCancel = () => {
       setIsModalOpen(false)
       form.resetFields()
       setEditingProduct(null)
     }
-
-
-
-
 
   const filteredProducts = products.filter((product) => {
     // Apply filter first
@@ -520,7 +513,11 @@ const token = localStorage.getItem('token');
               pageSize: pageSize,
               total: totalItems,
               showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} sản phẩm`,
+              showTotal: (total) => (
+              <span>
+                Tổng <span style={{ color: 'red', fontWeight: 'bold' }}>{total}</span> sản phẩm
+              </span>
+            ),
               onChange: (page, size) => {
                 fetchProducts(page, size);
               },
@@ -530,12 +527,13 @@ const token = localStorage.getItem('token');
         </div>
 
 <Modal
-  title={editingProduct ? "Sửa sản phẩm" : "Thêm sản phẩm mới"}
+  title={editingProduct ? "Sửa Thông Tin Sản Phẩm" : "Thêm Sản Phẩm Mới"}
   open={isModalOpen}
   onCancel={handleCancel}
   footer={null}
-  width={800}
-  closable={false}
+  width={700}
+  closable={true}
+  style={{ top: 70 }}
 >
   <Form
     form={form}
@@ -543,113 +541,158 @@ const token = localStorage.getItem('token');
     onFinish={handleSubmit}
     autoComplete="off"
   >
-    <Row gutter={24}>
-      {/* Cột trái */}
-      <Col span={12}>
-        <Form.Item label="Hình ảnh">
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <img
-              src={previewImage || editingProduct?.imagePath || "/img/Default_Product.png"}
-              alt="Preview"
-              style={{
-                width: "150px",
-                height: "150px",
-                objectFit: "cover",
-                borderRadius: "8px",
-                border: "1px solid #d9d9d9",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-              }}
-            />
-            <input type="file" accept="image/*" onChange={handleFileChange} />
-          </div>
-        </Form.Item>
+    {/* Hình ảnh sản phẩm */}
+    <Form.Item label="Hình ảnh" style={{ textAlign: "center", marginBottom: 24 }}>
+  <div style={{ position: "relative", display: "inline-block" }}>
+    <img
+      src={previewImage || editingProduct?.imagePath || "/img/Default_Product.png"}
+      alt="Preview"
+      style={{
+        width: "180px",
+        height: "180px",
+        objectFit: "cover",
+        borderRadius: "8px",
+        border: "1px solid #d9d9d9",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+      }}
+    />
+    {/* Nút chọn file chồng lên hình */}
+    <input
+      type="file"
+      accept="image/*"
+      onChange={handleFileChange}
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        opacity: 0,
+        cursor: "pointer",
+        borderRadius: "8px",
+      }}
+    />
+    <div
+      style={{
+        position: "absolute",
+        bottom: "8px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        background: "rgba(0,0,0,0.5)",
+        color: "#fff",
+        padding: "4px 8px",
+        borderRadius: "4px",
+        fontSize: "12px",
+        pointerEvents: "none",
+      }}
+    >
+      Chọn hình
+    </div>
+  </div>
+</Form.Item>
 
-        <Form.Item
-          label="Tên sản phẩm"
-          name="productName"
-          rules={[
-            { required: true, message: "Vui lòng nhập tên sản phẩm" },
-            { max: 100, message: "Tên sản phẩm không quá 100 ký tự" },
-          ]}
-        >
-          <Input placeholder="Nhập tên sản phẩm" />
-        </Form.Item>
+    <Row gutter={16}>
+  <Col span={12}>
+    <Form.Item
+      label="Tên sản phẩm"
+      name="productName"
+      rules={[
+        { required: true, message: "Vui lòng nhập tên sản phẩm" },
+        { max: 100, message: "Tên sản phẩm không quá 100 ký tự" },
+      ]}
+    >
+      <Input placeholder="Nhập tên sản phẩm" />
+    </Form.Item>
+  </Col>
 
-        <Form.Item
-          label="Barcode"
-          name="barcode"
-          rules={[
-            { required: true, message: "Vui lòng nhập barcode" },
-            { max: 50, message: "Barcode không quá 50 ký tự" },
-          ]}
-        >
-          <Input placeholder="Nhập barcode" />
-        </Form.Item>
-      </Col>
+  <Col span={12}>
+    <Form.Item
+      label="Đơn vị"
+      name="unit"
+      initialValue="cái"
+      rules={[{ required: true, message: "Vui lòng nhập đơn vị" }]}
+    >
+      <Input placeholder="Nhập đơn vị (cái, kg, ly...)" />
+    </Form.Item>
+  </Col>
+</Row>
 
-      {/* Cột phải */}
-      <Col span={12}>
-        <Form.Item
-          label="Giá (VNĐ)"
-          name="price"
-          rules={[
-            { required: true, message: "Vui lòng nhập giá" },
-            { type: "number", min: 0, message: "Giá phải lớn hơn hoặc bằng 0" },
-          ]}
-        >
-          <InputNumber placeholder="Nhập giá" style={{ width: "100%" }} />
-        </Form.Item>
+{/* Barcode và Giá cùng hàng */}
+<Row gutter={16}>
+  <Col span={12}>
+    <Form.Item
+      label="Barcode"
+      name="barcode"
+      rules={[
+        { required: true, message: "Vui lòng nhập barcode" },
+        { max: 50, message: "Barcode không quá 50 ký tự" },
+      ]}
+    >
+      <Input placeholder="Nhập barcode" />
+    </Form.Item>
+  </Col>
 
-        <Form.Item
-          label="Đơn vị"
-          name="unit"
-          initialValue="cái"
-          rules={[{ required: true, message: "Vui lòng nhập đơn vị" }]}
-        >
-          <Input placeholder="Nhập đơn vị (cái, kg, ly...)" />
-        </Form.Item>
+  <Col span={12}>
+    <Form.Item
+      label="Giá (VNĐ)"
+      name="price"
+      rules={[
+        { required: true, message: "Vui lòng nhập giá" },
+        { type: "number", min: 0, message: "Giá phải >= 0" },
+      ]}
+    >
+      <InputNumber placeholder="Nhập giá" style={{ width: "100%" }} />
+    </Form.Item>
+  </Col>
+</Row>
 
-        <Form.Item
-          label="Danh mục"
-          name="categoryId"
-          rules={[{ required: true, message: "Vui lòng chọn danh mục" }]}
-        >
-          <Select placeholder="Chọn danh mục">
-            {categories.map((category) => (
-              <Option key={category.categoryId} value={category.categoryId}>
-                {category.categoryName}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
+{/* Danh mục và nhà cung cấp */}
+<Row gutter={16}>
+  <Col span={12}>
+    <Form.Item
+      label="Danh mục"
+      name="categoryId"
+      rules={[{ required: true, message: "Vui lòng chọn danh mục" }]}
+    >
+      <Select placeholder="Chọn danh mục">
+        {categories.map((category) => (
+          <Option key={category.categoryId} value={category.categoryId}>
+            {category.categoryName}
+          </Option>
+        ))}
+      </Select>
+    </Form.Item>
+  </Col>
 
-        <Form.Item
-          label="Nhà cung cấp"
-          name="supplierId"
-          rules={[{ required: true, message: "Vui lòng chọn nhà cung cấp" }]}
-        >
-          <Select placeholder="Chọn nhà cung cấp">
-            {suppliers.map((supplier) => (
-              <Option key={supplier.supplierId} value={supplier.supplierId}>
-                {supplier.name}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-      </Col>
-    </Row>
+  <Col span={12}>
+    <Form.Item
+      label="Nhà cung cấp"
+      name="supplierId"
+      rules={[{ required: true, message: "Vui lòng chọn nhà cung cấp" }]}
+    >
+      <Select placeholder="Chọn nhà cung cấp">
+        {suppliers.map((supplier) => (
+          <Option key={supplier.supplierId} value={supplier.supplierId}>
+            {supplier.name}
+          </Option>
+        ))}
+      </Select>
+    </Form.Item>
+  </Col>
+</Row>
 
     {/* Nút hành động */}
     <Form.Item style={{ textAlign: "right", marginTop: 16 }}>
       <Space>
         <Button onClick={handleCancel}>Hủy</Button>
-        <Button type="primary" htmlType="submit" className="product-search-btn">
+        <Button type="primary" htmlType="submit">
           {editingProduct ? "Cập nhật" : "Thêm mới"}
         </Button>
       </Space>
     </Form.Item>
   </Form>
 </Modal>
+
 
       </div>
     )

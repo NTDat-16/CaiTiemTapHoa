@@ -184,100 +184,100 @@ export default function App() {
     };
 
     /// Hàm gọi API THÊM MỚI hoặc CẬP NHẬT
-// Hàm gọi API THÊM MỚI hoặc CẬP NHẬT
-const handleSubmit = async (values) => {
-    setSubmitting(true);
-    setErrorMessage('');
-    
-    const token = getAuthToken();
-    
-    if (!token) {
-        setErrorMessage("Vui lòng Đăng nhập để thực hiện thao tác này.");
-        setSubmitting(false);
-        return;
-    }
+    // Hàm gọi API THÊM MỚI hoặc CẬP NHẬT
+    const handleSubmit = async (values) => {
+        setSubmitting(true);
+        setErrorMessage('');
+        
+        const token = getAuthToken();
+        
+        if (!token) {
+            setErrorMessage("Vui lòng Đăng nhập để thực hiện thao tác này.");
+            setSubmitting(false);
+            return;
+        }
 
-    // Khắc phục ReferenceError
-    let url = PROMOTION_API_URL;
-    let method = 'POST'; 
+        // Khắc phục ReferenceError
+        let url = PROMOTION_API_URL;
+        let method = 'POST'; 
 
-    if (editingId) {
-        url = `${PROMOTION_API_URL}/${editingId}`;
-        method = 'PUT';
-    }
+        if (editingId) {
+            url = `${PROMOTION_API_URL}/${editingId}`;
+            method = 'PUT';
+        }
 
-    // 🌟 ÁNH XẠ DỮ LIỆU ĐÚNG CHUẨN BACKEND (camelCase + Enum Integer)
-    const finalData = {
-        // Tên trường camelCase
-        promoCode: values.promo_code,
-        description: values.description,
+        // 🌟 ÁNH XẠ DỮ LIỆU ĐÚNG CHUẨN BACKEND (camelCase + Enum Integer)
+        const finalData = {
+            // Tên trường camelCase
+            promoCode: values.promo_code,
+            description: values.description,
+            
+            // 🌟 ÁNH XẠ ENUM (percentage -> 0, fixed -> 1)
+            discountType: values.discount_type === 'percentage' ? 0 : 1, 
+            
+            discountValue: Number(values.discount_value),
+            
+            // Chuyển đổi ngày tháng sang ISO 8601 string
+            startDate: values.start_date ? values.start_date.toISOString() : '', 
+            endDate: values.end_date ? values.end_date.toISOString() : '', 
+            
+            minOrderAmount: Number(values.min_order_amount),
+            usageLimit: Number(values.usage_limit),
+            usedCount: Number(values.used_count || 0), 
+            // Giả định Status string 'active'/'inactive' được chấp nhận hoặc tự chuyển đổi
+            status: values.status,
+        };
         
-        // 🌟 ÁNH XẠ ENUM (percentage -> 0, fixed -> 1)
-        discountType: values.discount_type === 'percentage' ? 0 : 1, 
-        
-        discountValue: Number(values.discount_value),
-        
-        // Chuyển đổi ngày tháng sang ISO 8601 string
-        startDate: values.start_date ? values.start_date.toISOString() : '', 
-        endDate: values.end_date ? values.end_date.toISOString() : '', 
-        
-        minOrderAmount: Number(values.min_order_amount),
-        usageLimit: Number(values.usage_limit),
-        usedCount: Number(values.used_count || 0), 
-        // Giả định Status string 'active'/'inactive' được chấp nhận hoặc tự chuyển đổi
-        status: values.status,
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(finalData),
+            });
+            
+            // Xử lý lỗi 400 chi tiết
+            if (response.status === 400) {
+                const errorText = await response.text();
+                // Cố gắng parse JSON để lấy chi tiết lỗi validation
+                let errorDetail = {};
+                try {
+                    errorDetail = JSON.parse(errorText);
+                } catch {
+                    throw new Error(`Lỗi ${method} API: 400. Chi tiết: ${errorText || response.statusText}`);
+                }
+
+                let clientErrorMessage = `Lỗi nhập liệu. Vui lòng kiểm tra lại.`;
+                if (errorDetail.errors) {
+                    clientErrorMessage += ` Chi tiết: ${Object.values(errorDetail.errors).flat().join('; ')}`;
+                }
+                throw new Error(`Lỗi ${method} API: 400. ${clientErrorMessage}`);
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Lỗi ${method} API: ${response.status}. Chi tiết: ${errorText || response.statusText}`);
+            }
+
+            await fetchPromotions();
+            handleCloseModal();
+            message.success(`Đã ${editingId ? "cập nhật" : "thêm mới"} mã khuyến mãi thành công!`);
+
+        } catch (error) {
+            console.error("Lỗi khi gửi form:", error);
+            
+            const errorMessageToDisplay = error.message.includes("Chi tiết: ") 
+                ? error.message.split("Chi tiết: ")[1] 
+                : error.message;
+
+            setErrorMessage(error.message);
+            message.error(errorMessageToDisplay); 
+        } finally {
+            setSubmitting(false);
+        }
     };
-    
-    try {
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(finalData),
-        });
-        
-        // Xử lý lỗi 400 chi tiết
-        if (response.status === 400) {
-            const errorText = await response.text();
-            // Cố gắng parse JSON để lấy chi tiết lỗi validation
-            let errorDetail = {};
-            try {
-                errorDetail = JSON.parse(errorText);
-            } catch {
-                throw new Error(`Lỗi ${method} API: 400. Chi tiết: ${errorText || response.statusText}`);
-            }
-
-            let clientErrorMessage = `Lỗi nhập liệu. Vui lòng kiểm tra lại.`;
-            if (errorDetail.errors) {
-                clientErrorMessage += ` Chi tiết: ${Object.values(errorDetail.errors).flat().join('; ')}`;
-            }
-            throw new Error(`Lỗi ${method} API: 400. ${clientErrorMessage}`);
-        }
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Lỗi ${method} API: ${response.status}. Chi tiết: ${errorText || response.statusText}`);
-        }
-
-        await fetchPromotions();
-        handleCloseModal();
-        message.success(`Đã ${editingId ? "cập nhật" : "thêm mới"} mã khuyến mãi thành công!`);
-
-    } catch (error) {
-        console.error("Lỗi khi gửi form:", error);
-        
-        const errorMessageToDisplay = error.message.includes("Chi tiết: ") 
-            ? error.message.split("Chi tiết: ")[1] 
-            : error.message;
-
-        setErrorMessage(error.message);
-        message.error(errorMessageToDisplay); 
-    } finally {
-        setSubmitting(false);
-    }
-};
     // Mở Modal và điền dữ liệu cho việc chỉnh sửa
     const handleEdit = (promo) => {
         const initialValues = {
@@ -434,16 +434,15 @@ const handleSubmit = async (values) => {
                         cancelText="Không"
                     >
                        <Tooltip title="Xóa">
-                            <Button
+                            <Button
                                 className="btnDelete"
-                                icon={<DeleteOutlined />}
-                                danger
-                                size="small"
-                            >
-                                {/* Đặt chữ "Xóa" vào đây */}
-                                Xóa
-                            </Button>
-                        </Tooltip>
+                                icon={<DeleteOutlined />}
+                                danger
+                                size="small"
+                            >
+                                Xóa
+                            </Button>
+                        </Tooltip>
                     </Popconfirm>
                 </Space>
             ),
@@ -482,7 +481,11 @@ const handleSubmit = async (values) => {
                     pagination={{
                         pageSize: 10,
                         showSizeChanger: true,
-                        showTotal: (total) => `Tổng ${total} mã giảm giá${searchTerm ? " (đã lọc)" : ""}`,
+                        showTotal: (total) => (
+                            <span>
+                                Tổng <span style={{ color: 'red', fontWeight: 'bold' }}>{total}</span> mã giảm giá
+                            </span>
+                        ),
                     }}
                     scroll={{ y: 400, x: 1200 }}
                 />
@@ -511,18 +514,17 @@ const handleSubmit = async (values) => {
                         }}
                     >
                         {/* Các trường nhập liệu */}
-                        <Form.Item
-                            label="Mã KM"
-                            name="promo_code"
-                            rules={[
-                                { required: true, message: "Vui lòng nhập mã khuyến mãi" },
-                                // THÊM REGEX VÀO ĐÂY
+                        <Form.Item
+                            label="Mã KM"
+                            name="promo_code"
+                            rules={[
+                                { required: true, message: "Vui lòng nhập mã khuyến mãi" },
                                 { 
                                     pattern: /^[A-Z0-9_-]+$/, 
                                     message: "Chỉ được chứa chữ in hoa, số, gạch dưới (_) và gạch ngang (-)" 
                                 },
-                                { max: 50, message: "Mã không quá 50 ký tự" },
-                            ]}
+                                { max: 50, message: "Mã không quá 50 ký tự" },
+                            ]}
                             style={{ marginBottom: 0 }}
                         >
                             <Input placeholder="Nhập mã khuyến mãi" style={{ height: 36 }} />
@@ -550,28 +552,28 @@ const handleSubmit = async (values) => {
                             name="discount_value"
                             rules={[
                                 { required: true, message: "Vui lòng nhập giá trị giảm" },
-                                {
-                                    validator: (_, value) => {
-                                        if (!value || isNaN(Number(value))) return Promise.resolve();
-                                        const numValue = Number(value);
-                                        const type = form.getFieldValue('discount_type'); 
+                                {
+                                    validator: (_, value) => {
+                                        if (!value || isNaN(Number(value))) return Promise.resolve();
+                                        const numValue = Number(value);
+                                        const type = form.getFieldValue('discount_type'); 
 
-                                        // Yêu cầu chung: Phải lớn hơn 0 (theo lỗi API)
-                                        if (numValue <= 0) {
-                                            return Promise.reject(new Error("Giá trị giảm giá phải lớn hơn 0"));
-                                        }
+                                        // Yêu cầu chung: Phải lớn hơn 0 (theo lỗi API)
+                                        if (numValue <= 0) {
+                                            return Promise.reject(new Error("Giá trị giảm giá phải lớn hơn 0"));
+                                        }
 
-                                        if (type === 'percentage') {
-                                            if (numValue >= 1 && numValue <= 100 && Number.isInteger(numValue)) return Promise.resolve();
-                                            return Promise.reject(new Error("Phần trăm phải là số nguyên từ 1 đến 100"));
-                                        } else if (type === 'fixed') {
-                                            // Đã được bao gồm trong điều kiện numValue > 0
-                                            if (Number.isInteger(numValue)) return Promise.resolve();
-                                            return Promise.reject(new Error("Giá trị cố định phải là số nguyên"));
-                                        }
-                                            return Promise.resolve();
-                                        },
-                                    },
+                                        if (type === 'percentage') {
+                                            if (numValue >= 1 && numValue <= 100 && Number.isInteger(numValue)) return Promise.resolve();
+                                                return Promise.reject(new Error("Phần trăm phải là số nguyên từ 1 đến 100"));
+                                        } else if (type === 'fixed') {
+                                            // Đã được bao gồm trong điều kiện numValue > 0
+                                            if (Number.isInteger(numValue)) return Promise.resolve();
+                                                return Promise.reject(new Error("Giá trị cố định phải là số nguyên"));
+                                        }
+                                        return Promise.resolve();
+                                    },
+                                },
                             ]}
                             style={{ marginBottom: 0 }}
                         >
