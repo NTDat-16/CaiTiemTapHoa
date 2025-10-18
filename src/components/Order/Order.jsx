@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import {
-  Form, Table, Row, Col, Input, Select, Button, Card, Modal, message, Space, Tag, Pagination, Spin,Divider, InputNumber 
+  Form, Table, Row, Col, Input, Select, Button, Card, Modal, message, Space, Tag, Pagination, Spin,Divider, InputNumber
 } from "antd";
 import { SearchOutlined, DeleteOutlined, MinusOutlined, PlusOutlined, QrcodeOutlined } from "@ant-design/icons";
 import "./Order.css";
@@ -9,6 +9,8 @@ import QR from "../../assets/QR.png";
 
 const { Option } = Select;
 
+// Giữ lại mockProducts và mockPromotions cho mục đích phát triển local, 
+// nhưng chúng ta sẽ thay thế việc sử dụng chúng bằng API call
 const mockProducts = [
   { product_id: 1, product_name: "Nước suối Aquafina 500ml", barcode: "8938505970025", price: 5000, unit: "chai", type: "do-uong", image_url: aquavoiem },
   { product_id: 2, product_name: "Bánh mì sandwich", barcode: "8934567823912", price: 15000, unit: "ổ", type: "thuc-pham", image_url: aquavoiem },
@@ -45,6 +47,13 @@ const typeColors = {
   // ... bạn có thể thêm bất cứ loại nào ở đây
 };
 
+// Hàm lấy Token
+const getAuthToken = () => {
+    return localStorage.getItem('token');
+};
+
+const API_BASE_URL = "http://localhost:5000/api";
+
 
 export default function Order() {
   const [category, setCategory] = useState("all");
@@ -65,13 +74,65 @@ export default function Order() {
   const [customerName, setCustomerName] = useState("");
   const [loadingCustomer, setLoadingCustomer] = useState(false);
 
+  // Hàm gọi API lấy danh sách sản phẩm
+  const fetchProducts = async () => {
+    setLoading(true);
+    const token = getAuthToken(); 
+    // console.log(token);
+    if (!token) {
+        message.error("Không tìm thấy token. Vui lòng đăng nhập lại.");
+        setLoading(false);
+        // Fallback: có thể giữ lại mock data nếu không có token hoặc chuyển hướng đăng nhập
+        setProducts(mockProducts);
+        setPromotions(mockPromotions);
+        return;
+    }
 
+    try {
+        const response = await fetch(`${API_BASE_URL}/Products`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                // Thêm Authorization header
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            // Xử lý lỗi HTTP (ví dụ: 401 Unauthorized, 404 Not Found)
+            if (response.status === 401) {
+                message.error("Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
+                // Xóa token và chuyển hướng đăng nhập ở production
+            } else {
+                message.error(`Lỗi khi lấy dữ liệu sản phẩm: ${response.statusText}`);
+            }
+            // Fallback khi gọi API thất bại
+            setProducts(mockProducts);
+            setPromotions(mockPromotions);
+
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        // Giả định API trả về một mảng sản phẩm
+        setProducts(data);
+        // Tạm thời giữ lại mockPromotions vì chưa có API cho nó
+        setPromotions(mockPromotions); 
+        message.success("Tải dữ liệu sản phẩm thành công!");
+    } catch (error) {
+        console.error("Lỗi khi fetch sản phẩm:", error);
+        message.error("Không thể kết nối đến máy chủ hoặc lỗi mạng.");
+        // Fallback khi có exception (ví dụ: lỗi mạng)
+        setProducts(mockProducts);
+        setPromotions(mockPromotions);
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  // Thay thế useEffect cũ
   useEffect(() => {
-    setTimeout(() => {
-      setProducts(mockProducts);
-      setPromotions(mockPromotions);
-      setLoading(false);
-    }, 600);
+    fetchProducts();
   }, []);
 
   const handleAdd = () => {
@@ -79,12 +140,11 @@ export default function Order() {
     form.resetFields();
   }
 
-  const filteredProducts = products.filter((p) => {
+const filteredProducts = (Array.isArray(products) ? products : []).filter((p) => {
     const matchCategory = category === "all" || p.type === category;
     const matchSearch = p.product_name.toLowerCase().includes(search.toLowerCase());
     return matchCategory && matchSearch;
-  });
-
+});
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
@@ -268,8 +328,7 @@ export default function Order() {
           <Card
             title={null}
             style={{height: "calc(100vh - 80px)",display: "flex",flexDirection: "column",borderRadius: 12,boxShadow: "0 4px 12px rgba(0,0,0,0.08)",overflow: "hidden",}}
-            bodyStyle={{display: "flex",flexDirection: "column",height: "100%",padding: 0,}}
-          >
+          styles={{ body: { display: "flex", flexDirection: "column", height: "100%", padding: 0 } }}          >
             {/* Header */}
             <div
               style={{padding: "10px 20px",borderBottom: "1px solid #f0f0f0",background: "#fff",position: "sticky",top: 0,zIndex: 2,}}
@@ -320,7 +379,8 @@ export default function Order() {
                           <div style={{ position: "relative", height: 140, overflow: "hidden", borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
                             <img
                               alt={p.product_name}
-                              src={p.image_url}
+                              // Giả sử API trả về image_url hợp lệ, nếu không có, dùng fallback
+                              src={p.image_url || aquavoiem} 
                               style={{width: "100%",height: "100%",objectFit: "cover",}}
                             />
                             {chosenIds.includes(p.product_id) && (
@@ -334,8 +394,8 @@ export default function Order() {
                         }
                         onClick={() => handleAddToCart(p)}
                         style={{width: 160,borderRadius: 10,boxShadow: "0 4px 12px rgba(0,0,0,0.08)",transition: "transform 0.2s, box-shadow 0.2s", cursor: "pointer",background: "#fff",}}
-                        bodyStyle={{ padding: 10 }}
-                        onMouseEnter={(e) => {
+                        styles={{ body: { padding: 0 } }}  
+                      onMouseEnter={(e) => {
                           e.currentTarget.style.transform = "translateY(-3px)";
                           e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.12)";
                         }}
@@ -365,7 +425,7 @@ export default function Order() {
                                 color: "red", 
                                 fontSize: 12 
                             }}>
-                                Số lượng: {10000}
+                                Số lượng: {10000} {/* Giả định: thay bằng p.stock_quantity nếu API có */}
                             </span>
                             <span style={{ color: "#555", fontSize: 12 }}>
                               {p.price.toLocaleString()} ₫ / {p.unit}
