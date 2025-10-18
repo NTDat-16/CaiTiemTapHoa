@@ -29,7 +29,6 @@ export default function InventoryManage() {
   const [unitOptions, setUnitOptions] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [form] = Form.useForm();
   const [pagination, setPagination] = useState({
@@ -90,36 +89,37 @@ export default function InventoryManage() {
   }, [pagination.current, pagination.pageSize]);
 
   // BƯỚC 1 & 2: Tạo hàm mới và gọi trong useEffect riêng để lấy sản phẩm sắp hết hàng
-  useEffect(() => {
-    const fetchLowStock = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        // Giả sử đây là endpoint mới của bạn
-        const response = await axios.get(
-          `http://localhost:5000/api/inventory/low-stock`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        if (response.data.success) {
-          // Map lại dữ liệu nếu cần thiết để khớp với cấu trúc bạn đang dùng
-          const lowStockItems = response.data.data.map((item) => ({
-            inventory_id: item.inventoryId,
-            product_id: item.product.productId,
-            product_name: item.product.productName,
-            quantity: item.quantity,
-            unit: item.product.unit,
-          }));
-          setLowStock(lowStockItems);
-        }
-      } catch (error) {
-        // Có thể không hiển thị lỗi này để tránh làm phiền người dùng
-        console.error("Lỗi khi lấy dữ liệu sản phẩm sắp hết hàng:", error);
-      }
-    };
 
+  const fetchLowStock = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      // Giả sử đây là endpoint mới của bạn
+      const response = await axios.get(
+        `http://localhost:5000/api/inventory/low-stock`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.success) {
+        // Map lại dữ liệu nếu cần thiết để khớp với cấu trúc bạn đang dùng
+        const lowStockItems = response.data.data.map((item) => ({
+          inventory_id: item.inventoryId,
+          product_id: item.product.productId,
+          product_name: item.product.productName,
+          quantity: item.quantity,
+          unit: item.product.unit,
+        }));
+        setLowStock(lowStockItems);
+      }
+    } catch (error) {
+      // Có thể không hiển thị lỗi này để tránh làm phiền người dùng
+      console.error("Lỗi khi lấy dữ liệu sản phẩm sắp hết hàng:", error);
+    }
+  };
+
+  useEffect(() => {
     fetchLowStock();
   }, []); // Mảng rỗng để đảm bảo nó chỉ chạy 1 lần khi component mount
 
@@ -143,7 +143,6 @@ export default function InventoryManage() {
   const handleCancel = () => {
     setIsEditModalOpen(false);
     setIsImportModalOpen(false);
-    setIsAuditModalOpen(false);
     form.resetFields();
     setEditingProduct(null);
   };
@@ -193,8 +192,7 @@ export default function InventoryManage() {
           : product
       );
       setProducts(updatedProducts);
-      // Optional: Re-fetch low stock data if an item might have become low stock
-      // fetchLowStock();
+      fetchLowStock();
       message.success("Sửa sản phẩm thành công!");
     } else {
       message.error("Không thể cập nhật sản phẩm.");
@@ -223,27 +221,6 @@ export default function InventoryManage() {
     }
 
     setIsImportModalOpen(false);
-    form.resetFields();
-  };
-
-  const handleAudit = (values) => {
-    const productToAudit = products.find(
-      (product) => product.product_id === values.product_id
-    );
-
-    if (productToAudit) {
-      const updatedProducts = products.map((product) =>
-        product.product_id === values.product_id
-          ? { ...product, quantity: values.actual_quantity }
-          : product
-      );
-      setProducts(updatedProducts);
-      message.success("Kiểm kê thành công!");
-    } else {
-      message.error("Sản phẩm không tồn tại!");
-    }
-
-    setIsAuditModalOpen(false);
     form.resetFields();
   };
 
@@ -280,7 +257,7 @@ export default function InventoryManage() {
             icon={<EditOutlined />}
             size="small"
             onClick={() => handleEdit(record)}
-            className="edit-button"
+            className="btn-edit"
           >
             Sửa
           </Button>
@@ -294,7 +271,10 @@ export default function InventoryManage() {
   };
 
   return (
-    <div className="inventory-manage-container">
+    <div
+      className="inventory-manage-container"
+      style={{ overflowY: "auto", maxHeight: "95vh" }}
+    >
       <div className="inventory-manage-header">
         <h2> Quản Lý Tồn Kho</h2>
         <div
@@ -322,26 +302,17 @@ export default function InventoryManage() {
             >
               Nhập hàng
             </Button>
-            <Button
-              type="default"
-              icon={<FileSearchOutlined />}
-              size="large"
-              onClick={() => setIsAuditModalOpen(true)}
-            >
-              Kiểm kê
-            </Button>
           </Space>
         </div>
       </div>
 
-      {/* Phần Alert này không cần thay đổi */}
       {lowStock.length > 0 && (
         <Alert
           message={`Có ${lowStock.length} sản phẩm sắp hết hàng!`}
           description={
             <ul style={{ margin: 0, paddingLeft: 20 }}>
-              {lowStock.map((item) => (
-                <li key={item.product_id}>
+              {lowStock.map((item, index) => (
+                <li key={index}>
                   <b>{item.product_name}</b> (Còn lại:{" "}
                   <span style={{ color: "red" }}>{item.quantity}</span>)
                 </li>
@@ -475,59 +446,6 @@ export default function InventoryManage() {
               <Button onClick={handleCancel}>Đóng</Button>
               <Button type="primary" htmlType="submit">
                 Lưu
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* Modal kiểm kê */}
-      <Modal
-        title="Kiểm Kê"
-        open={isAuditModalOpen}
-        onCancel={handleCancel}
-        footer={null}
-        closable={false}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleAudit}
-          autoComplete="off"
-        >
-          <Form.Item
-            label="Chọn sản phẩm"
-            name="product_id"
-            rules={[{ required: true, message: "Vui lòng chọn sản phẩm" }]}
-          >
-            <Select placeholder="Chọn sản phẩm">
-              {products.map((product) => (
-                <Option key={product.product_id} value={product.product_id}>
-                  {product.product_name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="Số lượng thực tế"
-            name="actual_quantity"
-            rules={[
-              { required: true, message: "Vui lòng nhập số lượng thực tế" },
-            ]}
-          >
-            <Input type="number" placeholder="Nhập số lượng thực tế" />
-          </Form.Item>
-
-          <Form.Item label="Ghi chú" name="note">
-            <Input.TextArea placeholder="Nhập ghi chú (nếu có)" />
-          </Form.Item>
-
-          <Form.Item className="form-actions">
-            <Space>
-              <Button onClick={handleCancel}>Đóng</Button>
-              <Button type="primary" htmlType="submit">
-                Kiểm kê
               </Button>
             </Space>
           </Form.Item>

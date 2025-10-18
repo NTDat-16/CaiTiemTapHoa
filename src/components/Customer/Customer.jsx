@@ -5,18 +5,7 @@ import "./Customer.css"
 
 const { Option } = Select
 
-// Dữ liệu giả lập
-const mockCustomersData = [
-    { customer_id: 1, name: "Nguyễn Văn An", phone: "0901234567", email: "an.nguyen@example.com", address: "123 Nguyễn Trãi, Phường Đồng Xuân, Quận Hoàn Kiếm, Thành phố Hà Nội", created_at: "2025-10-01" },
-    { customer_id: 2, name: "Trần Thị Bình", phone: "0901234568", email: "binh.tran@example.com", address: "456 Lê Lợi, Phường Bến Nghé, Quận 1, Thành phố Hồ Chí Minh", created_at: "2025-10-01" },
-]
-
-// Hàm giả lập API (Đã sửa lại logic ID: dùng ID từ data truyền vào thay vì Date.now())
-const fetchCustomersAPI = async () => new Promise(resolve => setTimeout(() => resolve(mockCustomersData), 500));
-const createCustomerAPI = async (data) => new Promise(resolve => setTimeout(() => resolve({ ...data, created_at: new Date().toISOString() }), 300));
-const updateCustomerAPI = async (id, data) => new Promise(resolve => setTimeout(() => resolve({ customer_id: id, ...data }), 300));
 const deleteCustomerAPI = async (id) => new Promise(resolve => setTimeout(() => resolve({ success: true }), 300));
-
 
 export default function Customer() {
     const [loading, setLoading] = useState(false)
@@ -25,7 +14,8 @@ export default function Customer() {
     const [customers, setCustomers] = useState([])
     const [searchTerm, setSearchTerm] = useState("")
     const [form] = Form.useForm()
-
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+    
     // --- Địa chỉ Việt Nam API ---
     const [provinces, setProvinces] = useState([])
     const [districts, setDistricts] = useState([])
@@ -70,24 +60,55 @@ export default function Customer() {
         }
     }
 
-    // --- Fetch khách hàng ---
-    const fetchCustomers = async () => {
-        setLoading(true)
+    // --- Fetch khách hàng từ API thực tế ---
+    const fetchCustomers = async (page = 1, pageSize = 10) => {
+        setLoading(true);
         try {
-            const data = await fetchCustomersAPI()
-            setCustomers(data)
+            const res = await fetch(`http://localhost:5000/api/Customer?pageNumber=${page}&pageSize=${pageSize}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+
+            if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+
+            const data = await res.json();
+            if (!data || !data.data) throw new Error("Phản hồi từ API không hợp lệ");
+
+            const items = (data.data.items || []).map(c => ({
+                ...c,
+                customerId: Number(c.customerId)
+            }));
+
+            setCustomers(items);
+            setPagination({
+                current: data.data.pageNumber || page,
+                pageSize: data.data.pageSize || pageSize,
+                total: data.data.totalCount || items.length
+            });
         } catch (error) {
-            message.error("Lỗi khi tải danh sách khách hàng")
-            console.error(error)
+            message.error("Lỗi khi tải danh sách khách hàng: " + error.message);
+            console.error(error);
         } finally {
-            setLoading(false)
+            setTimeout(() => {
+            setLoading(false);
+            }, 1000);
         }
-    }
+    };
 
     useEffect(() => {
-        fetchCustomers()
+        fetchCustomers(pagination.current, pagination.pageSize);
+    }, []);
+
+    useEffect(() => {
         fetchProvinces()
     }, [fetchProvinces])
+
+    const handleTableChange = (pag) => {
+        fetchCustomers(pag.current, pag.pageSize);
+    };
 
     // --- Handlers ---
     const handleAdd = () => {
@@ -104,14 +125,13 @@ export default function Customer() {
         setEditingCustomer(customer)
         setIsModalOpen(true)
 
-        // Phân tích địa chỉ: "Số nhà/Đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố"
-        const parts = customer.address.split(",").map(p => p.trim())
-        const house = parts[0] || ""
-        const wardName = parts[1] || ""
-        const districtName = parts[2] || ""
-        const provinceName = parts[3] || ""
+        const addressStr = customer.address || ""; // nếu null thì dùng chuỗi rỗng
+        const parts = addressStr.split(",").map(p => p.trim());
+        const house = parts[0] || "";
+        const wardName = parts[1] || "";
+        const districtName = parts[2] || "";
+        const provinceName = parts[3] || "";
         
-        // Dùng useEffect hoặc setTimeout để đảm bảo provinces đã load xong
         setTimeout(async () => {
             const provinceObj = provinces.find(p => p.name === provinceName)
             const provinceCode = provinceObj?.code
@@ -135,11 +155,11 @@ export default function Customer() {
             form.setFieldsValue({
                 name: customer.name,
                 phone: customer.phone,
-                email: customer.email,
-                house,
-                province: provinceCode,
-                district: districtCode,
-                ward: wardCode,
+                email: customer.email || "",
+                house ,
+                province: provinceCode || "",
+                district: districtCode || "",
+                ward: wardCode || "",
             })
         }, 0)
     }
@@ -148,7 +168,7 @@ export default function Customer() {
         setLoading(true)
         try {
             await deleteCustomerAPI(customerId)
-            setCustomers(prev => prev.filter(c => c.customer_id !== customerId))
+            setCustomers(prev => prev.filter(c => c.customerId !== customerId))
             message.success("Xóa khách hàng thành công")
         } catch (error) {
             message.error("Lỗi khi xóa khách hàng")
@@ -157,50 +177,108 @@ export default function Customer() {
         }
     }
 
-    // --- Sửa lỗi ID tự tăng ---
     const handleSubmit = async (values) => {
         try {
-            const provinceName = provinces.find(p => p.code === values.province)?.name || ''
-            const districtName = districts.find(d => d.code === values.district)?.name || ''
-            const wardName = wards.find(w => w.code === values.ward)?.name || ''
-            const fullAddress = `${values.house}, ${wardName}, ${districtName}, ${provinceName}`
+            const { name, email, phone, house, ward, district, province } = values;
+
+            const isDuplicateName = customers.some(
+                c => c.name.toLowerCase().trim() === name.toLowerCase().trim() &&
+                    (!editingCustomer || c.customerId !== editingCustomer.customerId)
+            );
+
+            if (isDuplicateName) {
+                form.setFields([
+                    {
+                        name: "name",
+                        errors: ["Tên khách hàng đã tồn tại! Vui lòng nhập tên khác!"]
+                    }
+                ]);
+                return;
+            }
+
+            const provinceName = provinces.find(p => p.code === province)?.name || '';
+            const districtName = districts.find(d => d.code === district)?.name || '';
+            const wardName = wards.find(w => w.code === ward)?.name || '';
+            const fullAddress = `${house}, ${wardName}, ${districtName}, ${provinceName}`;
+
+            if (!editingCustomer || (editingCustomer && email !== editingCustomer.email)) {
+                const emailRes = await fetch(`http://localhost:5000/api/Customer/check-email/${email}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+                });
+                const emailData = await emailRes.json();
+                if (!emailRes.ok || emailData.exists) {
+                    form.setFields([{ name: "email", errors: ["Email đã tồn tại!"] }]);
+                    return;
+                }
+            }
+
+            if (!editingCustomer || (editingCustomer && phone !== editingCustomer.phone)) {
+                const phoneRes = await fetch(`http://localhost:5000/api/Customer/check-phone/${phone}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+                });
+                const phoneData = await phoneRes.json();
+                if (!phoneRes.ok || phoneData.exists) {
+                    form.setFields([{ name: "phone", errors: ["Số điện thoại đã tồn tại!"] }]);
+                    return;
+                }
+            }
 
             let customerData = {
                 ...values,
                 address: fullAddress,
                 created_at: editingCustomer ? editingCustomer.created_at : new Date().toISOString()
-            }
+            };
 
             if (editingCustomer) {
-                // Cập nhật
-                const updatedCustomer = await updateCustomerAPI(editingCustomer.customer_id, customerData)
-                setCustomers(prev => prev.map(c => c.customer_id === editingCustomer.customer_id ? updatedCustomer : c))
-                message.success("Cập nhật khách hàng thành công")
-            } else {
-                // Thêm mới
-                // 1. Tính toán ID mới
-                const maxId = customers.length > 0 ? Math.max(...customers.map(c => c.customer_id)) : 0
-                const newId = maxId + 1
+                const response = await fetch(`http://localhost:5000/api/Customer/${editingCustomer.customerId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify(customerData),
+                });
 
-                // 2. Gán ID mới vào data trước khi gọi API giả lập
-                customerData = { ...customerData, customer_id: newId } 
-                
-                // 3. Gọi API giả lập (đã sửa API giả lập để dùng ID này)
-                const newCustomer = await createCustomerAPI(customerData) 
-                
-                setCustomers(prev => [...prev, newCustomer])
-                message.success("Thêm khách hàng mới thành công")
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || "Cập nhật khách hàng thất bại");
+                }
+
+                const updatedCustomer = await response.json();
+                setCustomers(prev =>
+                    prev.map(c => c.customerId === editingCustomer.customerId ? updatedCustomer.data || updatedCustomer : c)
+                );
+                message.success("Cập nhật khách hàng thành công");
+            } else {
+                const response = await fetch("http://localhost:5000/api/Customer", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify(customerData),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || "Thêm khách hàng thất bại");
+                }
+
+                const result = await response.json();
+                const newCustomer = result.data || result;
+                setCustomers(prev => [...prev, newCustomer]);
+                message.success("Thêm khách hàng thành công");
             }
 
-            form.resetFields()
-            setEditingCustomer(null)
-            setIsModalOpen(false)
-        } catch (error) {
-            message.error("Lỗi khi lưu khách hàng")
-            console.error(error)
-        }
-    }
+            form.resetFields();
+            setEditingCustomer(null);
+            setIsModalOpen(false);
 
+        } catch (error) {
+            message.error(error.message || "Lỗi khi lưu khách hàng");
+            console.error(error);
+        }
+    };
 
     const handleCancel = () => {
         form.resetFields()
@@ -210,10 +288,6 @@ export default function Customer() {
         setSelectedProvince(null)
         setSelectedDistrict(null)
         setIsModalOpen(false)
-    }
-
-    const handleSearch = (value) => {
-        setSearchTerm(value)
     }
 
     const handleProvinceChange = (value) => {
@@ -237,9 +311,14 @@ export default function Customer() {
         const lower = searchTerm.toLowerCase()
         return c.name?.toLowerCase().includes(lower) || c.phone?.includes(lower) || c.email?.toLowerCase().includes(lower)
     })
+    
+    const handleSearch = (value) => {
+        setSearchTerm(value)
+    }
+
 
     const columns = [
-        { title: "ID", dataIndex: "customer_id", key: "customer_id", width: 60, align: "center" },
+        { title: "ID", dataIndex: "customerId", key: "customerId", width: 60, align: "center" },
         { title: "Họ và tên", dataIndex: "name", key: "name", width: 150 },
         { title: "Số điện thoại", dataIndex: "phone", key: "phone", width: 120, align: "center" },
         { title: "Email", dataIndex: "email", key: "email", width: 180 },
@@ -254,7 +333,7 @@ export default function Customer() {
                 </Tooltip>
             )
         },
-        { title: "Ngày tạo", dataIndex: "created_at", key: "created_at", width: 120, align: "center", render: (text) => text ? new Date(text).toLocaleDateString("vi-VN") : "N/A" },
+        { title: "Ngày tạo", dataIndex: "createdAt", key: "createdAt", width: 120, align: "center", render: (text) => text ? new Date(text).toLocaleDateString("vi-VN") : "N/A" },
         {
             title: "Thao tác",
             key: "action",
@@ -263,8 +342,8 @@ export default function Customer() {
             align: "center",
             render: (_, record) => (
                 <Space size="small">
-                    <Button type="primary" icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)}>Sửa</Button>
-                    <Popconfirm title="Xóa khách hàng?" onConfirm={() => handleDelete(record.customer_id)} okText="Xóa" cancelText="Hủy">
+                    <Button className="btn-edit" type="primary" icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)}>Sửa</Button>
+                    <Popconfirm title="Xóa khách hàng?" onConfirm={() => handleDelete(record.customerId)} okText="Xóa" cancelText="Hủy">
                         <Button type="primary" danger icon={<DeleteOutlined />} size="small">Xóa</Button>
                     </Popconfirm>
                 </Space>
@@ -277,13 +356,35 @@ export default function Customer() {
             <div className="customer-manage-header">
                 <h2 className="customer-manage-title">Quản Lý Khách Hàng</h2>
                 <div className="header-actions">
-                    <Input.Search placeholder="Tìm kiếm theo tên, số điện thoại, email..." allowClear enterButton={<SearchOutlined />} size="large" onSearch={handleSearch} className="customer-search-input" />
+                    <Input.Search 
+                        placeholder="Tìm kiếm theo tên, số điện thoại, email..." 
+                        allowClear 
+                        enterButton={<SearchOutlined />} 
+                        size="large" 
+                        onSearch={handleSearch}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        className="customer-search-input" 
+                    />
                     <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large" className="product-search-btn">Thêm khách hàng</Button>
                 </div>
             </div>
 
             <div className="customer-manage-table">
-                <Table columns={columns} dataSource={filteredCustomers} rowKey="customer_id" loading={loading} pagination={{ pageSize: 10, showSizeChanger: true, showTotal: total => `Tổng ${total} khách hàng${searchTerm ? " (đã lọc)" : ""}` }} scroll={{ y:420, x: 1200 }} />
+                <Table
+                    columns={columns}
+                    dataSource={filteredCustomers}
+                    rowKey="customerId"
+                    loading={loading}
+                    pagination={{
+                        current: pagination.current,
+                        pageSize: pagination.pageSize,
+                        total: pagination.total,
+                        showSizeChanger: true,
+                        showTotal: total => `Tổng ${total} khách hàng`,
+                    }}
+                    scroll={{ y:420, x: 1200 }}
+                    onChange={handleTableChange}
+                />
             </div>
 
             <Modal title={editingCustomer ? "Sửa Thông Tin Khách Hàng" : "Thêm Khách Hàng Mới"} open={isModalOpen} onCancel={handleCancel} footer={null} width={720} closable={false} style={{ top: 100 }}>
@@ -332,6 +433,7 @@ export default function Customer() {
                     </Form.Item>
                 </Form>
             </Modal>
+            
         </div>
     )
 }
