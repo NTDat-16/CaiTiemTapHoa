@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './Login.css'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,15 @@ export default function Login() {
     const [password, setPassWord] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        document.title = "CaiTiemTapHoa - Đăng nhập";
+
+        // Nếu muốn khi rời trang reset lại tiêu đề mặc định
+        return () => {
+            document.title = "CaiTiemTapHoa"; 
+        }
+    }, []);
 
     /*Xử lý login*/
     const handleLogin = async () => {

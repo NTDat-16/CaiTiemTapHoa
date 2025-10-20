@@ -12,12 +12,13 @@ export default function Category() {
   const [editingCategory, setEditingCategory] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [form] = Form.useForm()
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
 
   //Lấy danh sách danh mục từ database
-  const fetchCategories = async () => {
+  const fetchCategories = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/Categories", {
+      const response = await fetch(`http://localhost:5000/api/Categories?pageNumber=${page}&pageSize=${pageSize}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -25,18 +26,25 @@ export default function Category() {
         },
       });
 
-      const result = await response.json();
-
-      if (result.success && Array.isArray(result.data?.items)) {
-        setCategories(result.data.items);
-      } else if (Array.isArray(result.data)) {
-        setCategories(result.data);
-      } else if (Array.isArray(result)) {
-        setCategories(result);
+      const data = await response.json();
+      let items = [];
+      if (Array.isArray(data)) {
+        items = data;
+      } else if (Array.isArray(data?.data)) {
+        items = data.data;
+      } else if (Array.isArray(data?.data?.items)) {
+        items = data.data.items;
       } else {
         throw new Error("Phản hồi từ server không hợp lệ");
       }
 
+      const sorted = items.sort((a, b) => a.categoryId- b.categoryId);
+      setCategories(sorted);
+      setPagination({
+        current: data.data?.pageNumber || page,
+        pageSize: data.data?.pageSize || pageSize,
+        total: data.data?.totalCount || mapped.length,
+      });
     } catch (error) {
       message.error(error.message || "Lỗi khi tải danh sách danh mục");
     } finally {
@@ -236,9 +244,15 @@ export default function Category() {
           rowKey="categoryId"
           loading={loading}
           pagination={{
-            pageSize: 10,
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
             showSizeChanger: true,
-            showTotal: (total) => `Tổng ${total} danh mục${searchTerm ? " (đã lọc)" : ""}`,
+            showTotal: (total) => (
+              <span>
+                Tổng <span style={{ color: 'red', fontWeight: 'bold' }}>{total}</span> danh mục
+              </span>
+            ),
           }}
           scroll={{ y: 420, x: 1200 }}
         />

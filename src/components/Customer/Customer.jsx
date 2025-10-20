@@ -125,7 +125,7 @@ export default function Customer() {
         setEditingCustomer(customer)
         setIsModalOpen(true)
 
-        const addressStr = customer.address || ""; // nếu null thì dùng chuỗi rỗng
+        const addressStr = customer.address || "";
         const parts = addressStr.split(",").map(p => p.trim());
         const house = parts[0] || "";
         const wardName = parts[1] || "";
@@ -267,6 +267,10 @@ export default function Customer() {
                 const result = await response.json();
                 const newCustomer = result.data || result;
                 setCustomers(prev => [...prev, newCustomer]);
+                setPagination((prev) => ({
+                    ...prev,
+                    total: prev.total + 1,
+                }));
                 message.success("Thêm khách hàng thành công");
             }
 
@@ -315,7 +319,6 @@ export default function Customer() {
     const handleSearch = (value) => {
         setSearchTerm(value)
     }
-
 
     const columns = [
         { title: "ID", dataIndex: "customerId", key: "customerId", width: 60, align: "center" },
@@ -380,7 +383,11 @@ export default function Customer() {
                         pageSize: pagination.pageSize,
                         total: pagination.total,
                         showSizeChanger: true,
-                        showTotal: total => `Tổng ${total} khách hàng`,
+                        showTotal: (total) => (
+                            <span>
+                                Tổng <span style={{ color: 'red', fontWeight: 'bold' }}>{total}</span> khách hàng
+                            </span>
+                        ),
                     }}
                     scroll={{ y:420, x: 1200 }}
                     onChange={handleTableChange}
@@ -433,7 +440,6 @@ export default function Customer() {
                     </Form.Item>
                 </Form>
             </Modal>
-            
         </div>
     )
 }
