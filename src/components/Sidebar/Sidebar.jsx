@@ -1,5 +1,5 @@
 import  './Sidebar.css'
-import { FiUsers, FiFileText, FiTrendingUp, FiPackage, FiUser, FiGift, FiLogOut, FiGrid, FiBox } from 'react-icons/fi'
+import { FiTruck, FiUsers, FiFileText, FiTrendingUp, FiPackage, FiUser, FiGift, FiLogOut, FiGrid, FiBox } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,6 +20,7 @@ export default function Sidebar({onTag, choosen}) {
     <div className="sidebar">
       <div className="SidebarWrapper">
         <ul className="SidebarList">
+           {/* Hóa đơn */}
           <li
             className={`SidebarItem ${choosen === 'order' ? 'active' : ''}`}
             data-label="Hóa đơn"
@@ -27,14 +28,8 @@ export default function Sidebar({onTag, choosen}) {
           >
             <FiFileText />
           </li>
-          <li
-            className={`SidebarItem ${choosen === 'product' ? 'active' : ''}`}
-            data-label="Sản phẩm"
-            onClick={() => onTag('product')}
-          >
-            <FiPackage />
-          </li>
 
+          {/* Quản lý danh mục */}
           <li
             className={`SidebarItem ${choosen === 'category' ? 'active' : ''}`}
             data-label="Danh mục"
@@ -42,6 +37,26 @@ export default function Sidebar({onTag, choosen}) {
           >
             <FiGrid />
           </li>
+
+          {/* Quản lý nhà cung cấp */}
+          <li
+            className={`SidebarItem ${choosen === 'supplier' ? 'active' : ''}`}
+            data-label="Nhà cung cấp"
+            onClick={() => onTag('supplier')}
+          >
+            <FiTruck />
+          </li>
+
+          {/* Quản lý sản phẩm */}
+          <li
+            className={`SidebarItem ${choosen === 'product' ? 'active' : ''}`}
+            data-label="Sản phẩm"
+            onClick={() => onTag('product')}
+          >
+            <FiPackage />
+          </li>
+          
+          {/* Quản lý nhân viên */}
           <li
             className={`SidebarItem ${choosen === 'employee' ? 'active' : ''}`}
             data-label="Nhân viên"
@@ -49,6 +64,8 @@ export default function Sidebar({onTag, choosen}) {
           >
             <FiUser />
           </li>
+
+          {/* Quản lý khách hàng */}
           <li
             className={`SidebarItem ${choosen === 'customer' ? 'active' : ''}`}
             data-label="Khách hàng"
@@ -57,6 +74,7 @@ export default function Sidebar({onTag, choosen}) {
             <FiUsers />
           </li>
 
+          {/* Quản lý kho */}
           <li
             className={`SidebarItem ${choosen === 'inventory' ? 'active' : ''}`}
             data-label="Tồn kho"
@@ -65,13 +83,16 @@ export default function Sidebar({onTag, choosen}) {
             <FiBox />
           </li>
 
+          {/* Khuyến mãi */}
           <li
             className={`SidebarItem ${choosen === 'promotion' ? 'active' : ''}`}
-            data-label="Mã giảm giá"
+            data-label="Khuyến mãi"
             onClick={() => onTag('promotion')}
           >
             <FiGift />
           </li>
+
+          {/* Thống kê */}
           <li
             className={`SidebarItem ${choosen === 'report' ? 'active' : ''}`}
             data-label="Báo cáo"

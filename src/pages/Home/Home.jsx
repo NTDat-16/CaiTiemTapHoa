@@ -9,6 +9,7 @@ import Dashboard from "../../components/Dashboard/Dashboard";
 import Category from "../../components/Category/Category";
 import Employee from "../../components/Employee/Employee";
 import Customer from "../../components/Customer/Customer";
+import Supplier from "../../components/Supplier/Supplier";
 import "./Home.css";
 
 export default function Home() {
@@ -27,6 +28,7 @@ export default function Home() {
         {/* Khu vực nội dung chính thay đổi */}
         <div className="HomeContent">
           {choosen === "category" && <Category />}
+          {choosen === "supplier" && <Supplier />}
           {choosen === "employee" && <Employee />}
           {choosen === "customer" && <Customer />}
           {choosen === "order" && <Order />}
