@@ -1,14 +1,14 @@
-  import { useState, useEffect, useMemo, useCallback } from "react";
-  import {
-    Form, Table, Row, Col, Input, Select, Button, Card, Modal, message, Space, Tag, Pagination, Spin,Divider, InputNumber
-  } from "antd";
-  import { SearchOutlined, DeleteOutlined, MinusOutlined, PlusOutlined, QrcodeOutlined } from "@ant-design/icons";
-  import "./Order.css";
-  import aquavoiem from "../../assets/aquavoiem.png";
-  import QR from "../../assets/QR.png";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  Form, Table, Row, Col, Input, Select, Button, Card, Modal, message, Space, Tag, Pagination, Spin,Divider, InputNumber
+} from "antd";
+import { SearchOutlined, DeleteOutlined, MinusOutlined, PlusOutlined, QrcodeOutlined } from "@ant-design/icons";
+import "./Order.css";
+import aquavoiem from "../../assets/aquavoiem.png";
+import QR from "../../assets/QR.png";
 import useFetchPromotions from "../Hooks/useFetchpPromotion";
 import useCustomer from "../Hooks/useCustomer";
-
+// import printInvoice from "./printInvoice";
   const { Option } = Select;
 
 
@@ -28,14 +28,29 @@ import useCustomer from "../Hooks/useCustomer";
   ];
 
 
-  const typeColors = {
-    "do-uong": "blue",
-    "thuc-pham": "orange",
-    "gia-dung": "green",
-    "bánh-kẹo": "purple",
-    "trai-cay": "red",
-  };
-
+const CATEGORY_MAP = {
+    1: { name: "Đồ uống", slug: "do-uong" },
+    2: { name: "Bánh kẹo", slug: "banh-keo" },
+    3: { name: "Gia vị", slug: "gia-vi" },
+    4: { name: "Đồ gia dụng", slug: "do-gia-dung" },
+    5: { name: "Mỹ phẩm", slug: "my-pham" },
+};
+const typeColors = {
+    "do-uong": "blue",
+    "thuc-pham": "orange",
+    "do-gia-dung": "green", 
+    "banh-keo": "purple",   
+    "trai-cay": "red",
+    "gia-vi": "volcano",    
+    "my-pham": "cyan",      
+};
+const getCategoryData = (id) => {
+    return CATEGORY_MAP[id] || { name: "Khác", slug: "khac" };
+};
+const normalizeCategoryName = (name) => {
+  if (!name) return "";
+  return name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
+};
 
   const getAuthToken = () => {
       return localStorage.getItem('token');
@@ -43,7 +58,39 @@ import useCustomer from "../Hooks/useCustomer";
 
   const API_BASE_URL = "http://localhost:5000/api";
   const API_IMAGE = "http://localhost:5000";
+// Đặt hàm này ở đầu file Order.jsx, gần các hằng số API_BASE_URL, MOCK DATA
+const calculateDiscountAmount = (subtotal, selectedPromoId, promotions) => {
+    const promoId = Number(selectedPromoId);
+    const selectedPromo = promotions.find(p => p.promo_id === promoId);
+    
+    if (!selectedPromo || subtotal <= 0) {
+        return 0;
+    }
 
+    // Lấy min_order_amount, mặc định là 0
+    const minAmount = selectedPromo.min_order_amount || 0; 
+    
+    // Kiểm tra điều kiện đơn hàng tối thiểu
+    if (subtotal < minAmount) {
+        return 0; 
+    }
+
+    const { discount_type, discount_value } = selectedPromo;
+    let discount = 0;
+    
+    // Xử lý cả "Fixed" (API) và "Percent"
+    const type = discount_type.toLowerCase();
+
+    if (type === "percent") {
+        // Đã sửa: Dùng 'subtotal' (tham số truyền vào)
+        discount = (subtotal * discount_value) / 100;
+    } else if (type === "fixed" || type === "amount") { 
+        discount = discount_value;
+    }
+
+    // Chiết khấu không được vượt quá Tổng phụ
+    return Math.max(0, Math.min(discount, subtotal));
+};
   const useFetchProducts = (page = 1, size = 25) => { 
     const [products, setProducts] = useState([]);
     const [promotions, setPromotions] = useState([]);
@@ -90,9 +137,13 @@ import useCustomer from "../Hooks/useCustomer";
               const fetchedProducts = Array.isArray(result?.data?.items)
               ? result.data.items.map(p => ({
                   ...p,
-                  product_id: p.productId, // map productId (API) -> product_id (cart logic)
-                  product_name: p.productName, // map productName (API) -> product_name (cart logic)
-                  // Giữ nguyên imagePath, sẽ dùng để tạo URL
+                 product_id: p.productId || p.product?.productId, 
+                product_name: p.productName || p.product?.productName,
+                price: p.price || p.product?.price,
+                unit: p.unit || p.product?.unit,
+                imagePath: p.imagePath || p.product?.imagePath,
+                categoryName: p.categoryName || p.product?.categoryName,
+                categoryId: p.categoryId || p.product?.categoryId,
               })) 
               : mockProducts;
           
@@ -112,7 +163,7 @@ import useCustomer from "../Hooks/useCustomer";
       }
     }, [page, size]);
   useEffect(() => {
-      fetchProductsData(page, size);
+      fetchProductsData();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, size]); // chỉ phụ thuộc page & size
 
@@ -122,101 +173,85 @@ import useCustomer from "../Hooks/useCustomer";
   }
 
   const useFetchInventory = (productIds, page = 1, pageSize = 10) => {
-      const [inventory, setInventory] = useState({}); // {productId: stockQuantity}
-      const [loadingInventory, setLoadingInventory] = useState(false);
-      
-      // Giữ một state để theo dõi ID của các sản phẩm đã được fetch
-      const [fetchedProductIds, setFetchedProductIds] = useState([]); 
+     const [inventory, setInventory] = useState({}); 
+     const [loadingInventory, setLoadingInventory] = useState(false);
+     
+     // Không cần state fetchedProductIds nữa
 
-      // Chỉ fetch lại nếu danh sách productIds cần xem đã thay đổi
-      const shouldFetch = productIds.length > 0;
-      
-      // Sử dụng useEffect để trigger fetch khi component Order mount
-      useEffect(() => {
-          if (!shouldFetch) return;
+     const shouldFetch = productIds.length > 0;
+    
+     // Khai báo hàm fetchData bên trong useEffect hoặc dùng useCallback (nhưng trong trường hợp này, bên trong useEffect là đủ)
+     useEffect(() => {
+         if (!shouldFetch) {
+                // Nếu không có productIds (ví dụ: đang loading Product), clear inventory
+                setInventory({}); 
+                return;
+            }
 
-          const fetchInventoryData = async () => {
-              setLoadingInventory(true);
-              const token = getAuthToken();
+         const fetchInventoryData = async () => {
+             setLoadingInventory(true);
+             const token = getAuthToken();
 
-              if (!token) {
-                  setLoadingInventory(false);
-                  return;
-              }
+             if (!token) {
+                 setLoadingInventory(false);
+                 return;
+             }
 
-              try {
-                  // ✅ GỌI API GET /api/Inventory
-                  const response = await fetch(`${API_BASE_URL}/Inventory?pageNumber=${page}&pageSize=${pageSize}`, {
-                      method: 'GET',
-                      headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${token}`,
-                      },
-                  });
+             try {
+                 // Gọi API với page và pageSize mới nhất
+                 const response = await fetch(`${API_BASE_URL}/Inventory?pageNumber=${page}&pageSize=${pageSize}`, {
+                     method: 'GET',
+                     headers: {
+                         'Content-Type': 'application/json',
+                         'Authorization': `Bearer ${token}`,
+                     },
+                 });
 
-                  if (!response.ok) {
-                      throw new Error(`Lỗi khi lấy dữ liệu tồn kho: ${response.status}`);
-                  }
-                  const result = await response.json();
+                 if (!response.ok) {
+                     throw new Error(`Lỗi khi lấy dữ liệu tồn kho: ${response.status}`);
+                 }
+                 const result = await response.json();
 
-                  const newInventory = {};
-                  if (Array.isArray(result.data?.items)) {
-                    result.data.items.forEach(item => {
-                      newInventory[item.productId] = item.quantity; 
-                    });
-                  }
+                 const newInventory = {};
+                 if (Array.isArray(result.data?.items)) {
+                    result.data.items.forEach(item => {
+                      newInventory[item.productId] = item.quantity; 
+                    });
+                 }
+                 
+                 setInventory(newInventory); // Chỉ gọi setInventory một lần
+                 // Không cần setFetchedProductIds nữa
+             } catch (error) {
+                 console.error("Lỗi khi fetch tồn kho:", error);
+             } finally {
+                 setLoadingInventory(false);
+             }
+         };
+           
+         // Luôn gọi fetchInventoryData nếu shouldFetch (productIds.length > 0)
+         fetchInventoryData();
 
-                  setInventory(newInventory);
+   
+     }, [shouldFetch, page, pageSize, productIds]); // Giữ productIds vì nó thay đổi sau mỗi lần fetch product
 
-                  setInventory(newInventory);
-                  setFetchedProductIds(productIds); // Đánh dấu là đã fetch 
-
-              } catch (error) {
-                  console.error("Lỗi khi fetch tồn kho:", error);
-              } finally {
-                  setLoadingInventory(false);
-              }
-          };
-          
-          // Vì ta fetch tất cả, nên chỉ cần fetch 1 lần khi danh sách ID thay đổi
-          // Tối ưu hóa: Ta chỉ fetch 1 lần khi lần đầu tiên có dữ liệu sản phẩm
-          if(productIds.length > 0 && fetchedProductIds.length === 0){
-              fetchInventoryData();
-          }
-
-      }, [productIds, fetchedProductIds.length, shouldFetch]); 
-
-      // ✅ RETURN: Chỉ trả về tồn kho và trạng thái loading
-      return { inventory, loadingInventory };
-  }
- 
+     return { inventory, loadingInventory };
+}
 
 
   export default function Order() {
-    // Khai báo State phân trang ban đầu (cần thiết cho lần fetch đầu)
+    
     const [currentPage, setCurrentPage] = useState(1);
     const [productsPerPage, setProductsPerPage] = useState(25);
-  // ✅ Đặt useFetchProducts trước tiên để có dữ liệu sản phẩm
-  const { products, loading, totalItems } = useFetchProducts(currentPage, productsPerPage);
-      const { promotions, loading: loadingPromo } = useFetchPromotions(); 
+  
+    const { products, loading, totalItems } = useFetchProducts(currentPage, productsPerPage);
+    const { promotions } = useFetchPromotions(); 
 
-  // ✅ Sau đó mới tạo productIds
-  const productIds = useMemo(
-    () => Array.isArray(products) ? products.map(p => p.product_id) : [],
-    [products]
-  );
- const {
-    customers,
-    loading: customersLoading,
-    pagination,
-    fetchCustomers,
-    findCustomerByPhone,
-    addCustomer
-  } = useCustomer();
+    const productIds = useMemo(
+      () => Array.isArray(products) ? products.map(p => p.product_id) : [],
+      [products]
+    );
 
-
-
-    const [category, setCategory] = useState("all");
+    const [selectedCategory, setSelectedCategory] = useState("all"); 
     const [cart, setCart] = useState([]);
     const [search, setSearch] = useState("");
     const [selectedPromoId, setSelectedPromoId] = useState("");
@@ -224,88 +259,42 @@ import useCustomer from "../Hooks/useCustomer";
     const [customerPaid, setCustomerPaid] = useState(0);
     const [chosenIds, setChosenIds] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    // Loại bỏ: const [pageSize, setPageSize]= useState(25); 
-    
     const [form] = Form.useForm()
     const [phone, setPhone] = useState("");
     const [customerName, setCustomerName] = useState("");
     const [loadingCustomer, setLoadingCustomer] = useState(false);
 
    
-const { inventory, loadingInventory } = useFetchInventory(productIds, currentPage, productsPerPage);
+    const { inventory } = useFetchInventory(productIds, currentPage, productsPerPage);
 
-const handleAdd = useCallback(async (customer) => {
 
-  setIsModalOpen(true);
-  if (!customer?.name || !customer?.phone) {
-    message.warning("Vui lòng nhập đầy đủ Họ tên và Số điện thoại!");
-    return null;
-  }
-
-  const token = localStorage.getItem("token"); // ✅ Thêm dòng này ở đầu
-
-  setLoading(true);
-  try {
-    const res = await fetch(`${API_BASE_URL}/Customer`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        name: customer.name.trim(),
-        phone: customer.phone.trim(),
-      }),
+const currentProducts = useMemo(() => {
+    if (!Array.isArray(products)) return [];
+    
+    // Lọc sản phẩm theo Category và Search
+    const filtered = products.filter((p) => {
+        const productName = p.product_name ?? ""; 
+        
+        // 1. LỌC THEO DANH MỤC (ĐÃ SỬA)
+        // Lấy slug từ categoryId của sản phẩm (vì selectedCategory là slug)
+        const productCategorySlug = getCategoryData(p.categoryId)?.slug; 
+        
+        // So sánh slug của sản phẩm với selectedCategory state
+        const matchCategory = selectedCategory === "all" || productCategorySlug === selectedCategory;
+        
+        // 2. Lọc theo tìm kiếm
+        const matchSearch = productName.toLowerCase().includes(search.toLowerCase());
+        
+        return matchCategory && matchSearch;
     });
 
-    if (res.status === 400) {
-      const detail = await res.text();
-      throw new Error(`Dữ liệu không hợp lệ: ${detail}`);
-    }
+    // Thêm thông tin tồn kho vào sản phẩm đã lọc
+    return filtered.map(p => ({
+        ...p,
+        stock: inventory?.[p.product_id] ?? 0, 
+    }));
+}, [products, inventory, selectedCategory, search]);
 
-    if (res.status === 409) {
-      message.warning("Số điện thoại đã tồn tại trong hệ thống!");
-      return null;
-    }
-
-    if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-
-    const data = await res.json();
-
-    message.success("🎉 Thêm khách hàng mới thành công!");
-    return data?.data || null;
-  } catch (error) {
-    console.error("❌ Lỗi khi thêm khách hàng:", error);
-    message.error(error.message || "Không thể thêm khách hàng.");
-    return null;
-  } finally {
-    setLoading(false);
-  }
-}, []); // ✅ Xóa [token] khỏi dependency array
-
-    const displayedProducts = useMemo(() => {
-      const allProducts = Array.isArray(products) ? products : [];
-
-      return allProducts.filter((p) => {
-          const productName = p.product_name ?? ""; 
-          
-          // 1. Lọc theo danh mục
-          const matchCategory = category === "all" || p.type === category;
-          
-          // 2. Lọc theo tìm kiếm
-          const matchSearch = productName.toLowerCase().includes(search.toLowerCase());
-          
-          return matchCategory && matchSearch;
-      });
-  }, [products, category, search]);
- 
-const currentProducts = useMemo(() => {
-  if (!Array.isArray(products)) return [];
-  return products.map(p => ({
-    ...p,
-    stock: inventory?.[p.product_id] ?? 0, // ưu tiên inventory, fallback 0
-  }));
-}, [products, inventory]);
     const handleAddToCart = (product) => {
       setCart(prev => {
         const exists = prev.find(item => item.product_id === product.product_id);
@@ -352,24 +341,140 @@ const currentProducts = useMemo(() => {
       });
     };
 
-    const { subtotal, discountAmount, total } = useMemo(() => {
-      const currentSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const selectedPromo = promotions.find((p) => p.promo_id === Number(selectedPromoId));
-      let currentDiscount = 0;
-      if (selectedPromo) {
-        if (selectedPromo.discount_type === "percent") {
-          currentDiscount = (currentSubtotal * selectedPromo.discount_value) / 100;
-        } else if (selectedPromo.discount_type === "amount") {
-          currentDiscount = selectedPromo.discount_value;
-        }
-      }
-      const currentTotal = Math.max(0, currentSubtotal - currentDiscount);
-      return { subtotal: currentSubtotal, discountAmount: currentDiscount, total: currentTotal };
-    }, [cart, selectedPromoId, promotions]);
+  const calculateDiscountAmount = (subtotal, selectedPromoId, promotions) => {
+    const promoId = Number(selectedPromoId);
+    const selectedPromo = promotions.find(p => p.promo_id === promoId);
+    
+    // 1. Kiểm tra tồn tại và tổng tiền
+    if (!selectedPromo || subtotal <= 0) {
+        return 0;
+    }
 
-    const handlePaymentChange = (value) => {
-      setPaymentMethod(value);
-    };
+    const minAmount = selectedPromo.min_order_amount || 0; 
+    
+    // 2. Kiểm tra điều kiện đơn hàng tối thiểu
+    if (subtotal < minAmount) {
+        return 0; 
+    }
+
+    const { discount_type, discount_value } = selectedPromo;
+    let discount = 0;
+    
+    // 3. Tính toán chiết khấu (SỬA: Dùng 'subtotal' thay vì 'currentSubtotal')
+    const type = discount_type.toLowerCase();
+
+    if (type === "percent") {
+        // Dùng tham số 'subtotal' ở đây
+        discount = (subtotal * discount_value) / 100;
+    } else if (type === "fixed" || type === "amount") {
+        discount = discount_value;
+    }
+
+    // Chiết khấu không được vượt quá Tổng phụ
+    return Math.max(0, Math.min(discount, subtotal));
+};
+ 
+const { subtotal, discountAmount, total } = useMemo(() => {
+    const currentSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    
+    // Tính Chiết khấu bằng hàm helper mới (đã xử lý minOrderAmount và Fixed/Percent)
+    const currentDiscount = calculateDiscountAmount(
+        currentSubtotal,
+        selectedPromoId,
+        promotions
+    );
+
+    const currentTotal = Math.max(0, currentSubtotal - currentDiscount);
+    
+    return { subtotal: currentSubtotal, discountAmount: currentDiscount, total: currentTotal };
+}, [cart, selectedPromoId, promotions]);
+
+
+const handlePayment = async () => {
+    console.log("Xử lý thanh toán..."); 
+    if (cart.length === 0) {
+        message.warning("Giỏ hàng đang trống. Vui lòng thêm sản phẩm.");
+        return;
+    }
+    
+    // 1. Kiểm tra điều kiện Tiền mặt
+    if (paymentMethod === "Tiền mặt" && customerPaid < total) {
+        message.error("Số tiền khách đưa không đủ!");
+        return;
+    }
+    
+    // 2. Thu thập dữ liệu
+    const orderDetails = cart.map(item => ({
+        productId: item.product_id,
+        quantity: item.quantity,
+        price: item.price, // Giá bán tại thời điểm tạo đơn
+        productName: item.product_name
+    }));
+
+    const orderData = {
+        // Kiểm tra xem đã tìm thấy khách hàng chưa, nếu không thì dùng ID mặc định (ví dụ: 1 cho khách vãng lai)
+        customerId: customerName ? 3 : 2, // Tạm gán: 3 là user_id từ file đính kèm, 2 là customer_id từ file đính kèm
+        promoId: selectedPromoId ? Number(selectedPromoId) : null,
+        totalAmount: total, // Tổng tiền cuối cùng sau giảm giá
+        discountAmount: discountAmount,
+        paymentMethod: paymentMethod,
+        customerPaid: customerPaid, // Tiền mặt, Chuyển khoản, Thẻ
+        orderDetails: orderDetails,
+        subtotal: subtotal,
+    };
+
+    const token = getAuthToken();
+    if (!token) {
+        message.error("Phiên đăng nhập đã hết hạn.");
+        return;
+    }
+
+    try {
+        message.loading({ content: 'Đang xử lý thanh toán...', key: 'payment' });
+        const response = await fetch(`${API_BASE_URL}/Order`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(orderData),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || `Lỗi HTTP: ${response.status}`);
+        }
+
+        message.success({ content: `✅ Thanh toán thành công! Mã đơn: ${result.data.orderId}`, key: 'payment', duration: 3 });
+        
+       Modal.confirm({
+            title: 'In hóa đơn',
+            content: 'Bạn có muốn tạo và tải xuống hóa đơn PDF không?',
+            okText: 'Tải xuống PDF',
+            cancelText: 'Không, cảm ơn',
+            onOk: () => {
+                // Kết hợp orderData với ID trả về từ server để in
+                printInvoice({ ...orderData, orderId: result.data.orderId }); 
+            },
+            onCancel: () => {
+                console.log("Không in hóa đơn");
+            }
+        });
+        
+        // 4. Reset giỏ hàng và thanh toán
+        setCart([]);
+        setChosenIds([]);
+        setSelectedPromoId("");
+        setCustomerPaid(0);
+        setPhone("");
+        setCustomerName("");
+
+    } catch (error) {
+        console.error("Lỗi thanh toán:", error);
+        message.error({ content: `❌ Thanh toán thất bại: ${error.message}`, key: 'payment', duration: 5 });
+    }
+};
 
     const columns = [
       {title: "SP",dataIndex: "product_name",key: "product_name",render: (text) => <div style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{text}</div>,},
@@ -389,17 +494,16 @@ const currentProducts = useMemo(() => {
     ];
 
    
-const handlePhoneChange = (e) => {
-  const value = e.target.value;
-  setPhone(value);
+    const handlePhoneChange = (e) => {
+      const value = e.target.value;
+      setPhone(value);
 
-  if (value.length >= 10) {
-    fetchCustomerByPhone(value);
-  } else {
-    setCustomerName("");
-    setCustomerId(null);
-  }
-};
+      if (value.length >= 10) {
+        fetchCustomerByPhone(value);
+      } else {
+        setCustomerName("");
+      }
+    };
 
     const fetchCustomerByPhone = async (phone) => {
       try {
@@ -489,17 +593,19 @@ const handlePhoneChange = (e) => {
               >
                 <Space style={{ width: "100%", justifyContent: "space-between" }}>
                   <Select
-                    value={category}
-                    onChange={setCategory}
-                    style={{width: 160,height: 50,borderRadius: 6,}}
-                    bordered={true}
-                    size="middle"
-                  >
-                    <Option value="all">Tất cả</Option>
-                    <Option value="do-uong">Đồ uống</Option>
-                    <Option value="thuc-pham">Thực phẩm</Option>
-                    <Option value="gia-dung">Gia dụng</Option>
-                  </Select>
+                 onChange={(val) => setSelectedCategory(val)} 
+                    value={selectedCategory}
+                    style={{width: 160,height: 50,borderRadius: 6,}}
+                    size="middle"
+                >
+                    <Option value="all">Tất cả</Option>
+               
+                    {Object.values(CATEGORY_MAP).map(cat => (
+                        <Option key={cat.slug} value={cat.slug}>
+                            {cat.name}
+                        </Option>
+                    ))}
+                </Select>
 
                   <Input
                     prefix={<SearchOutlined style={{ color: "#999" }} />}
@@ -642,18 +748,17 @@ const handlePhoneChange = (e) => {
                           </span>
                         }
                         description={
-                          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                             <Tag
-                              color={typeColors[p.type] || "default"}
-                              style={{
-                                fontSize: 11,
-                                padding: "2px 6px",
-                                borderRadius: 4,
-                                alignSelf: "flex-start",
-                              }}
-                            >
-                              {p.type?.replace("-", " ") || "Khác"}
-                            </Tag>
+                          color={typeColors[getCategoryData(p.categoryId)?.slug]|| "default"}
+                            style={{
+                              fontSize: 12,
+                              padding: "2px 6px",
+                              borderRadius: 4,
+                            }}
+                          >
+                         {getCategoryData(p.categoryId)?.name || "Khác"}
+                          </Tag>
 
                             {/* Số lượng tồn */}
                             <span
@@ -691,8 +796,7 @@ const handlePhoneChange = (e) => {
                   style={{ transform: "translateY(-10px)" }}
                   current={currentPage}
                   pageSize={productsPerPage}
-                  total={totalItems/2
-                  }
+                  total={totalItems/2}
                   showSizeChanger
                   pageSizeOptions={["5", "10", "15", "20", "25", "50"]}
                   onChange={(page, size) => {
@@ -751,7 +855,7 @@ const handlePhoneChange = (e) => {
                       value={phone}
                     
                       addonAfter={
-                        <Button onClick={handleAdd} type="primary" style={{ padding: "0 12px", height: 28 }}>
+                        <Button onClick={() => setIsModalOpen(true)} type="primary" style={{ padding: "0 12px", height: 28 }}>
                           + Thêm
                         </Button>
                       }
@@ -781,7 +885,7 @@ const handlePhoneChange = (e) => {
                     <Input.TextArea placeholder="Ghi chú cho đơn" rows={2} style={{ borderRadius: 6 }} />
                     <Select
                       value={paymentMethod}
-                      onChange={handlePaymentChange}
+                      onChange={handlePayment}
                       style={{ width: "100%", height: 36, borderRadius: 6 }}
                     >
                       <Option value="Tiền mặt">Tiền mặt</Option>
@@ -802,7 +906,7 @@ const handlePhoneChange = (e) => {
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: 18 }}>
                       <span>Tổng cộng:</span>
-                      <span>{total.toLocaleString()} ₫</span>
+                      <span>{total.toLocaleString()} ₫</span> 
                       
                     </div>
                     {paymentMethod === "Tiền mặt" && 
@@ -842,8 +946,7 @@ const handlePhoneChange = (e) => {
               {/* 3. Footer: nút luôn sát đáy */}
               <div style={{display: "flex",gap: 8,borderTop: "1px solid #f0f0f0",padding: 12,flexShrink: 0}}>                      
                 <Button type="default" style={{ flex: 1 }} onClick={() => {setCart([]);setChosenIds([]);}}>Hủy</Button>
-                <Button type="primary" style={{ flex: 1 }}>Thanh toán</Button>
-              </div>
+            <Button type="primary" style={{ flex: 1 }} onClick={handlePayment}>Thanh toán</Button>              </div>
             </Card>
           </Col>
         </Row>
