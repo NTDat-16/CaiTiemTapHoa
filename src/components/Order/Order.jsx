@@ -7,6 +7,7 @@
   import aquavoiem from "../../assets/aquavoiem.png";
   import QR from "../../assets/QR.png";
 import useFetchPromotions from "../Hooks/useFetchpPromotion";
+import useCustomer from "../Hooks/useCustomer";
 
   const { Option } = Select;
 
@@ -35,7 +36,7 @@ import useFetchPromotions from "../Hooks/useFetchpPromotion";
     "trai-cay": "red",
   };
 
-  // Hàm lấy Token
+
   const getAuthToken = () => {
       return localStorage.getItem('token');
   };
@@ -204,8 +205,16 @@ import useFetchPromotions from "../Hooks/useFetchpPromotion";
     () => Array.isArray(products) ? products.map(p => p.product_id) : [],
     [products]
   );
+ const {
+    customers,
+    loading: customersLoading,
+    pagination,
+    fetchCustomers,
+    findCustomerByPhone,
+    addCustomer
+  } = useCustomer();
 
-  // ✅ Cuối cùng mới gọi useFetchInventory
+
 
     const [category, setCategory] = useState("all");
     const [cart, setCart] = useState([]);
@@ -225,10 +234,54 @@ import useFetchPromotions from "../Hooks/useFetchpPromotion";
    
 const { inventory, loadingInventory } = useFetchInventory(productIds, currentPage, productsPerPage);
 
-    const handleAdd = () => {
-      setIsModalOpen(true)
-      form.resetFields();
-    }
+const handleAdd = useCallback(async (customer) => {
+
+  setIsModalOpen(true);
+  if (!customer?.name || !customer?.phone) {
+    message.warning("Vui lòng nhập đầy đủ Họ tên và Số điện thoại!");
+    return null;
+  }
+
+  const token = localStorage.getItem("token"); // ✅ Thêm dòng này ở đầu
+
+  setLoading(true);
+  try {
+    const res = await fetch(`${API_BASE_URL}/Customer`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name: customer.name.trim(),
+        phone: customer.phone.trim(),
+      }),
+    });
+
+    if (res.status === 400) {
+      const detail = await res.text();
+      throw new Error(`Dữ liệu không hợp lệ: ${detail}`);
+    }
+
+    if (res.status === 409) {
+      message.warning("Số điện thoại đã tồn tại trong hệ thống!");
+      return null;
+    }
+
+    if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+
+    const data = await res.json();
+
+    message.success("🎉 Thêm khách hàng mới thành công!");
+    return data?.data || null;
+  } catch (error) {
+    console.error("❌ Lỗi khi thêm khách hàng:", error);
+    message.error(error.message || "Không thể thêm khách hàng.");
+    return null;
+  } finally {
+    setLoading(false);
+  }
+}, []); // ✅ Xóa [token] khỏi dependency array
 
     const displayedProducts = useMemo(() => {
       const allProducts = Array.isArray(products) ? products : [];
@@ -335,21 +388,18 @@ const currentProducts = useMemo(() => {
       },
     ];
 
-    //Tìm kiếm tên khách hàng theo số điện thoại
-    let typingTimer;
+   
+const handlePhoneChange = (e) => {
+  const value = e.target.value;
+  setPhone(value);
 
-    const handlePhoneChange = (e) => {
-      const value = e.target.value.trim();
-      setPhone(value);
-      setCustomerName("");
-
-      clearTimeout(typingTimer);
-      if (/^\d{9,10}$/.test(value)) {
-        typingTimer = setTimeout(() => {
-          fetchCustomerByPhone(value);
-        }, 500);
-      }
-    };
+  if (value.length >= 10) {
+    fetchCustomerByPhone(value);
+  } else {
+    setCustomerName("");
+    setCustomerId(null);
+  }
+};
 
     const fetchCustomerByPhone = async (phone) => {
       try {
@@ -366,7 +416,7 @@ const currentProducts = useMemo(() => {
         const result = await response.json();
 
         if (response.ok && result?.data) {
-          setCustomerName(result.data.name || ""); // lấy tên từ dữ liệu trả về
+          setCustomerName(result.data.name || ""); 
         } else {
           setCustomerName("");
           message.warning("Không tìm thấy khách hàng này");
@@ -699,6 +749,7 @@ const currentProducts = useMemo(() => {
                     <Input
                       placeholder="Nhập SĐT khách hàng"
                       value={phone}
+                    
                       addonAfter={
                         <Button onClick={handleAdd} type="primary" style={{ padding: "0 12px", height: 28 }}>
                           + Thêm
@@ -710,7 +761,7 @@ const currentProducts = useMemo(() => {
                     />
                     
                     <Input
-                      placeholder="Tên khách hàng"
+                      placeholder="Tên khách hàng "
                       value={customerName}
                       readOnly
                       style={{ height: 36, borderRadius: 6, marginTop: 8 }}
