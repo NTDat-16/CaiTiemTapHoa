@@ -43,7 +43,7 @@ export default function Category() {
       setPagination({
         current: data.data?.pageNumber || page,
         pageSize: data.data?.pageSize || pageSize,
-        total: data.data?.totalCount || mapped.length,
+        total: data.data?.totalCount || items.length,
       });
     } catch (error) {
       message.error(error.message || "Lỗi khi tải danh sách danh mục");
@@ -255,6 +255,9 @@ export default function Category() {
             ),
           }}
           scroll={{ y: 420, x: 1200 }}
+          onChange={(pagination) => {
+            fetchCategories(pagination.current, pagination.pageSize);
+          }}
         />
       </div>
 

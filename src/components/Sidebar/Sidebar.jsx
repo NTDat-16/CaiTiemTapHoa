@@ -7,7 +7,7 @@ import { useState } from 'react';
 export default function Sidebar({onTag, choosen}) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const role = user.user?.role;
+  const role = user?.role || user?.user?.role;
 
   const HandleLogOut = async () => {
     logout();

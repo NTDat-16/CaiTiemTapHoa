@@ -499,7 +499,7 @@ export default function App() {
                 onCancel={handleCancel}
                 footer={null}
                 width={700}
-                closable={!submitting} 
+                closable={false} 
                 maskClosable={!submitting} 
                 style={{ top: 70 }}
             >
