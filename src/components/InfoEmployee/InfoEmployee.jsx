@@ -26,7 +26,7 @@ export default function InfoEmployee({ OpenInfo }) {
           <h3>Thông tin liên hệ</h3>
           <div className="ContactRow"><span>Họ tên:</span>{user.user?.fullName}</div>
           <div className="ContactRow"><span>Chức vụ:</span>{user.user?.role === "Admin" ? "Quản trị viên" : "Nhân viên"} </div>
-          <div className="ContactRow"><span>Ngày tạo:</span>2025-10-01</div>
+          <div className="ContactRow"><span>Ngày bắt đầu làm việc:</span>2025-10-01</div>
         </div>
 
         {/* Cập nhật */}

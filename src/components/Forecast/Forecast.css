@@ -1,0 +1,147 @@
+/* Forecast.css */
+.forecast-container {
+  width: 100%;
+  /* padding: 16px; */
+  background: #f5f7fa;
+  height: calc(100vh - 205px); /* Chiều cao tổng thể của frame */
+  overflow: hidden;
+}
+
+.forecast-card {
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  background: #fff;
+  padding: 10px;
+  height: 100%; /* Chiếm toàn bộ chiều cao của container */
+  display: flex;
+  flex-direction: column;
+}
+
+.forecast-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.forecast-filter .ant-picker,
+.forecast-filter .ant-select,
+.forecast-filter .ant-btn {
+  border-radius: 8px;
+}
+
+.forecast-filter .ant-btn-primary {
+  background: #008f5a;
+  border-color: #008f5a;
+}
+
+.forecast-filter .ant-btn-primary:hover {
+  background: #006d44;
+  border-color: #006d44;
+  transform: scale(1.05);
+}
+
+.forecast-body {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  flex: 1; /* Chiếm không gian còn lại trong card */
+  overflow: hidden;
+}
+
+.forecast-stats-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Hai cột cho thống kê */
+  gap: 12px;
+}
+
+.stats-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-box {
+  background: linear-gradient(135deg, #e0f7ea, #c8f0e0);
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex: 1; /* Các khối thống kê chia đều không gian */
+}
+
+.stat-box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stat-box h3 {
+  font-size: 12px;
+  color: #555;
+  margin: 0;
+}
+
+.stat-box p {
+  font-size: 20px;
+  margin: 6px 0 0;
+}
+
+.stat-total p { color: #008f5a; }
+.stat-avg p { color: #e67e22; }
+.stat-actual p { color: #3498db; }
+.stat-accuracy p { color: #9b59b6; }
+.stat-trend p { font-weight: 600; }
+
+.forecast-chart-panel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  position: relative;
+  height: 420px; /* Chiều cao bảng biểu đồ */
+  overflow: hidden;
+}
+
+.forecast-chart-panel .ant-spin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@media (max-width: 768px) {
+  .forecast-container {
+    height: auto; /* Cho phép chiều cao tự động trên mobile */
+  }
+
+  .forecast-body {
+    grid-template-columns: 1fr;
+  }
+
+  .forecast-stats-panel {
+    grid-template-columns: 1fr; /* Trở lại 1 cột trên mobile */
+  }
+
+  .forecast-chart-panel {
+    height: 300px; /* Giảm chiều cao biểu đồ trên mobile */
+  }
+}
+
+.forecast-filter .ant-picker,
+.forecast-filter .ant-select-selector,
+.forecast-filter .ant-btn {
+  height: 40px;            /* Chiều cao cố định */
+  line-height: 40px;       /* Canh text vào giữa */
+}
+
+.forecast-filter .ant-select {
+  display: inline-flex;
+  align-items: center;
+}
+
+.forecast-filter .ant-btn {
+  padding: 0 16px;         /* Giữ padding vừa phải */
+}

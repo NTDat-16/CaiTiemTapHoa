@@ -20,7 +20,7 @@
 .EmployeeProfile {
   background: #fff;
   border-radius: 16px;
-  width: 700px;
+  width: 600px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   animation: scaleIn 0.25s ease;
@@ -41,7 +41,6 @@
   background: #008f5a;
   color: white;
   padding: 28px 24px;
-  border-bottom: 3px solid #006f45;
 }
 
 .ProfileAvatar {
