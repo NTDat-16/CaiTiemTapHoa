@@ -41,6 +41,7 @@ export default function InventoryManage() {
     total: 0,
   });
 
+  // (useEffect... không thay đổi)
   useEffect(() => {
     const fetchInventory = async (page = 1, pageSize = 10) => {
       setLoading(true);
@@ -158,6 +159,7 @@ export default function InventoryManage() {
     }
   }, [isImportModalOpen]);
 
+  // (Các hàm handler khác... không thay đổi)
   const filteredProducts = products.filter((product) => {
     if (!filterUnit || filterUnit === null) {
       return true;
@@ -177,6 +179,14 @@ export default function InventoryManage() {
 
   const handleAddItemToImportList = (values) => {
     const { productId, quantity } = values;
+
+    // Chặn ID 0, null, hoặc undefined
+    if (!productId) {
+      message.error("ID sản phẩm không hợp lệ, không thể thêm!");
+      return;
+    }
+    // ==========================================================
+
     const productDetails = allProducts.find((p) => p.productId === productId);
 
     if (!productDetails) {
@@ -265,6 +275,7 @@ export default function InventoryManage() {
     );
   };
 
+  // (columns, importTableColumns, handleTableChange... không thay đổi)
   const columns = [
     {
       title: "Mã sản phẩm",
@@ -327,6 +338,7 @@ export default function InventoryManage() {
     setPagination(newPagination);
   };
 
+  // (JSX return... không thay đổi)
   return (
     <div className="inventory-manage-container">
       <div className="inventory-manage-header">
@@ -471,6 +483,7 @@ export default function InventoryManage() {
           pagination={false}
           bordered
           title={() => <b>Danh sách nhập hàng</b>}
+          scroll={{ y: 300 }}
         />
 
         <div style={{ textAlign: "right", marginTop: "16px" }}>
