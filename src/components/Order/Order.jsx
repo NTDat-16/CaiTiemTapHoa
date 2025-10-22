@@ -253,35 +253,35 @@ export default function Order() {
   const [loadingCustomer, setLoadingCustomer] = useState(false);
 
    
-    const { inventory } = useFetchInventory(productIds, currentPage, productsPerPage);
+  const { inventory } = useFetchInventory(productIds, currentPage, productsPerPage);
 
 
-const currentProducts = useMemo(() => {
-    if (!Array.isArray(products)) return [];
-    
-    // Lọc sản phẩm theo Category và Search
-    const filtered = products.filter((p) => {
-        const productName = p.product_name ?? ""; 
-        
-        // 1. LỌC THEO DANH MỤC (ĐÃ SỬA)
-        // Lấy slug từ categoryId của sản phẩm (vì selectedCategory là slug)
-        const productCategorySlug = getCategoryData(p.categoryId)?.slug; 
-        
-        // So sánh slug của sản phẩm với selectedCategory state
-        const matchCategory = selectedCategory === "all" || productCategorySlug === selectedCategory;
-        
-        // 2. Lọc theo tìm kiếm
-        const matchSearch = productName.toLowerCase().includes(search.toLowerCase());
-        
-        return matchCategory && matchSearch;
-    });
+  const currentProducts = useMemo(() => {
+      if (!Array.isArray(products)) return [];
+      
+      // Lọc sản phẩm theo Category và Search
+      const filtered = products.filter((p) => {
+          const productName = p.product_name ?? ""; 
+          
+          // 1. LỌC THEO DANH MỤC (ĐÃ SỬA)
+          // Lấy slug từ categoryId của sản phẩm (vì selectedCategory là slug)
+          const productCategorySlug = getCategoryData(p.categoryId)?.slug; 
+          
+          // So sánh slug của sản phẩm với selectedCategory state
+          const matchCategory = selectedCategory === "all" || productCategorySlug === selectedCategory;
+          
+          // 2. Lọc theo tìm kiếm
+          const matchSearch = productName.toLowerCase().includes(search.toLowerCase());
+          
+          return matchCategory && matchSearch;
+      });
 
-    // Thêm thông tin tồn kho vào sản phẩm đã lọc
-    return filtered.map(p => ({
-        ...p,
-        stock: inventory?.[p.product_id] ?? 0, 
-    }));
-}, [products, inventory, selectedCategory, search]);
+      // Thêm thông tin tồn kho vào sản phẩm đã lọc
+      return filtered.map(p => ({
+          ...p,
+          stock: inventory?.[p.product_id] ?? 0, 
+      }));
+  }, [products, inventory, selectedCategory, search]);
 
     const handleAddToCart = (product) => {
       setCart(prev => {
@@ -470,22 +470,91 @@ const handlePayment = async () => {
 
     //Danh sách các cột trong bảng
     const columns = [
-      {title: "SP",dataIndex: "product_name",key: "product_name",render: (text) => <div style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{text}</div>,},
-      { title: "SL", dataIndex: "quantity", key: "quantity", render: (qty, record) => (
-        <Space>
-          <Button size="small" icon={<MinusOutlined />} onClick={() => updateQuantity(record.product_id, -1)} />
-          <span>{qty}</span>
-          <Button size="small" icon={<PlusOutlined />} onClick={() => updateQuantity(record.product_id, 1)} />
-        </Space>
-      ),},
-      { title: "ĐG", dataIndex: "price", key: "price", render: (p) => p.toLocaleString() + " ₫" },
-      { title: "TT", key: "total", render: (_, r) => (r.price * r.quantity).toLocaleString() + " ₫" },
-      { title: "Xóa", key: "action", render: (_, r) => (
-          <Button type="primary" danger size="small" icon={<DeleteOutlined />} onClick={() => removeFromCart(r.product_id)} />
-      ),
-      },
-    ];
-
+    {
+      title: "No",
+      key: "no",
+      width: '10%',
+      render: (text, record, index) => index + 1, // tự tăng
+    },
+    {
+      title: "Sản phẩm",
+      dataIndex: "product_name",
+      key: "product_name",
+      // Cột này nên chiếm nhiều không gian hơn
+      width: '30%', 
+      render: (text) => (
+        <div style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{text}</div>
+      ),
+    },
+    {
+      title: "SL",
+      dataIndex: "quantity",
+      key: "quantity",
+      width: '25%', // Tăng độ rộng để chứa nút
+      align: 'center',
+      render: (qty, record) => (
+        <Space>
+          {/* Nút Giảm SL: Luôn cho phép giảm (đã có check qty > 0 trong updateQuantity) */}
+          <Button 
+            size="small" 
+            icon={<MinusOutlined />} 
+            onClick={() => updateQuantity(record.product_id, -1)} 
+          />
+          {/* Hiển thị số lượng */}
+          <span style={{ minWidth: 20, textAlign: 'center', fontWeight: 600 }}>
+            {qty}
+          </span>
+          {/* Nút Tăng SL: CHỈ CHO PHÉP TĂNG nếu SL hiện tại < Tồn kho (record.stock) */}
+          <Button 
+            size="small" 
+            icon={<PlusOutlined />}
+            disabled={qty >= record.stock} // Vô hiệu hóa nút nếu SL đã bằng hoặc vượt quá tồn kho
+            onClick={() => {
+              if (qty < record.stock) {
+                updateQuantity(record.product_id, 1);
+              } else {
+                 message.warning(`Số lượng tối đa có thể thêm là ${record.stock}!`);
+              }
+            }}
+          />
+        </Space>
+      ),
+    },
+    { 
+      title: "Đơn giá", 
+      dataIndex: "price", 
+      key: "price", 
+      width: '20%',
+      align: 'left', // Căn phải cho dễ đọc
+      render: (p) => p.toLocaleString() + " ₫" 
+    },
+    { 
+      title: "Thành tiền", 
+      key: "total", 
+      width: '20%',
+      align: 'left', // Căn phải cho dễ đọc
+      render: (_, r) => (
+          <span style={{ fontWeight: 600 }}>
+             {(r.price * r.quantity).toLocaleString() + " ₫"}
+          </span>
+      ),
+    },
+    { 
+      title: "", 
+      key: "action", 
+      width: 40, 
+      align: 'center',
+      render: (_, r) => (
+        <Button 
+          type="primary" 
+          danger 
+          size="small" 
+          icon={<DeleteOutlined />} 
+          onClick={() => removeFromCart(r.product_id)} 
+        />
+      ),
+    },
+  ];
    
     const handlePhoneChange = (e) => {
       const value = e.target.value;
@@ -623,154 +692,6 @@ const handlePayment = async () => {
                     style={{display: "grid",gridTemplateColumns: "auto-fit, minmax(160px, 1fr)",gap: 5,justifyItems: "center",alignItems: "start",}}
                   >
                     {currentProducts.map((p) => (
-  //                   <Card
-  //                     key={p.product_id}
-  //                     hoverable={inventory?.[p.product_id] > 0}
-  //                     cover={
-  //                       <div
-  //                         style={{
-  //                           position: "relative",
-  //                           height: 140,
-  //                           overflow: "hidden",
-  //                           borderTopLeftRadius: 10,
-  //                           borderTopRightRadius: 10,
-  //                         }}
-  //                       >
-  //                         <img
-  //                           alt={p.product_name}
-  //                           src={
-  //                             p.imagePath
-  //                               ? p.imagePath.startsWith("http")
-  //                                 ? p.imagePath
-  //                                 : `${API_IMAGE}${p.imagePath}`
-  //                               : aquavoiem // fallback ảnh mặc định
-  //                           }
-  //                           onError={(e) => (e.target.src = aquavoiem)}
-  //                           style={{
-  //                             width: "100%",
-  //                             height: "100%",
-  //                             objectFit: "cover",
-  //                             filter: inventory?.[p.product_id] > 0 ? "none" : "grayscale(80%)",
-  //                           }}
-  //                         />
-
-  //                         {/* 🏷️ Nhãn "Hết hàng" */}
-  //                         {inventory?.[p.product_id] === 0 && (
-  //                           <div
-  //                             style={{
-  //                               position: "absolute",
-  //                               top: 8,
-  //                               left: 8,
-  //                               backgroundColor: "rgba(0,0,0,0.7)",
-  //                               color: "#fff",
-  //                               fontSize: 11,
-  //                               padding: "2px 6px",
-  //                               borderRadius: 4,
-  //                             }}
-  //                           >
-  //                             Hết hàng
-  //                           </div>
-  //                         )}
-
-  //                         {/* Dấu check nếu đã chọn */}
-  //                         {chosenIds.includes(p.product_id) && (
-  //                           <div
-  //                             style={{
-  //                               position: "absolute",
-  //                               top: 8,
-  //                               right: 8,
-  //                               width: 24,
-  //                               height: 24,
-  //                               backgroundColor: "#008f5a",
-  //                               borderRadius: "50%",
-  //                               display: "flex",
-  //                               alignItems: "center",
-  //                               justifyContent: "center",
-  //                               color: "#fff",
-  //                               fontSize: 16,
-  //                               fontWeight: "bold",
-  //                             }}
-  //                           >
-  //                             ✓
-  //                           </div>
-  //                         )}
-  //                       </div>
-  //                     }
-  //                     onClick={() => {
-  //                       if (inventory?.[p.product_id] > 0) {
-  //                         handleAddToCart(p);
-  //                       }
-  //                     }}
-  //                     style={{
-  //                       width: 160,
-  //                       borderRadius: 10,
-  //                       boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-  //                       transition: "transform 0.2s, box-shadow 0.2s",
-  //                       cursor: inventory?.[p.product_id] > 0 ? "pointer" : "not-allowed",
-  //                       background: "#fff",
-  //                       opacity: inventory?.[p.product_id] > 0 ? 1 : 0.5,
-  //                       pointerEvents: inventory?.[p.product_id] > 0 ? "auto" : "none",
-  //                     }}
-  //                     styles={{ body: { padding: 0 } }}
-  //                     onMouseEnter={(e) => {
-  //                       if (inventory?.[p.product_id] > 0) {
-  //                         e.currentTarget.style.transform = "translateY(-3px)";
-  //                         e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.12)";
-  //                       }
-  //                     }}
-  //                     onMouseLeave={(e) => {
-  //                       e.currentTarget.style.transform = "translateY(0)";
-  //                       e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-  //                     }}
-  //                   >
-  //                     <Card.Meta
-  //                       title={
-  //                         <span
-  //                           style={{
-  //                             fontWeight: 600,
-  //                             fontSize: 13,
-  //                             display: "block",
-  //                             height: 34,
-  //                             overflow: "hidden",
-  //                             textOverflow: "ellipsis",
-  //                           }}
-  //                         >
-  //                           {p.product_name}
-  //                         </span>
-  //                       }
-  //                       description={
-  //                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-  //                           <Tag
-  //                         color={typeColors[getCategoryData(p.categoryId)?.slug]|| "default"}
-  //                           style={{
-  //                             fontSize: 12,
-  //                             padding: "2px 6px",
-  //                             borderRadius: 4,
-  //                           }}
-  //                         >
-  //                        {getCategoryData(p.categoryId)?.name || "Khác"}
-  //                         </Tag>
-
-  //                           {/* Số lượng tồn */}
-  //                           <span
-  //                             style={{
-  //                               color: inventory?.[p.product_id] > 0 ? "red" : "gray",
-  //                               fontSize: 12,
-  //                               fontStyle: inventory?.[p.product_id] > 0 ? "normal" : "italic",
-  //                             }}
-  //                           >
-  //                             {inventory?.[p.product_id] > 0
-  //                               ? `Số lượng: ${inventory[p.product_id]}`
-  //                               : "Hết hàng"}
-  //                           </span>
-
-  //                           <span style={{ color: "#555", fontSize: 12 }}>
-  //                             {p.price.toLocaleString()} ₫ / {p.unit}
-  //                           </span>
-  //                         </div>
-  //                       }
-  //                     />
-  //                   </Card>
                         <Card
                           key={p.product_id}
                           hoverable={inventory?.[p.product_id] > 0}
@@ -1004,7 +925,7 @@ const handlePayment = async () => {
                   size="small"
                   locale={{ emptyText: "Chưa có sản phẩm" }}
                   bordered
-                  scroll={cart.length > 5 ? { y: 350 } : undefined}
+                  scroll={cart.length > 5 ? { y: 330 } : undefined}
                   style={{ tableLayout: "fixed", width: "100%" }}
                   components={{
                     header: {
