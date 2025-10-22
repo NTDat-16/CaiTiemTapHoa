@@ -13,7 +13,6 @@ export default function Employee() {
     const [editingEmployee, setEditingEmployee] = useState(null)
     const [searchTerm, setSearchTerm] = useState("")
     const [form] = Form.useForm()
-    const [previewUsername, setPreviewUsername] = useState("")
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
 
     //Load dữ liệu nhân viên lên bảng
@@ -158,32 +157,10 @@ export default function Employee() {
     const handleSubmit = async (values) => {
         try {
             const { fullName, role } = values;
-            const isDuplicate = employees.some(
-                (e) =>
-                    e.fullName.toLowerCase().trim() === fullName.toLowerCase().trim() &&
-                    (!editingEmployee || e.userId !== editingEmployee.userId)
-            );
-
-            if (isDuplicate) {
-                form.setFields([
-                    {
-                        name: "fullName",
-                        errors: ["Tên nhân viên đã tồn tại. Vui lòng nhập tên khác!"],
-                    },
-                ]);
-                return;
-            }
-
             if (editingEmployee) {
-                let newUsername = editingEmployee.userName;
-
-                if (values.role !== editingEmployee.role) {
-                    const sameRoleUsers = employees.filter(
-                        (e) => e.role === values.role && e.userId !== editingEmployee.userId
-                    );
-                    const nextIndex = sameRoleUsers.length + 1;
-                    const prefix = role === "Admin" ? "admin" : "staff";
-                    newUsername = `${prefix}${nextIndex.toString().padStart(2, "0")}`;
+                const dataUpdate = {
+                    fullName,
+                    role,
                 }
 
                 const response = await fetch(
@@ -194,11 +171,7 @@ export default function Employee() {
                             "Content-Type": "application/json",
                             Authorization: `Bearer ${localStorage.getItem("token")}`,
                         },
-                        body: JSON.stringify({
-                            fullName,
-                            role,
-                            userName: newUsername,
-                        }),
+                        body: JSON.stringify(dataUpdate),
                     }
                 );
 
@@ -209,12 +182,13 @@ export default function Employee() {
 
                 const updated = employees.map((e) =>
                     e.userId === editingEmployee.userId
-                        ? { ...e, fullName, role, userName: newUsername }
+                        ? { ...e, fullName, role }
                         : e
                 );
                 setEmployees(updated);
                 message.success("Cập nhật nhân viên thành công");
             }else {
+                const previewUsername = await generateUsername();
                 const employeeToAdd = {
                     fullName,
                     userName: previewUsername,
@@ -228,7 +202,7 @@ export default function Employee() {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
                     },
-                    body: JSON.stringify(employeeToAdd), // ❗ Không bọc thêm { newEmployee }
+                    body: JSON.stringify(employeeToAdd),
                 });
 
                 if (!response.ok) {
@@ -267,8 +241,7 @@ export default function Employee() {
 
         return (
             user.fullName?.toLowerCase().includes(searchLower) ||
-            user.username?.toLowerCase().includes(searchLower) ||
-            user.role?.toLowerCase().includes(searchLower)
+            user.username?.toLowerCase().includes(searchLower)
         );
     });
 
@@ -277,36 +250,32 @@ export default function Employee() {
     }
 
     //Tạo tên đăng nhập tự động cho nhân viên
-    const generateUsername = async (role) => {
-        if (!role) return "";
-
+    const generateUsername = async () => {
         try {
             const response = await fetch("http://localhost:5000/api/Users/count-by-role", {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
             });
 
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
             const result = await response.json();
-            const counts = result?.data?.roleCounts || {};
-            const roleCount = counts[role] || 0;
+            const totalCount = result?.data?.totalCount || 0;
 
-            const nextIndex = roleCount + 1;
-            const prefix = role === "Admin" ? "admin" : "staff";
+            const nextIndex = totalCount + 1;
+            const prefix = "staff";
+
             return `${prefix}${nextIndex.toString().padStart(2, "0")}`;
         } catch (error) {
-            console.error("Lỗi khi lấy số lượng nhân viên theo role:", error);
+            console.error("Lỗi khi lấy số lượng nhân viên:", error);
             return "";
         }
     };
 
     const handleRoleChange = async (value) => {
         form.setFieldValue("role", value);
-        const username = await generateUsername(value);
-        setPreviewUsername(username);
         form.setFieldValue("username", username);
     };
 
@@ -357,7 +326,7 @@ export default function Employee() {
                 open={isModalOpen}
                 onCancel={handleCancel}
                 footer={null}
-                width={600}
+                width={500}
                 closable={false}
             >
                 <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off">
@@ -378,17 +347,10 @@ export default function Employee() {
                         rules={[{ required: true, message: "Vui lòng chọn chức vụ" }]}
                     >
                         <Select placeholder="Chọn chức vụ" onChange={handleRoleChange}>
-                            <Option value="Admin">Quản trị viên</Option>
-                            <Option value="Staff">Nhân viên</Option>
+                            <Option value="Admin">Quản Trị Viên</Option>
+                            <Option value="Staff">Nhân Viên</Option>
                         </Select>
                     </Form.Item>
-
-                    {previewUsername && (
-                        <div style={{ marginBottom: 12 }}>
-                        <Text type="secondary">Tên đăng nhập dự kiến: </Text>
-                        <Text strong>{previewUsername}</Text>
-                        </div>
-                    )}
                     <Form.Item className="form-actions">
                         <Space>
                             <Button onClick={handleCancel}>Hủy</Button>
