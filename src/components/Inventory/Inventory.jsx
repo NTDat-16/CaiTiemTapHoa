@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react"; // THAY ĐỔI 1: Import useRef, useCallback
 import {
   Table,
   Alert,
@@ -33,7 +33,9 @@ export default function InventoryManage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [productLoading, setProductLoading] = useState(false);
-  const [searchTimeout, setSearchTimeout] = useState(null);
+
+  // thay doi: Dùng useRef thay vì useState cho timer
+  const searchTimeoutRef = useRef(null);
 
   const [pagination, setPagination] = useState({
     current: 1,
@@ -41,7 +43,7 @@ export default function InventoryManage() {
     total: 0,
   });
 
-  // (useEffect... không thay đổi)
+  // (useEffect fetchInventory... không thay đổi)
   useEffect(() => {
     const fetchInventory = async (page = 1, pageSize = 10) => {
       setLoading(true);
@@ -88,6 +90,7 @@ export default function InventoryManage() {
     fetchInventory(pagination.current, pagination.pageSize);
   }, [pagination.current, pagination.pageSize, refreshKey]);
 
+  // (useEffect fetchLowStock... không thay đổi)
   useEffect(() => {
     const fetchLowStock = async () => {
       try {
@@ -118,7 +121,8 @@ export default function InventoryManage() {
     fetchLowStock();
   }, [refreshKey]);
 
-  const fetchProducts = async (searchTerm = "") => {
+  // THAY ĐỔI 3: Bọc hàm fetchProducts bằng useCallback
+  const fetchProducts = useCallback(async (searchTerm = "") => {
     setProductLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -151,13 +155,13 @@ export default function InventoryManage() {
     } finally {
       setProductLoading(false);
     }
-  };
+  }, []); // Dependency array rỗng vì nó không phụ thuộc state/props nào
 
   useEffect(() => {
     if (isImportModalOpen) {
       fetchProducts("");
     }
-  }, [isImportModalOpen]);
+  }, [isImportModalOpen, fetchProducts]); // Thêm fetchProducts vào dependency
 
   // (Các hàm handler khác... không thay đổi)
   const filteredProducts = products.filter((product) => {
@@ -180,12 +184,10 @@ export default function InventoryManage() {
   const handleAddItemToImportList = (values) => {
     const { productId, quantity } = values;
 
-    // Chặn ID 0, null, hoặc undefined
     if (!productId) {
       message.error("ID sản phẩm không hợp lệ, không thể thêm!");
       return;
     }
-    // ==========================================================
 
     const productDetails = allProducts.find((p) => p.productId === productId);
 
@@ -264,16 +266,18 @@ export default function InventoryManage() {
     }
   };
 
-  const handleProductSearch = (value) => {
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
-    setSearchTimeout(
-      setTimeout(() => {
+  // THAY ĐỔI 4: Bọc hàm search bằng useCallback và dùng useRef
+  const handleProductSearch = useCallback(
+    (value) => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      searchTimeoutRef.current = setTimeout(() => {
         fetchProducts(value);
-      }, 300)
-    );
-  };
+      }, 300);
+    },
+    [fetchProducts]
+  ); // Phụ thuộc vào hàm fetchProducts đã bọc
 
   // (columns, importTableColumns, handleTableChange... không thay đổi)
   const columns = [
@@ -483,7 +487,6 @@ export default function InventoryManage() {
           pagination={false}
           bordered
           title={() => <b>Danh sách nhập hàng</b>}
-          scroll={{ y: 300 }}
         />
 
         <div style={{ textAlign: "right", marginTop: "16px" }}>
