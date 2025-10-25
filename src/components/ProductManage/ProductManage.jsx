@@ -1,30 +1,46 @@
-  import { useState, useEffect } from "react"
-  import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Dropdown, InputNumber,Upload, Row,Col } from "antd"
-  import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, FilterOutlined } from "@ant-design/icons"
-    import "./ProductManage.css"
+import { useState, useEffect } from "react";
+import {
+  Table,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Select,
+  Space,
+  message,
+  Popconfirm,
+  Dropdown,
+  InputNumber,
+  Row,
+  Col,
+} from "antd";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SearchOutlined,
+  FilterOutlined,
+} from "@ant-design/icons";
+import "./ProductManage.css";
 
-    const { Option } = Select
+const { Option } = Select;
 
-
-  export default function ProductManage() {
-    const [products, setProducts] = useState([])
-    const [categories, setCategories] = useState([])
-    const [suppliers, setSuppliers] = useState([])
-    const [loading, setLoading] = useState(false)
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [editingProduct, setEditingProduct] = useState(null)
-    const [searchTerm, setSearchTerm] = useState("")
-    const [filterType, setFilterType] = useState(null) // 'category' or 'supplier'
-    const [filterId, setFilterId] = useState(null) // selected categoryId or supplierId
-    const [form] = Form.useForm()
-    const [pageNumber, setPageNumber] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
-    const [totalItems, setTotalItems] = useState(0);
-    const [previewImage, setPreviewImage] = useState(null);
-    const [selectedFile, setSelectedFile] = useState(null); // New state for selected file
-
-
-
+export default function ProductManage() {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState(null);
+  const [filterId, setFilterId] = useState(null);
+  const [form] = Form.useForm();
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [previewImage, setPreviewImage] = useState("img/Default_Product.png");
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const API_BASE = "http://localhost:5000/api";
   const API_IMAGE = "http://localhost:5000";
@@ -98,14 +114,14 @@
         unit: editingProduct.unit,
         categoryId: editingProduct.categoryId,
         supplierId: editingProduct.supplierId,
-        imagePath: editingProduct.imagePath,
       });
+
       setPreviewImage(
-        editingProduct.imagePath && editingProduct.imagePath.trim() !== ""
+        editingProduct.imagePath
           ? editingProduct.imagePath.startsWith("http")
             ? editingProduct.imagePath
             : `${API_IMAGE}${editingProduct.imagePath}`
-          : "/img/Default_Product.png"
+          : "img/Default_Product.png"
       );
     } else {
       form.resetFields();
@@ -385,36 +401,11 @@
                 allowClear
                 enterButton={<SearchOutlined />}
                 size="large"
-                onSearch={handleSearch}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="product-search-input"
-              />
-
-              <Dropdown
-                menu={{ items: filterMenuItems }}
-                trigger={["click"]}
-                placement="bottomLeft"
+                type={filterType ? "primary" : "default"}
               >
-                <Button
-                  icon={<FilterOutlined />}
-                  size="large"
-                  className="filter-button"
-                  type={filterType ? "primary" : "default"}
-                >
-                  {getFilterDisplayName()}
-                </Button>
-              </Dropdown>
-            </div>
-
-            {/* Nút bên phải */}
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleAdd}
-              size="large"
-            >
-              Thêm sản phẩm
-            </Button>
+                {getFilterDisplayName()}
+              </Button>
+            </Dropdown>
           </div>
 
       </div>
@@ -432,7 +423,7 @@
               showSizeChanger: true,
               showTotal: (total) => (
               <span>
-                Tổng <span style={{ color: 'red', fontWeight: 'bold' }}>{total}</span> sản phẩm
+                Tổng <b style={{ color: "red" }}>{t}</b> sản phẩm
               </span>
             ),
               onChange: (page, size) => {
