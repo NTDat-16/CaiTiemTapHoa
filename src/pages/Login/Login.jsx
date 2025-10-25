@@ -12,8 +12,6 @@ export default function Login() {
 
     useEffect(() => {
         document.title = "CaiTiemTapHoa - Đăng nhập";
-
-        // Nếu muốn khi rời trang reset lại tiêu đề mặc định
         return () => {
             document.title = "CaiTiemTapHoa"; 
         }

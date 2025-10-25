@@ -44,55 +44,25 @@ export default function ProductManage() {
 
   const API_BASE = "http://localhost:5000/api";
   const API_IMAGE = "http://localhost:5000";
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token');
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
-  // ✅ Fetch Categories
-  const fetchCategories = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/Categories`, { headers: authHeader });
-      const result = await res.json();
-      const categoriesArray = Array.isArray(result?.data?.items)
-        ? result.data.items
-        : [];
-      setCategories(categoriesArray);
-    } catch (error) {
-      message.error("Lỗi khi tải danh mục");
-    }
-  };
-
-  // ✅ Fetch Suppliers
-  const fetchSuppliers = async () => {
-    try {
-      const response = await fetch(`${API_BASE}/Suppliers`, {
-        headers: authHeader,
-      });
-      const result = await response.json();
-      const suppliersArray = Array.isArray(result?.data?.items)
-        ? result.data.items
-        : [];
-      setSuppliers(suppliersArray);
-    } catch (error) {
-      message.error("Lỗi khi tải nhà cung cấp");
-    }
-  };
-
-  // ✅ Fetch Products (with pagination)
+  // Fetch products from API (currently using mock data)
   const fetchProducts = async (page = pageNumber, size = pageSize) => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${API_BASE}/Products?PageNumber=${page}&PageSize=${size}`,
-        { headers: authHeader }
-      );
+      const response = await fetch(`${API_BASE}/Products?PageNumber=${page}&PageSize=${size}`, {
+        headers: { ...authHeader },
+      });
       const result = await response.json();
 
-      const productsArray = Array.isArray(result?.data?.items)
-        ? result.data.items
-        : [];
-
+      const productsArray = Array.isArray(result?.data?.items) ? result.data.items : [];
       setProducts(productsArray);
-      setTotalItems(result?.data?.totalCount || 0);
+      // ✅ Lưu tổng số phần tử để Ant Table hiển thị đúng phân trang
+      if (result?.data?.totalCount) {
+        setTotalItems(result.data.totalCount);
+      }
+
       setPageNumber(page);
       setPageSize(size);
     } catch (error) {
@@ -103,12 +73,39 @@ export default function ProductManage() {
     }
   };
 
-  // ✅ Load dữ liệu khi mở modal sửa
-  useEffect(() => {
-    fetchProducts(pageNumber, pageSize);
-    fetchCategories();
-    fetchSuppliers();
+  // Fetch suppliers from API (currently using mock data)
+  const fetchSuppliers = async () => {
+    try {
+      // TODO: Uncomment when API is ready
+      const response = await fetch(`${API_BASE}/Suppliers`, {
+        headers: { ...authHeader },
+      });
+      const result = await response.json();
+      const suppliersArray = Array.isArray(result?.data?.items) ? result.data.items : [];
+      setSuppliers(suppliersArray);
+    } catch (error) {
+      message.error("Lỗi khi tải nhà cung cấp")
+    }
+  }
 
+  const fetchCategories = async () => {
+    try {
+      // TODO: Uncomment when API is ready
+      const response = await fetch(`${API_BASE}/Categories`, {
+        headers: { ...authHeader },
+      });
+      const result = await response.json();
+      const categoriesArray = Array.isArray(result?.data?.items) ? result.data.items : [];
+      setCategories(categoriesArray);
+    } catch (error) {
+      message.error("Lỗi khi tải danh mục")
+    }
+  }
+
+  useEffect(() => {
+    fetchProducts(pageNumber, pageSize)
+    fetchCategories()
+    fetchSuppliers()
     if (editingProduct) {
       form.setFieldsValue({
         productName: editingProduct.productName,
@@ -130,21 +127,19 @@ export default function ProductManage() {
       form.resetFields();
       setPreviewImage("img/Default_Product.png");
     }
-  }, [editingProduct, pageNumber, pageSize]);
+  }, [editingProduct, form, pageNumber, pageSize]);
 
-  // ✅ Columns cho bảng
+  // Table columns definition
   const columns = [
-    {
-      title: "Hình ảnh",
+    {title: "Hình ảnh",
       dataIndex: "imagePath",
       key: "imagePath",
       width: 100,
       render: (imagePath) => {
-        const imageUrl = imagePath
-          ? imagePath.startsWith("http")
-            ? imagePath
-            : `${API_IMAGE}${imagePath}`
-          : "/img/Default_Product.png";
+        const imageUrl = imagePath ? imagePath.startsWith("http")
+        ? imagePath
+        : `${API_IMAGE}${imagePath}`
+        : "/img/Default_Product.png"; // fallback mặc định trong public
         return (
           <img
             src={imageUrl}
@@ -161,58 +156,26 @@ export default function ProductManage() {
         );
       },
     },
-    {
-      title: "Mã SP",
-      dataIndex: "productId",
-      key: "productId",
-      width: 100,
+    {title: "Mã SP",dataIndex: "productId",key: "productId",width: 100,},
+    {title: "Tên sản phẩm",dataIndex: "productName",key: "productName",width: 200,},
+    {title: "Barcode",dataIndex: "barcode",key: "barcode",width: 150,},
+    {title: "Giá (VNĐ)",dataIndex: "price",key: "price",width: 150,
+      render: (price) => `${price.toLocaleString("vi-VN")} ₫`,
     },
-    {
-      title: "Tên sản phẩm",
-      dataIndex: "productName",
-      key: "productName",
-      width: 200,
+    {title: "Đơn vị",dataIndex: "unit",key: "unit",width: 100,},
+    {title: "Danh mục",dataIndex: "categoryId",key: "categoryId",width: 150,
+      render: (categoryId) => {
+        const category = categories.find((c) => c.categoryId === categoryId);
+        return category ? category.categoryName : "-";
+      },
     },
-    {
-      title: "Barcode",
-      dataIndex: "barcode",
-      key: "barcode",
-      width: 150,
+    {title: "Nhà cung cấp",dataIndex: "supplierId",key: "supplierId",width: 150,
+      render: (supplierId) => {
+        const supplier = suppliers.find((s) => s.supplierId === supplierId);
+        return supplier ? supplier.name : "-";
+       },
     },
-    {
-      title: "Giá (VNĐ)",
-      dataIndex: "price",
-      key: "price",
-      width: 150,
-      render: (price) => `${price?.toLocaleString("vi-VN")} ₫`,
-    },
-    {
-      title: "Đơn vị",
-      dataIndex: "unit",
-      key: "unit",
-      width: 100,
-    },
-    {
-      title: "Danh mục",
-      dataIndex: "categoryId",
-      key: "categoryId",
-      width: 150,
-      render: (id) =>
-        categories.find((c) => c.categoryId === id)?.categoryName || "-",
-    },
-    {
-      title: "Nhà cung cấp",
-      dataIndex: "supplierId",
-      key: "supplierId",
-      width: 150,
-      render: (id) =>
-        suppliers.find((s) => s.supplierId === id)?.name || "-",
-    },
-    {
-      title: "Thao tác",
-      key: "action",
-      width: 150,
-      fixed: "right",
+    {title: "Thao tác",key: "action",width: 150,fixed: "right",
       render: (_, record) => (
         <Space size="small">
           <Button
@@ -220,16 +183,18 @@ export default function ProductManage() {
             icon={<EditOutlined />}
             size="small"
             onClick={() => handleEdit(record)}
+            className="btn-edit"
           >
             Sửa
           </Button>
           <Popconfirm
             title="Xóa sản phẩm"
-            onConfirm={() => handleDelete(record.productId)}
+            description="Bạn có chắc chắn muốn xóa sản phẩm này?"
+            onConfirm={() => handleDelete(record.productId)} // ✅ sửa lại
             okText="Xóa"
             cancelText="Hủy"
           >
-            <Button danger icon={<DeleteOutlined />} size="small">
+            <Button type="primary" danger icon={<DeleteOutlined />} size="small">
               Xóa
             </Button>
           </Popconfirm>
@@ -238,24 +203,28 @@ export default function ProductManage() {
     },
   ];
 
-  // ✅ Các hàm xử lý
+  // Handle add new product
   const handleAdd = () => {
-    setEditingProduct(null);
-    form.resetFields();
-    setIsModalOpen(true);
-  };
+    setEditingProduct(null)
+    form.resetFields()
+    setIsModalOpen(true)
+  }
 
+  // Handle edit product
   const handleEdit = (product) => {
-    setEditingProduct(product);
-    setIsModalOpen(true);
-  };
+    setEditingProduct(product)
+    form.setFieldsValue(product)
+    setIsModalOpen(true)
+  }
 
-  const handleDelete = async (id) => {
+  // DELETE product
+  const handleDelete = async (productId) => {
     try {
-      const response = await fetch(`${API_BASE}/Products/${id}`, {
+      const response = await fetch(`${API_BASE}/Products/${productId}`, {
         method: "DELETE",
-        headers: authHeader,
+        headers: { ...authHeader },
       });
+
       if (!response.ok) throw new Error("Delete failed");
       message.success("Xóa sản phẩm thành công");
       fetchProducts();
@@ -267,15 +236,17 @@ export default function ProductManage() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setSelectedFile(file);
+
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => setPreviewImage(reader.result);
+      reader.onload = () => setPreviewImage(reader.result); // hiển thị ảnh ngay
       reader.readAsDataURL(file);
     }
   };
 
   const handleSubmit = async (values) => {
     try {
+      // Chuẩn bị FormData
       const formData = new FormData();
       formData.append("ProductName", values.productName);
       formData.append("CategoryId", values.categoryId);
@@ -283,74 +254,92 @@ export default function ProductManage() {
       formData.append("Barcode", values.barcode);
       formData.append("Price", values.price);
       formData.append("Unit", values.unit);
-      if (selectedFile) formData.append("Image", selectedFile);
+      if (selectedFile) {
+        formData.append("Image", selectedFile);
+      }
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
 
+      let response;
       const url = editingProduct
         ? `${API_BASE}/Products/${editingProduct.productId}`
         : `${API_BASE}/Products`;
       const method = editingProduct ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      response = await fetch(url, {
         method,
-        headers: { Accept: "application/json", ...authHeader },
+        headers: {
+          Accept: "application/json",
+          ...authHeader,
+        },
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Lưu sản phẩm thất bại");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Server response:", errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
 
-      message.success(
-        editingProduct ? "Cập nhật sản phẩm thành công" : "Thêm sản phẩm thành công"
-      );
-
-      setIsModalOpen(false);
-      form.resetFields();
-      setSelectedFile(null);
-      fetchProducts();
+      const result = await response.json();
+      message.success(editingProduct ? "Cập nhật sản phẩm thành công" : "Thêm sản phẩm thành công");
+        setIsModalOpen(false);
+        form.resetFields();
+        setPreviewImage(null);
+        setSelectedFile(null);
+        setTimeout(() => fetchProducts(pageNumber, pageSize), 500);
     } catch (error) {
-      message.error(error.message);
+      console.error("❌ Submit error:", error);
+      message.error(`Lỗi khi lưu sản phẩm: ${error.message}`);
     }
   };
 
+  // Handle modal cancel
   const handleCancel = () => {
-    setIsModalOpen(false);
-    setEditingProduct(null);
-    form.resetFields();
-  };
+    setIsModalOpen(false)
+    form.resetFields()
+    setEditingProduct(null)
+  }
 
-  const handleSearch = (value) => {
-    setSearchTerm(value.toLowerCase());
-  };
+  // const filteredProducts = products.filter((product) => {
+  //   // Apply filter first
+  //   if (filterType === "category" && filterId !== null) {
+  //     if (product.categoryId !== filterId) return false
+  //   }
+  // });
 
-  const handleFilterByCategory = (id) => {
-    setFilterType("category");
-    setFilterId(id);
-    message.success("Đang lọc theo danh mục");
-  };
+  const filteredProducts = products.filter((product) => {
+    if (filterType === "category" && filterId !== null) {
+      return product.categoryId === filterId;
+    }
+    if (filterType === "supplier" && filterId !== null) {
+      return product.supplierId === filterId;
+    }
+    if (searchTerm) {
+      const keyword = searchTerm.toLowerCase();
+      return (
+        product.productName?.toLowerCase().includes(keyword) ||
+        product.barcode?.toLowerCase().includes(keyword) ||
+        product.unit?.toLowerCase().includes(keyword)
+      );
+    }
+    return true;
+  });
 
-  const handleFilterBySupplier = (id) => {
-    setFilterType("supplier");
-    setFilterId(id);
-    message.success("Đang lọc theo nhà cung cấp");
-  };
+
+  const handleFilterBySupplier = (supplierId) => {
+    setFilterType("supplier")
+    setFilterId(supplierId)
+    const supplier = suppliers.find((s) => s.supplierId === supplierId)
+    message.success(`Đang lọc theo nhà cung cấp: ${supplier?.name}`)
+  }
 
   const handleClearFilter = () => {
-    setFilterType(null);
-    setFilterId(null);
-    message.info("Đã xóa bộ lọc");
-  };
-
-  const filteredProducts = products.filter((p) => {
-    let matches = true;
-    if (filterType === "category" && filterId)
-      matches = p.categoryId === filterId;
-    if (filterType === "supplier" && filterId)
-      matches = p.supplierId === filterId;
-    if (searchTerm)
-      matches =
-        p.productName?.toLowerCase().includes(searchTerm) ||
-        p.barcode?.toLowerCase().includes(searchTerm);
-    return matches;
-  });
+    setFilterType(null)
+    setFilterId(null)
+    message.info("Đã xóa bộ lọc")
+  }
 
   const filterMenuItems = [
     {
@@ -371,47 +360,46 @@ export default function ProductManage() {
         onClick: () => handleFilterBySupplier(sup.supplierId),
       })),
     },
-    { type: "divider" },
+    {
+      type: "divider",
+    },
     {
       key: "clear",
       label: "Xóa bộ lọc",
       onClick: handleClearFilter,
-      disabled: !filterType,
+      disabled: filterType === null,
     },
-  ];
+  ]
 
   const getFilterDisplayName = () => {
-    if (!filterType || !filterId) return "Lọc";
+    if (!filterType || filterId === null) return "Lọc"
     if (filterType === "category") {
-      const category = categories.find((c) => c.categoryId === filterId);
-      return category ? `Lọc: ${category.categoryName}` : "Lọc";
+      const category = categories.find((c) => c.categoryId === filterId)
+      return category ? `Lọc: ${category.categoryName}` : "Lọc"
     }
-    if (filterType === "supplier") {
-      const supplier = suppliers.find((s) => s.supplierId === filterId);
-      return supplier ? `Lọc: ${supplier.name}` : "Lọc";
-    }
-    return "Lọc";
-  };
 
-  // ✅ JSX
+    if (filterType === "supplier") {
+      const supplier = suppliers.find((s) => s.supplierId === filterId)
+      return supplier ? `Lọc: ${supplier.name}` : "Lọc"
+    }
+    return "Lọc"
+  }
+  
+  const handleSearch = (value) => {
+    setSearchTerm(value)
+  }
+
   return (
     <div className="product-manage-container">
       <div className="product-manage-header">
-        <h2>Quản lý sản phẩm</h2>
-        <div className="header-actions">
-          <div className="search-filter-group">
-            <Input.Search
-              placeholder="Tìm kiếm sản phẩm..."
-              allowClear
-              enterButton={<SearchOutlined />}
-              size="large"
-              onSearch={handleSearch}
-              onChange={(e) => handleSearch(e.target.value)}
-            />
-
-            <Dropdown menu={{ items: filterMenuItems }} trigger={["click"]}>
-              <Button
-                icon={<FilterOutlined />}
+          <h2>Quản lý sản phẩm</h2>
+          <div className="header-actions">
+            {/* Nhóm bên trái: Search + Dropdown */}
+            <div className="search-filter-group">
+              <Input.Search
+                placeholder="Tìm kiếm theo tên sản phẩm, barcode, giá, đơn vị, danh mục, nhà cung cấp..."
+                allowClear
+                enterButton={<SearchOutlined />}
                 size="large"
                 type={filterType ? "primary" : "default"}
               >
@@ -420,37 +408,30 @@ export default function ProductManage() {
             </Dropdown>
           </div>
 
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleAdd}
-            size="large"
-          >
-            Thêm sản phẩm
-          </Button>
-        </div>
       </div>
 
       <div className="product-manage-table">
-        <Table
-          columns={columns}
-          dataSource={filteredProducts}
-          rowKey="productId"
-          loading={loading}
-          pagination={{
-            current: pageNumber,
-            pageSize,
-            total: totalItems,
-            showSizeChanger: true,
-            showTotal: (t) => (
+          <Table
+            columns={columns}
+            dataSource={filteredProducts}
+            rowKey="productId"
+            loading={loading}
+            pagination={{
+              current: pageNumber,
+              pageSize: pageSize,
+              total: totalItems,
+              showSizeChanger: true,
+              showTotal: (total) => (
               <span>
                 Tổng <b style={{ color: "red" }}>{t}</b> sản phẩm
               </span>
             ),
-            onChange: (page, size) => fetchProducts(page, size),
-          }}
-          scroll={{ y: 420, x: 1200 }}
-        />
+              onChange: (page, size) => {
+                fetchProducts(page, size);
+              },
+            }}
+            scroll={{ y: 420, x: 1200 }}
+          />
       </div>
 
       <Modal
@@ -459,6 +440,7 @@ export default function ProductManage() {
         onCancel={handleCancel}
         footer={null}
         width={700}
+        closable={false}
         style={{ top: 70 }}
       >
         <Form
@@ -467,20 +449,21 @@ export default function ProductManage() {
           onFinish={handleSubmit}
           autoComplete="off"
         >
-          <Form.Item label="Hình ảnh" style={{ textAlign: "center" }}>
-            <div style={{ position: "relative", display: "inline-block" }}>
-              <img
-                src={previewImage}
-                alt="Preview"
-                style={{
-                  width: "180px",
-                  height: "180px",
-                  objectFit: "cover",
-                  borderRadius: "8px",
-                  border: "1px solid #d9d9d9",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                }}
-              />
+        {/* Hình ảnh sản phẩm */}
+        <Form.Item label="Hình ảnh" style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <img
+              src={previewImage || editingProduct?.imagePath || "/img/Default_Product.png"}
+              alt="Preview"
+              style={{
+                width: "180px",
+                height: "180px",
+                objectFit: "cover",
+                borderRadius: "8px",
+                border: "1px solid #d9d9d9",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              }}
+            />
               <input
                 type="file"
                 accept="image/*"
@@ -493,12 +476,13 @@ export default function ProductManage() {
                   height: "100%",
                   opacity: 0,
                   cursor: "pointer",
+                  borderRadius: "8px",
                 }}
               />
               <div
                 style={{
                   position: "absolute",
-                  bottom: 8,
+                  bottom: "8px",
                   left: "50%",
                   transform: "translateX(-50%)",
                   background: "rgba(0,0,0,0.5)",
@@ -506,13 +490,13 @@ export default function ProductManage() {
                   padding: "4px 8px",
                   borderRadius: "4px",
                   fontSize: "12px",
+                  pointerEvents: "none",
                 }}
               >
                 Chọn hình
               </div>
             </div>
           </Form.Item>
-
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -520,44 +504,55 @@ export default function ProductManage() {
                 name="productName"
                 rules={[
                   { required: true, message: "Vui lòng nhập tên sản phẩm" },
-                  { max: 100, message: "Tên không quá 100 ký tự" },
+                  { max: 100, message: "Tên sản phẩm không quá 100 ký tự" },
                 ]}
               >
                 <Input placeholder="Nhập tên sản phẩm" />
               </Form.Item>
             </Col>
+
             <Col span={12}>
               <Form.Item
                 label="Đơn vị"
                 name="unit"
+                initialValue="cái"
                 rules={[{ required: true, message: "Vui lòng nhập đơn vị" }]}
               >
-                <Input placeholder="Nhập đơn vị (cái, kg...)" />
+                <Input placeholder="Nhập đơn vị (cái, kg, ly...)" />
               </Form.Item>
             </Col>
           </Row>
 
+          {/* Barcode và Giá cùng hàng */}
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 label="Barcode"
                 name="barcode"
-                rules={[{ required: true, message: "Vui lòng nhập barcode" }]}
+                rules={[
+                  { required: true, message: "Vui lòng nhập barcode" },
+                  { max: 50, message: "Barcode không quá 50 ký tự" },
+                ]}
               >
                 <Input placeholder="Nhập barcode" />
               </Form.Item>
             </Col>
+
             <Col span={12}>
               <Form.Item
                 label="Giá (VNĐ)"
                 name="price"
-                rules={[{ required: true, message: "Vui lòng nhập giá" }]}
+                rules={[
+                  { required: true, message: "Vui lòng nhập giá" },
+                  { type: "number", min: 0, message: "Giá phải >= 0" },
+                ]}
               >
-                <InputNumber style={{ width: "100%" }} placeholder="Nhập giá" />
+                <InputNumber placeholder="Nhập giá" style={{ width: "100%" }} />
               </Form.Item>
             </Col>
           </Row>
 
+          {/* Danh mục và nhà cung cấp */}
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -566,14 +561,15 @@ export default function ProductManage() {
                 rules={[{ required: true, message: "Vui lòng chọn danh mục" }]}
               >
                 <Select placeholder="Chọn danh mục">
-                  {categories.map((c) => (
-                    <Option key={c.categoryId} value={c.categoryId}>
-                      {c.categoryName}
+                  {categories.map((category) => (
+                    <Option key={category.categoryId} value={category.categoryId}>
+                      {category.categoryName}
                     </Option>
                   ))}
                 </Select>
               </Form.Item>
             </Col>
+
             <Col span={12}>
               <Form.Item
                 label="Nhà cung cấp"
@@ -581,9 +577,9 @@ export default function ProductManage() {
                 rules={[{ required: true, message: "Vui lòng chọn nhà cung cấp" }]}
               >
                 <Select placeholder="Chọn nhà cung cấp">
-                  {suppliers.map((s) => (
-                    <Option key={s.supplierId} value={s.supplierId}>
-                      {s.name}
+                  {suppliers.map((supplier) => (
+                    <Option key={supplier.supplierId} value={supplier.supplierId}>
+                      {supplier.name}
                     </Option>
                   ))}
                 </Select>
@@ -591,6 +587,7 @@ export default function ProductManage() {
             </Col>
           </Row>
 
+          {/* Nút hành động */}
           <Form.Item style={{ textAlign: "right", marginTop: 16 }}>
             <Space>
               <Button onClick={handleCancel}>Hủy</Button>
@@ -602,5 +599,5 @@ export default function ProductManage() {
         </Form>
       </Modal>
     </div>
-  );
+  )
 }

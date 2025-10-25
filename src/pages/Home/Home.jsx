@@ -13,11 +13,13 @@ import Supplier from "../../components/Supplier/Supplier";
 import "./Home.css";
 
 export default function Home() {
+  
   const [choosen, setChoosen] = useState("order");
 
   function handleChoosen(frame) {
     setChoosen(frame);
   }
+  
   return (
     <div className="home-container">
       <Navbar />

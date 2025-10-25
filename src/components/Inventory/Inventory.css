@@ -29,6 +29,11 @@
   color: #008f5a;
 }
 
+.ant-table-container .ant-table-thead > tr > th {
+  background-color: #008f5a; /* <-- ĐỔI MÃ MÀU Ở ĐÂY */
+  color: white;
+}
+
 /* Label và Select filter */
 .inventory-manage-header label {
   font-weight: 500;
@@ -68,7 +73,6 @@
 .ant-alert-icon {
   color: #008f5a !important; /* Icon đồng bộ màu chủ đạo */
 }
-
 
 /* ========== BẢNG ========== */
 .inventory-manage-table {
@@ -143,4 +147,11 @@
   .inventory-manage-table {
     padding: 16px;
   }
+}
+
+.import-list-table .ant-table-thead > tr > th {
+  background-color: #008f5a !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  text-align: center;
 }

@@ -11,5 +11,6 @@ Currently, two official plugins are available:
 - npm install
 - npm install antd
 - npm install @ant-design/v5-patch-for-react-19 --save
+- npm install jspdf html2canvas
 - npm run dev
 - lụm 

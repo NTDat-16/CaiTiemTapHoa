@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import SalesReport from "../SalesReport/SaleReport";
-// import Forecast from "./Forecast";
+import Forecast from "../Forecast/Forecast";
 // import Inventory from "./Inventory";
 // import DeadStock from "./DeadStock";
 import {
@@ -29,7 +29,7 @@ export default function Dashboard() {
       case "sales":
         return <SalesReport />;
       case "forecast":
-        // return <Forecast />;
+        return <Forecast />;
       case "inventory":
         // return <Inventory />;
       case "deadstock":

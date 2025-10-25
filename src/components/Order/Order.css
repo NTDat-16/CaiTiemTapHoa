@@ -29,7 +29,7 @@
   font-size: 16px;
 }
 .ant-pagination-item-link {
-  background-color: #0d9488 !important; /* màu nền xanh ngọc */
+  background-color: #008f5a !important; /* màu nền xanh ngọc */
   color: white !important;              /* màu chữ */
   border-radius: 8px !important;        /* bo góc mềm */
   border: none !important;              /* bỏ viền mặc định */
@@ -37,7 +37,7 @@
   
 }
 .ant-pagination-item-link:hover {
-  background-color: #0f766e !important;
+  background-color: #008f5a !important;
   color: #fff !important;
   transform: scale(1.05);
 }
@@ -56,7 +56,7 @@
 
 /* Nền màu xanh cho header Ant Design Table */
 .ant-table-thead > tr > th {
-  background-color: green !important;
+  background-color: #008f5a !important;
   color: white !important;
   text-align: center;
 }

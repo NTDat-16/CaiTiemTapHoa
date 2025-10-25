@@ -35,15 +35,7 @@ const CATEGORY_MAP = {
     4: { name: "Đồ gia dụng", slug: "do-gia-dung" },
     5: { name: "Mỹ phẩm", slug: "my-pham" },
 };
-const typeColors = {
-    "do-uong": "blue",
-    "thuc-pham": "orange",
-    "do-gia-dung": "green", 
-    "banh-keo": "purple",   
-    "trai-cay": "red",
-    "gia-vi": "volcano",    
-    "my-pham": "cyan",      
-};
+
 const getCategoryData = (id) => {
     return CATEGORY_MAP[id] || { name: "Khác", slug: "khac" };
 };
@@ -182,32 +174,30 @@ const calculateDiscountAmount = (subtotal, selectedPromoId, promotions) => {
     
      // Khai báo hàm fetchData bên trong useEffect hoặc dùng useCallback (nhưng trong trường hợp này, bên trong useEffect là đủ)
      useEffect(() => {
-         if (!shouldFetch) {
-                // Nếu không có productIds (ví dụ: đang loading Product), clear inventory
-                setInventory({}); 
-                return;
-            }
+      if (!shouldFetch) {
+        // Nếu không có productIds (ví dụ: đang loading Product), clear inventory
+        setInventory({}); 
+        return;
+      }
+      const fetchInventoryData = async () => {
+        setLoadingInventory(true);
+        const token = getAuthToken();
 
-         const fetchInventoryData = async () => {
-             setLoadingInventory(true);
-             const token = getAuthToken();
+        if (!token) {
+          setLoadingInventory(false);
+          return;
+        }
+        try {
+          // Gọi API với page và pageSize mới nhất
+          const response = await fetch(`${API_BASE_URL}/Inventory?pageNumber=${page}&pageSize=${pageSize}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+          });
 
-             if (!token) {
-                 setLoadingInventory(false);
-                 return;
-             }
-
-             try {
-                 // Gọi API với page và pageSize mới nhất
-                 const response = await fetch(`${API_BASE_URL}/Inventory?pageNumber=${page}&pageSize=${pageSize}`, {
-                     method: 'GET',
-                     headers: {
-                         'Content-Type': 'application/json',
-                         'Authorization': `Bearer ${token}`,
-                     },
-                 });
-
-                 if (!response.ok) {
+          if (!response.ok) {
                      throw new Error(`Lỗi khi lấy dữ liệu tồn kho: ${response.status}`);
                  }
                  const result = await response.json();
@@ -238,62 +228,60 @@ const calculateDiscountAmount = (subtotal, selectedPromoId, promotions) => {
 }
 
 
-  export default function Order() {
-    
-    const [currentPage, setCurrentPage] = useState(1);
-    const [productsPerPage, setProductsPerPage] = useState(25);
-  
-    const { products, loading, totalItems } = useFetchProducts(currentPage, productsPerPage);
-    const { promotions } = useFetchPromotions(); 
+export default function Order() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage, setProductsPerPage] = useState(25);
+  const { products, loading, totalItems } = useFetchProducts(currentPage, productsPerPage);
+  const { promotions } = useFetchPromotions(); 
 
-    const productIds = useMemo(
-      () => Array.isArray(products) ? products.map(p => p.product_id) : [],
-      [products]
-    );
+  const productIds = useMemo(
+    () => Array.isArray(products) ? products.map(p => p.product_id) : [],
+    [products]
+  );
 
-    const [selectedCategory, setSelectedCategory] = useState("all"); 
-    const [cart, setCart] = useState([]);
-    const [search, setSearch] = useState("");
-    const [selectedPromoId, setSelectedPromoId] = useState("");
-    const [paymentMethod, setPaymentMethod] = useState("Tiền mặt");
-    const [customerPaid, setCustomerPaid] = useState(0);
-    const [chosenIds, setChosenIds] = useState([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [form] = Form.useForm()
-    const [phone, setPhone] = useState("");
-    const [customerName, setCustomerName] = useState("");
-    const [loadingCustomer, setLoadingCustomer] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("all"); 
+  const [cart, setCart] = useState([]);
+  const [search, setSearch] = useState("");
+  const [selectedPromoId, setSelectedPromoId] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Tiền mặt");
+  const [customerPaid, setCustomerPaid] = useState(0);
+  const [chosenIds, setChosenIds] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [form] = Form.useForm()
+  const [phone, setPhone] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [loadingCustomer, setLoadingCustomer] = useState(false);
 
    
-    const { inventory } = useFetchInventory(productIds, currentPage, productsPerPage);
+  const { inventory } = useFetchInventory(productIds, currentPage, productsPerPage);
 
 
-const currentProducts = useMemo(() => {
-    if (!Array.isArray(products)) return [];
-    
-    // Lọc sản phẩm theo Category và Search
-    const filtered = products.filter((p) => {
-        const productName = p.product_name ?? ""; 
-        
-        // 1. LỌC THEO DANH MỤC (ĐÃ SỬA)
-        // Lấy slug từ categoryId của sản phẩm (vì selectedCategory là slug)
-        const productCategorySlug = getCategoryData(p.categoryId)?.slug; 
-        
-        // So sánh slug của sản phẩm với selectedCategory state
-        const matchCategory = selectedCategory === "all" || productCategorySlug === selectedCategory;
-        
-        // 2. Lọc theo tìm kiếm
-        const matchSearch = productName.toLowerCase().includes(search.toLowerCase());
-        
-        return matchCategory && matchSearch;
-    });
+  const currentProducts = useMemo(() => {
+      if (!Array.isArray(products)) return [];
+      
+      // Lọc sản phẩm theo Category và Search
+      const filtered = products.filter((p) => {
+          const productName = p.product_name ?? ""; 
+          
+          // 1. LỌC THEO DANH MỤC (ĐÃ SỬA)
+          // Lấy slug từ categoryId của sản phẩm (vì selectedCategory là slug)
+          const productCategorySlug = getCategoryData(p.categoryId)?.slug; 
+          
+          // So sánh slug của sản phẩm với selectedCategory state
+          const matchCategory = selectedCategory === "all" || productCategorySlug === selectedCategory;
+          
+          // 2. Lọc theo tìm kiếm
+          const matchSearch = productName.toLowerCase().includes(search.toLowerCase());
+          
+          return matchCategory && matchSearch;
+      });
 
-    // Thêm thông tin tồn kho vào sản phẩm đã lọc
-    return filtered.map(p => ({
-        ...p,
-        stock: inventory?.[p.product_id] ?? 0, 
-    }));
-}, [products, inventory, selectedCategory, search]);
+      // Thêm thông tin tồn kho vào sản phẩm đã lọc
+      return filtered.map(p => ({
+          ...p,
+          stock: inventory?.[p.product_id] ?? 0, 
+      }));
+  }, [products, inventory, selectedCategory, search]);
 
     const handleAddToCart = (product) => {
       setCart(prev => {
@@ -475,24 +463,98 @@ const handlePayment = async () => {
         message.error({ content: `❌ Thanh toán thất bại: ${error.message}`, key: 'payment', duration: 5 });
     }
 };
+  const handlePaymentChange = (value) => {
+      setPaymentMethod(value);
+      console.log("Phương thức thanh toán:", value);
+  };
 
+    //Danh sách các cột trong bảng
     const columns = [
-      {title: "SP",dataIndex: "product_name",key: "product_name",render: (text) => <div style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{text}</div>,},
-      { title: "SL", dataIndex: "quantity", key: "quantity", render: (qty, record) => (
-        <Space>
-          <Button size="small" icon={<MinusOutlined />} onClick={() => updateQuantity(record.product_id, -1)} />
-          <span>{qty}</span>
-          <Button size="small" icon={<PlusOutlined />} onClick={() => updateQuantity(record.product_id, 1)} />
-        </Space>
-      ),},
-      { title: "ĐG", dataIndex: "price", key: "price", render: (p) => p.toLocaleString() + " ₫" },
-      { title: "TT", key: "total", render: (_, r) => (r.price * r.quantity).toLocaleString() + " ₫" },
-      { title: "Xóa", key: "action", render: (_, r) => (
-          <Button type="primary" danger size="small" icon={<DeleteOutlined />} onClick={() => removeFromCart(r.product_id)} />
-      ),
-      },
-    ];
-
+    {
+      title: "No",
+      key: "no",
+      width: '10%',
+      render: (text, record, index) => index + 1, // tự tăng
+    },
+    {
+      title: "Sản phẩm",
+      dataIndex: "product_name",
+      key: "product_name",
+      // Cột này nên chiếm nhiều không gian hơn
+      width: '30%', 
+      render: (text) => (
+        <div style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{text}</div>
+      ),
+    },
+    {
+      title: "SL",
+      dataIndex: "quantity",
+      key: "quantity",
+      width: '25%', // Tăng độ rộng để chứa nút
+      align: 'center',
+      render: (qty, record) => (
+        <Space>
+          {/* Nút Giảm SL: Luôn cho phép giảm (đã có check qty > 0 trong updateQuantity) */}
+          <Button 
+            size="small" 
+            icon={<MinusOutlined />} 
+            onClick={() => updateQuantity(record.product_id, -1)} 
+          />
+          {/* Hiển thị số lượng */}
+          <span style={{ minWidth: 20, textAlign: 'center', fontWeight: 600 }}>
+            {qty}
+          </span>
+          {/* Nút Tăng SL: CHỈ CHO PHÉP TĂNG nếu SL hiện tại < Tồn kho (record.stock) */}
+          <Button 
+            size="small" 
+            icon={<PlusOutlined />}
+            disabled={qty >= record.stock} // Vô hiệu hóa nút nếu SL đã bằng hoặc vượt quá tồn kho
+            onClick={() => {
+              if (qty < record.stock) {
+                updateQuantity(record.product_id, 1);
+              } else {
+                 message.warning(`Số lượng tối đa có thể thêm là ${record.stock}!`);
+              }
+            }}
+          />
+        </Space>
+      ),
+    },
+    { 
+      title: "Đơn giá", 
+      dataIndex: "price", 
+      key: "price", 
+      width: '20%',
+      align: 'left', // Căn phải cho dễ đọc
+      render: (p) => p.toLocaleString() + " ₫" 
+    },
+    { 
+      title: "Thành tiền", 
+      key: "total", 
+      width: '20%',
+      align: 'left', // Căn phải cho dễ đọc
+      render: (_, r) => (
+          <span style={{ fontWeight: 600 }}>
+             {(r.price * r.quantity).toLocaleString() + " ₫"}
+          </span>
+      ),
+    },
+    { 
+      title: "", 
+      key: "action", 
+      width: 40, 
+      align: 'center',
+      render: (_, r) => (
+        <Button 
+          type="primary" 
+          danger 
+          size="small" 
+          icon={<DeleteOutlined />} 
+          onClick={() => removeFromCart(r.product_id)} 
+        />
+      ),
+    },
+  ];
    
     const handlePhoneChange = (e) => {
       const value = e.target.value;
@@ -576,14 +638,12 @@ const handlePayment = async () => {
       const change = tiendua - tongmua;
       return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(change);
     }
-
-
-    return (
-      <div className="order-container">
-        <Row gutter={16}>
-          {/* Cột bên trái */}
-          <Col span={16}>
-            <Card
+  return (
+    <div className="order-container">
+      <Row gutter={16}>
+        {/* Cột bên trái */}
+        <Col span={16}>
+          <Card
               title={null}
               style={{height: "calc(100vh - 80px)",display: "flex",flexDirection: "column",borderRadius: 12,boxShadow: "0 4px 12px rgba(0,0,0,0.08)",overflow: "hidden",}}
               styles={{ body: { display: "flex", flexDirection: "column", height: "100%", padding: 0 } }}          >
@@ -593,7 +653,7 @@ const handlePayment = async () => {
               >
                 <Space style={{ width: "100%", justifyContent: "space-between" }}>
                   <Select
-                 onChange={(val) => setSelectedCategory(val)} 
+                    onChange={(val) => setSelectedCategory(val)} 
                     value={selectedCategory}
                     style={{width: 160,height: 50,borderRadius: 6,}}
                     size="middle"
@@ -629,161 +689,202 @@ const handlePayment = async () => {
                 ) : (
                   <div
                     className="product-grid"
-                    style={{display: "grid",gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",gap: 12,justifyItems: "center",alignItems: "start",}}
+                    style={{display: "grid",gridTemplateColumns: "auto-fit, minmax(160px, 1fr)",gap: 5,justifyItems: "center",alignItems: "start",}}
                   >
                     {currentProducts.map((p) => (
-                    <Card
-                      key={p.product_id}
-                      hoverable={inventory?.[p.product_id] > 0}
-                      cover={
-                        <div
+                        <Card
+                          key={p.product_id}
+                          hoverable={inventory?.[p.product_id] > 0}
+                          onClick={() => inventory?.[p.product_id] > 0 && handleAddToCart(p)}
                           style={{
-                            position: "relative",
-                            height: 140,
+                            position: "relative", // để Tag và icon nằm đúng vị trí
+                            width: 160,
+                            height: 230,
+                            borderRadius: 10,
+                            background: "#fff",
+                            cursor: inventory?.[p.product_id] > 0 ? "pointer" : "not-allowed",
+                            opacity: inventory?.[p.product_id] > 0 ? 1 : 0.6,
+                            transition: "all 0.25s ease",
+                            boxShadow: "0 3px 10px rgba(0,0,0,0.06)",
                             overflow: "hidden",
-                            borderTopLeftRadius: 10,
-                            borderTopRightRadius: 10,
+                            display: "flex",
+                            flexDirection: "column",
+                            padding: 0,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (inventory?.[p.product_id] > 0) {
+                              e.currentTarget.style.transform = "translateY(-4px)";
+                              e.currentTarget.style.boxShadow = "0 8px 18px rgba(0,0,0,0.1)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = "translateY(0)";
+                            e.currentTarget.style.boxShadow = "0 3px 10px rgba(0,0,0,0.06)";
                           }}
                         >
-                          <img
-                            alt={p.product_name}
-                            src={
-                              p.imagePath
-                                ? p.imagePath.startsWith("http")
-                                  ? p.imagePath
-                                  : `${API_IMAGE}${p.imagePath}`
-                                : aquavoiem // fallback ảnh mặc định
-                            }
-                            onError={(e) => (e.target.src = aquavoiem)}
+                          {/* Tag danh mục */}
+                          <div
                             style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              filter: inventory?.[p.product_id] > 0 ? "none" : "grayscale(80%)",
+                              position: "absolute",
+                              top: 6,
+                              left: 6,
+                              zIndex: 5,
                             }}
-                          />
-
-                          {/* 🏷️ Nhãn "Hết hàng" */}
-                          {inventory?.[p.product_id] === 0 && (
-                            <div
+                          >
+                            <Tag
                               style={{
-                                position: "absolute",
-                                top: 8,
-                                left: 8,
-                                backgroundColor: "rgba(0,0,0,0.7)",
-                                color: "#fff",
-                                fontSize: 11,
+                                fontSize: 10,
+                                fontWeight: 600,
+                                borderRadius: 8,
                                 padding: "2px 6px",
-                                borderRadius: 4,
+                                background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+                                color: "#fff",
+                                boxShadow: "0 2px 6px rgba(37,99,235,0.25)",
                               }}
                             >
-                              Hết hàng
-                            </div>
-                          )}
+                              {getCategoryData(p.categoryId)?.name || "Khác"}
+                            </Tag>
+                          </div>
 
-                          {/* Dấu check nếu đã chọn */}
+                          {/* Icon đã chọn */}
                           {chosenIds.includes(p.product_id) && (
                             <div
                               style={{
                                 position: "absolute",
-                                top: 8,
-                                right: 8,
-                                width: 24,
-                                height: 24,
-                                backgroundColor: "#008f5a",
+                                top: 6,
+                                right: 6,
+                                width: 22,
+                                height: 22,
+                                background: "linear-gradient(135deg, #22c55e, #16a34a)",
                                 borderRadius: "50%",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 color: "#fff",
-                                fontSize: 16,
-                                fontWeight: "bold",
+                                fontSize: 12,
+                                boxShadow: "0 3px 6px rgba(22,163,74,0.25)",
+                                zIndex: 10,
                               }}
                             >
                               ✓
                             </div>
                           )}
-                        </div>
-                      }
-                      onClick={() => {
-                        if (inventory?.[p.product_id] > 0) {
-                          handleAddToCart(p);
-                        }
-                      }}
-                      style={{
-                        width: 160,
-                        borderRadius: 10,
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                        transition: "transform 0.2s, box-shadow 0.2s",
-                        cursor: inventory?.[p.product_id] > 0 ? "pointer" : "not-allowed",
-                        background: "#fff",
-                        opacity: inventory?.[p.product_id] > 0 ? 1 : 0.5,
-                        pointerEvents: inventory?.[p.product_id] > 0 ? "auto" : "none",
-                      }}
-                      styles={{ body: { padding: 0 } }}
-                      onMouseEnter={(e) => {
-                        if (inventory?.[p.product_id] > 0) {
-                          e.currentTarget.style.transform = "translateY(-3px)";
-                          e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.12)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-                      }}
-                    >
-                      <Card.Meta
-                        title={
-                          <span
-                            style={{
-                              fontWeight: 600,
-                              fontSize: 13,
-                              display: "block",
-                              height: 34,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {p.product_name}
-                          </span>
-                        }
-                        description={
-                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                            <Tag
-                          color={typeColors[getCategoryData(p.categoryId)?.slug]|| "default"}
-                            style={{
-                              fontSize: 12,
-                              padding: "2px 6px",
-                              borderRadius: 4,
-                            }}
-                          >
-                         {getCategoryData(p.categoryId)?.name || "Khác"}
-                          </Tag>
 
-                            {/* Số lượng tồn */}
-                            <span
+                          {/* ẢNH SẢN PHẨM */}
+                          <div
+                            style={{
+                              position: "relative",
+                              height: 115,
+                              background: "#f9fafb",
+                              overflow: "hidden",
+                              flexShrink: 0,
+                              borderBottom: "1px solid #f1f5f9",
+                            }}
+                          >
+                            <img
+                              alt={p.product_name}
+                              src={
+                                p.imagePath
+                                  ? p.imagePath.startsWith("http")
+                                    ? p.imagePath
+                                    : `${API_IMAGE}${p.imagePath}`
+                                  : aquavoiem
+                              }
+                              onError={(e) => (e.target.src = aquavoiem)}
                               style={{
-                                color: inventory?.[p.product_id] > 0 ? "red" : "gray",
-                                fontSize: 12,
-                                fontStyle: inventory?.[p.product_id] > 0 ? "normal" : "italic",
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                transition: "transform 0.3s ease",
+                                filter: inventory?.[p.product_id] > 0 ? "none" : "grayscale(70%)",
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                            />
+
+                            {/* Hết hàng */}
+                            {inventory?.[p.product_id] === 0 && (
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  top: 6,
+                                  right: 6,
+                                  background: "rgba(17, 24, 39, 0.75)",
+                                  color: "#fff",
+                                  fontSize: 10.5,
+                                  padding: "2px 6px",
+                                  borderRadius: 6,
+                                  fontWeight: 600,
+                                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                                }}
+                              >
+                                Hết hàng
+                              </div>
+                            )}
+                          </div>
+
+                          {/* TÊN SẢN PHẨM */}
+                          <div
+                            style={{
+                              padding: "5px 5px 0px 0px",
+                              flex: 1,
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontWeight: 700,
+                                fontSize: 13,
+                                color: "#111827",
+                                marginBottom: 3,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                lineHeight: "17px",
+                                textAlign: "center",
                               }}
                             >
-                              {inventory?.[p.product_id] > 0
-                                ? `Số lượng: ${inventory[p.product_id]}`
-                                : "Hết hàng"}
-                            </span>
-
-                            <span style={{ color: "#555", fontSize: 12 }}>
-                              {p.price.toLocaleString()} ₫ / {p.unit}
-                            </span>
+                              {p.product_name}
+                            </div>
                           </div>
-                        }
-                      />
-                    </Card>
 
+                          {/* GIÁ + SỐ LƯỢNG */}
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              padding: "0 6px 6px 6px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                background: "linear-gradient(90deg, #ef4444, #f97316)",
+                                WebkitBackgroundClip: "text",
+                                WebkitTextFillColor: "transparent",
+                                fontWeight: 800,
+                                fontSize: 14,
+                                marginBottom: 2,
+                              }}
+                            >
+                              {p.price.toLocaleString()} ₫
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 11,
+                                color: "#6b7280",
+                                fontWeight: 500,
+                              }}
+                            >
+                              Còn lại: {inventory?.[p.product_id] || 0} {p.unit}
+                            </div>
+                          </div>
+                        </Card>
                     ))}
                   </div>
-                )}
+              )}
               </div>
               {/* Footer */}
               <div
@@ -804,15 +905,11 @@ const handlePayment = async () => {
                     setProductsPerPage(size);
                   }}
                 />
-
-
-          
               </div>
             </Card>
-          </Col>
-
-          {/* Cột bên phải*/}
-          <Col span={8}>
+        </Col>
+        {/* Cột bên phải*/}
+        <Col span={8} style={{ paddingRight: 0}}>
             <Card
               bordered
               style={{ height: "calc(100vh - 80px)", display: "flex", flexDirection: "column", padding: 0 }}
@@ -828,7 +925,7 @@ const handlePayment = async () => {
                   size="small"
                   locale={{ emptyText: "Chưa có sản phẩm" }}
                   bordered
-                  scroll={cart.length > 5 ? { y: 350 } : undefined}
+                  scroll={cart.length > 5 ? { y: 330 } : undefined}
                   style={{ tableLayout: "fixed", width: "100%" }}
                   components={{
                     header: {
@@ -846,7 +943,8 @@ const handlePayment = async () => {
               </div>
 
               {/* 2. Thông tin khách + thanh toán */}
-                <div style={{ display: "flex", padding: 16, gap: 16, flex: 1, overflowY: "auto", background: "#fff" }}>
+                <div 
+                  style={{ display: "flex", padding: 16, gap: 16, flex: 1, overflowY: "auto", background: "#fff"}}>
                   {/* Cột trái */}
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
 
@@ -882,10 +980,11 @@ const handlePayment = async () => {
                         <Option key={promo.promo_id} value={promo.promo_id}>{promo.name}</Option>
                       ))}
                     </Select>
-                    <Input.TextArea placeholder="Ghi chú cho đơn" rows={2} style={{ borderRadius: 6 }} />
+                    <Input.TextArea placeholder="Ghi chú cho đơn" rows={2} style={{ borderRadius: 6, resize: "none"}}  />
                     <Select
                       value={paymentMethod}
-                      onChange={handlePayment}
+  //                     onChange={handlePayment}
+                      onChange={handlePaymentChange}
                       style={{ width: "100%", height: 36, borderRadius: 6 }}
                     >
                       <Option value="Tiền mặt">Tiền mặt</Option>
@@ -911,7 +1010,7 @@ const handlePayment = async () => {
                     </div>
                     {paymentMethod === "Tiền mặt" && 
                       <>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: "bold" }}>
                           <span>Khách đưa:</span>
                             <InputNumber
                               min={0}
@@ -922,7 +1021,7 @@ const handlePayment = async () => {
                               style={{ width: 120 }}
                             />
                         </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "green" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "red", fontWeight: "bold"}}>
                           <span>Tiền thừa:</span>
                           <span>
                             {customerPaid != null && tienthua(customerPaid, total)}
@@ -946,31 +1045,32 @@ const handlePayment = async () => {
               {/* 3. Footer: nút luôn sát đáy */}
               <div style={{display: "flex",gap: 8,borderTop: "1px solid #f0f0f0",padding: 12,flexShrink: 0}}>                      
                 <Button type="default" style={{ flex: 1 }} onClick={() => {setCart([]);setChosenIds([]);}}>Hủy</Button>
-            <Button type="primary" style={{ flex: 1 }} onClick={handlePayment}>Thanh toán</Button>              </div>
+                <Button type="primary" style={{ flex: 1 }} onClick={handlePayment}>Thanh toán</Button>              
+              </div>
             </Card>
           </Col>
         </Row>
 
         {/*Model thêm khách hàng mới*/}
-        <Modal
-          title={"Thêm Khách Hàng Mới"}
-          open={isModalOpen}
-          onCancel={() => setIsModalOpen(false)}
-          footer={null}
-          width={400}
-          style={{ top: 100 }}
-          closeIcon={false}
-        >
-          <Form form={form} layout="vertical" autoComplete="off" onFinish={AddNewCustomer}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <Form.Item
-                label="Họ và tên"
-                name="name"
-                rules={[
-                  { required: true, message: "Vui lòng nhập họ và tên" },
-                  { max: 250, message: "Họ và tên không quá 250 ký tự" }
-                ]}
-              >
+      <Modal
+        title={"Thêm Khách Hàng Mới"}
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}
+        width={400}
+        style={{ top: 100 }}
+        closeIcon={false}
+      >
+        <Form form={form} layout="vertical" autoComplete="off" onFinish={AddNewCustomer}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <Form.Item
+              label="Họ và tên"
+              name="name"
+              rules={[
+                { required: true, message: "Vui lòng nhập họ và tên" },
+                { max: 250, message: "Họ và tên không quá 250 ký tự" }
+                  ]}
+            >
                 <Input placeholder="Nguyễn Văn An" style={{ width: "100%", height: 36 }} />
               </Form.Item>
 
@@ -994,8 +1094,7 @@ const handlePayment = async () => {
               </Space>
             </Form.Item>
           </Form>
-        </Modal>
-
-      </div>
-    );
-  }
+      </Modal>
+    </div>
+  );
+}
