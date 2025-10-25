@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm } from "antd"
+import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Tag } from "antd"
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons"
 import "./Supplier.css"
 
@@ -71,25 +71,34 @@ export default function Supplier() {
 
   // Xóa danh mục nếu chưa là khóa ngoại
   const handleDelete = async (supplierId) => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/Categories/${supplierId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+        try {
+            const response = await fetch(
+                `http://localhost:5000/api/Suppliers/${supplierId}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                }
+            );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Xóa danh mục thất bại");
-      }
+            // Kiểm tra phản hồi
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || "Xóa nhà cung cấp thất bại");
+            }
 
-      setCategories(categories.filter((p) => p.supplierId !== supplierId));
-      message.success("Xóa danh mục thành công");
-    } catch (error) {
-      message.error(error.message || "Danh mục đang được sử dụng, không thể xóa");
-    }
-  };
+            setSuppliers((prev) => prev.filter((p) => p.supplierId !== supplierId));
+            setPagination((prev) => ({
+              ...prev,
+              total: prev.total > 0 ? prev.total - 1 : 0,
+            }));
+            message.success("Xóa nhà cung cấp thành công");
+        } catch (error) {
+            message.error("Lỗi khi xóa nhà cung cấp");
+        }
+    };
 
   //Xử lý sự kiện thêm nhà cung cấp
   const handleAdd = () => {
@@ -107,13 +116,14 @@ export default function Supplier() {
       phone: supplier.phone,
       email: supplier.email,
       address: supplier.address,
+      status : supplier.status,
     });
   };
 
   //Thêm hoặc cập nhật nhà cung cấp
   const handleSubmit = async (values) => {
     try {
-      const { name, phone, email, address } = values;
+      const { name, phone, email, address, status } = values;
 
       // Kiểm tra trùng tên
       const isDuplicate = suppliers.some(
@@ -137,13 +147,13 @@ export default function Supplier() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({ name, phone, email, address }), // gửi đúng format API
+          body: JSON.stringify({ name, phone, email, address, status }), // gửi đúng format API
         });
 
         if (!response.ok) throw new Error("Sửa nhà cung cấp thất bại");
 
         setSuppliers(suppliers.map(c =>
-          c.supplierId === editingsupplier.supplierId ? { ...c, name, phone, email, address } : c
+          c.supplierId === editingsupplier.supplierId ? { ...c, name, phone, email, address, status } : c
         ));
         message.success("Cập nhật nhà cung cấp thành công");
       } else {
@@ -154,7 +164,7 @@ export default function Supplier() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({ name, phone, email, address }),
+          body: JSON.stringify({ name, phone, email, address, status: 'Active' }), // mặc định thêm mới là Active
         });
 
         if (!response.ok) throw new Error("Thêm nhà cung cấp thất bại");
@@ -200,6 +210,9 @@ export default function Supplier() {
     setSearchTerm(value)
   }
 
+  const handleStatusChange = async (value) => {
+    form.setFieldValue("status", value);
+  };
   //Danh sách các cột trong bảng
   const columns = [
     { title: "Mã NCC", dataIndex: "supplierId", key: "supplierId", width: 120, align: "center" },
@@ -207,6 +220,18 @@ export default function Supplier() {
     { title: "SĐT", dataIndex: "phone", key: "phone", width: 150, align: "center" },
     { title: "Email", dataIndex: "email", key: "email", width: 220, align: "left" },
     { title: "Địa chỉ", dataIndex: "address", key: "address", width: 250, align: "left" },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      width: 120,
+      align: "center",
+      render: (status) => (
+        <Tag color={status === 'Active' ? 'green' : 'red'}>
+          {status === 'Active' ? 'CÒN HỢP TÁC' : 'NGƯNG HỢP TÁC'}
+        </Tag>
+      ),
+    },
     {
       title: "Thao tác",
       key: "action",
@@ -352,7 +377,19 @@ export default function Supplier() {
               ))}
             </Select>
           </Form.Item>
-
+          {editingsupplier && 
+          <Form.Item
+            label="Trạng thái"
+            name="status"
+          >
+            <Select
+              placeholder="Trạng thái"
+              onChange={handleStatusChange}
+            >
+              <Option value="Inactive">Ngưng Hợp Tác</Option>
+              <Option value="Active">Còn Hợp Tác</Option>
+            </Select>
+          </Form.Item>}
           <Form.Item className="form-actions">
             <Space>
               <Button onClick={handleCancel}>Hủy</Button>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Tooltip } from "antd"
+import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Tooltip,Tag } from "antd"
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons"
 import "./Customer.css"
 
@@ -160,26 +160,44 @@ export default function Customer() {
                 province: provinceCode || "",
                 district: districtCode || "",
                 ward: wardCode || "",
+                status: customer.status,
             })
         }, 0)
     }
 
     const handleDelete = async (customerId) => {
-        setLoading(true)
         try {
-            await deleteCustomerAPI(customerId)
-            setCustomers(prev => prev.filter(c => c.customerId !== customerId))
-            message.success("Xóa khách hàng thành công")
+            const response = await fetch(
+                `http://localhost:5000/api/Customer/${customerId}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                }
+            );
+
+            // Kiểm tra phản hồi
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || "Xóa khách hàng thất bại");
+            }
+
+            setCustomers((prev) => prev.filter((p) => p.customerId !== customerId));
+            setPagination((prev) => ({
+              ...prev,
+              total: prev.total > 0 ? prev.total - 1 : 0,
+            }));
+            message.success("Xóa khách hàng thành công");
         } catch (error) {
-            message.error("Lỗi khi xóa khách hàng")
-        } finally {
-            setLoading(false)
+            message.error("Lỗi khi xóa khách hàng");
         }
-    }
+    };
 
     const handleSubmit = async (values) => {
         try {
-            const { name, email, phone, house, ward, district, province } = values;
+            const { name, email, phone, house, ward, district, province, status } = values;
 
             const isDuplicateName = customers.some(
                 c => c.name.toLowerCase().trim() === name.toLowerCase().trim() &&
@@ -226,6 +244,7 @@ export default function Customer() {
             let customerData = {
                 ...values,
                 address: fullAddress,
+                status: editingCustomer ? values.status : "Active",
                 created_at: editingCustomer ? editingCustomer.created_at : new Date().toISOString()
             };
 
@@ -336,7 +355,20 @@ export default function Customer() {
                 </Tooltip>
             )
         },
+        
         { title: "Ngày tạo", dataIndex: "createdAt", key: "createdAt", width: 120, align: "center", render: (text) => text ? new Date(text).toLocaleDateString("vi-VN") : "N/A" },
+        {
+            title: "Trạng thái",
+            dataIndex: "status",
+            key: "status",
+            width: 120,
+            align: "center",
+            render: (status) => (
+                <Tag color={status === 'Active' ? 'green' : 'red'}>
+                    {status === 'Active' ? 'HOẠT ĐỘNG' : 'KHÓA'}
+                </Tag>
+            ),
+        },
         {
             title: "Thao tác",
             key: "action",
@@ -353,6 +385,10 @@ export default function Customer() {
             )
         }
     ]
+
+    const handleStatusChange = async (value) => {
+        form.setFieldValue("status", value);
+    };
 
     return (
         <div className="customer-manage-container">
@@ -427,9 +463,22 @@ export default function Customer() {
                             </Select>
                         </Form.Item>
 
-                        <Form.Item label="Số nhà/Đường" name="house" rules={[{ required: true, message: "Vui lòng nhập số nhà/đường" }, { max: 250, message: "Số nhà/đường không quá 250 ký tự" }]} style={{ marginBottom: 16, gridColumn: "span 2" }}>
+                        <Form.Item label="Số nhà/Đường" name="house" rules={[{ required: true, message: "Vui lòng nhập số nhà/đường" }, { max: 250, message: "Số nhà/đường không quá 250 ký tự" }]} style={{ marginBottom: 16, gridColumn: editingCustomer ? "span 1" : "span 2" }}>
                             <Input placeholder="Số nhà, tên đường/ấp/khu phố..." style={{ width: "100%", height: 36 }} />
                         </Form.Item>
+                        {editingCustomer && 
+                        <Form.Item
+                            label="Trạng thái"
+                            name="status"
+                        >
+                            <Select
+                                placeholder="Trạng thái"
+                                onChange={handleStatusChange}
+                            >
+                                <Option value="Inactive">Khóa</Option>
+                                <Option value="Active">Hoạt Động</Option>
+                            </Select>
+                        </Form.Item>}
                     </div>
 
                     <Form.Item style={{ marginTop: 24, textAlign: "right", marginBottom: 0 }}>

@@ -243,7 +243,7 @@ export default function Employee() {
             const response = await fetch(
                 `http://localhost:5000/api/Users/${employeeId}`,
                 {
-                    method: "DELETE", // hoặc PATCH nếu backend dùng PATCH
+                    method: "DELETE",
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -253,16 +253,18 @@ export default function Employee() {
 
             // Kiểm tra phản hồi
             const data = await response.json();
-            console.log("🟩 Server response:", data);
 
             if (!response.ok) {
                 throw new Error(data.message || "Xóa nhân viên thất bại");
             }
 
             setEmployees((prev) => prev.filter((p) => p.userId !== employeeId));
+            setPagination((prev) => ({
+              ...prev,
+              total: prev.total > 0 ? prev.total - 1 : 0,
+            }));
             message.success("Xóa nhân viên thành công");
         } catch (error) {
-            console.error("❌ Lỗi khi xóa nhân viên:", error);
             message.error("Lỗi khi xóa nhân viên");
         }
     };
