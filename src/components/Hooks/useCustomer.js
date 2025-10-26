@@ -54,7 +54,6 @@ export default function useCustomer() {
     }
   }, [token]);
 
-  // 🔍 Tìm khách hàng theo số điện thoại
   const findCustomerByPhone = useCallback(async (phone) => {
     if (!phone) return null;
     setLoading(true);
