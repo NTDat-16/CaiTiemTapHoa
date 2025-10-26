@@ -403,10 +403,11 @@ export default function ProductManage() {
                 size="large"
                 type={filterType ? "primary" : "default"}
               >
+
                 {getFilterDisplayName()}
-              </Button>
-            </Dropdown>
+              </Input.Search>
           </div>
+            
 
       </div>
 
@@ -598,6 +599,7 @@ export default function ProductManage() {
           </Form.Item>
         </Form>
       </Modal>
+    </div>
     </div>
   )
 }

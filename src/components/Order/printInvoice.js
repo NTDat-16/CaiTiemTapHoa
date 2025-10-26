@@ -1,13 +1,9 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-
-// Hàm helper để tạo và tải hóa đơn PDF
 const printInvoice = (orderData) => {
     // 1. Tạo một container HTML tạm thời cho hóa đơn
     const invoiceContent = document.createElement('div');
-    invoiceContent.style.padding = '20px';
-    invoiceContent.style.width = '300px'; // Chiều rộng mô phỏng hóa đơn in nhiệt
-    invoiceContent.style.backgroundColor = '#fff';
+    // ... (nội dung HTML giữ nguyên)
     invoiceContent.innerHTML = `
         <h3 style="text-align: center; margin-bottom: 5px;">CỬA HÀNG ABC</h3>
         <p style="text-align: center; font-size: 10px;">Địa chỉ: 123 Đường Sài Gòn, TP.HCM</p>
@@ -16,6 +12,7 @@ const printInvoice = (orderData) => {
         <h4 style="text-align: center; margin-bottom: 10px;">HÓA ĐƠN BÁN HÀNG</h4>
         <p style="font-size: 12px; margin: 2px 0;">Mã đơn: **${orderData.orderId || 'N/A'}**</p>
         <p style="font-size: 12px; margin: 2px 0;">Ngày: ${new Date().toLocaleDateString('vi-VN')} ${new Date().toLocaleTimeString('vi-VN')}</p>
+        <p style="font-size: 12px; margin: 2px 0;">Khách hàng: **${orderData.customerName || 'Khách vãng lai'}**</p>
         <hr style="border-top: 1px dashed #000; margin: 10px 0;">
         <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
             <thead>
@@ -28,7 +25,7 @@ const printInvoice = (orderData) => {
             <tbody>
                 ${orderData.orderDetails.map(item => `
                     <tr>
-                        <td style="text-align: left;">${item.productName || 'Sản phẩm'}</td>
+                        <td style="text-align: left; max-width: 150px; word-break: break-all;">${item.productName || 'Sản phẩm'}</td>
                         <td style="text-align: center;">${item.quantity}</td>
                         <td style="text-align: right;">${(item.quantity * item.price).toLocaleString('vi-VN')}</td>
                     </tr>
@@ -38,14 +35,12 @@ const printInvoice = (orderData) => {
         <hr style="border-top: 1px dashed #000; margin: 10px 0;">
         <p style="font-size: 12px; margin: 2px 0; display: flex; justify-content: space-between;"><span>Tổng tiền hàng:</span> <span>${orderData.subtotal.toLocaleString('vi-VN')} ₫</span></p>
         <p style="font-size: 12px; margin: 2px 0; display: flex; justify-content: space-between;"><span>Giảm giá:</span> <span>- ${orderData.discountAmount.toLocaleString('vi-VN')} ₫</span></p>
-        <h4 style="margin: 5px 0; display: flex; justify-content: space-between;"><span>KHÁCH CẦN THANH TOÁN:</span> <span>${orderData.totalAmount.toLocaleString('vi-VN')} ₫</span></h4>
-        ${orderData.paymentMethod === 'Tiền mặt' ? `
-            <p style="font-size: 12px; margin: 2px 0; display: flex; justify-content: space-between;"><span>Khách đưa:</span> <span>${orderData.customerPaid.toLocaleString('vi-VN')} ₫</span></p>
-            <p style="font-size: 12px; margin: 2px 0; display: flex; justify-content: space-between;"><span>Tiền thừa:</span> <span>${(orderData.customerPaid - orderData.totalAmount).toLocaleString('vi-VN')} ₫</span></p>
-        ` : ''}
+        <hr style="border-top: 1px dashed #000; margin: 5px 0;">
+        <p style="font-weight: bold; font-size: 14px; margin: 5px 0; display: flex; justify-content: space-between;"><span>KHÁCH CẦN TRẢ:</span> <span>${orderData.totalAmount.toLocaleString('vi-VN')} ₫</span></p>
+        <p style="font-size: 12px; margin: 2px 0; display: flex; justify-content: space-between;"><span>Khách đã đưa:</span> <span>${orderData.customerPaid.toLocaleString('vi-VN')} ₫</span></p>
+        <p style="font-size: 12px; margin: 2px 0; display: flex; justify-content: space-between;"><span>Tiền thừa:</span> <span>${Math.max(0, orderData.customerPaid - orderData.totalAmount).toLocaleString('vi-VN')} ₫</span></p>
         <hr style="border-top: 1px dashed #000; margin: 10px 0;">
-        <p style="text-align: center; font-size: 10px;">Phương thức: ${orderData.paymentMethod}</p>
-        <p style="text-align: center; font-size: 10px; margin-top: 10px;">Cảm ơn quý khách!</p>
+        <p style="text-align: center; font-size: 10px; margin-top: 10px;">Cảm ơn quý khách và hẹn gặp lại!</p>
     `;
 
     // Phải thêm vào body để html2canvas hoạt động, sau đó xóa

@@ -50,7 +50,6 @@ const normalizeCategoryName = (name) => {
 
   const API_BASE_URL = "http://localhost:5000/api";
   const API_IMAGE = "http://localhost:5000";
-// Đặt hàm này ở đầu file Order.jsx, gần các hằng số API_BASE_URL, MOCK DATA
 const calculateDiscountAmount = (subtotal, selectedPromoId, promotions) => {
     const promoId = Number(selectedPromoId);
     const selectedPromo = promotions.find(p => p.promo_id === promoId);
@@ -303,22 +302,73 @@ export default function Order() {
       );
     };
 
-    const updateQuantity = (id, delta) => {
-      setCart((prev) => {
-        const newCart = prev
-          .map((item) =>
-            item.product_id === id
-            ? { ...item, quantity: Math.max(item.quantity + delta, 0) }
-            : item
-        )
-        .filter((item) => item.quantity > 0);
+  //   const updateQuantity = (id, delta) => {
+  //     setCart((prev) => {
+  //       const newCart = prev
+  //         .map((item) =>
+  //           item.product_id === id
+  //           ? { ...item, quantity: Math.max(item.quantity + delta, 0) }
+  //           : item
+  //       )
+  //       .filter((item) => item.quantity > 0);
 
-        setChosenIds((prevIds) =>
-          prevIds.filter((pid) => newCart.some((item) => item.product_id === pid))
-        );
-        return newCart;
-      });
-    };
+  //       setChosenIds((prevIds) =>
+  //         prevIds.filter((pid) => newCart.some((item) => item.product_id === pid))
+  //       );
+  //       return newCart;
+  //     });
+  //   };
+  const updateQuantity = (id, delta) => {
+    // Lấy ID đơn hàng đang mở/giỏ hàng hiện tại
+    const currentOrderId = getActiveOrderId(); // Giả sử có hàm này
+
+    setCart((prev) => {
+        const itemToUpdate = prev.find(item => item.product_id === id);
+        if (!itemToUpdate) return prev; // Không tìm thấy
+
+        const newQuantity = Math.max(itemToUpdate.quantity + delta, 0);
+
+        // --- Bắt đầu tích hợp API ---
+        if (currentOrderId && newQuantity > 0) {
+            // Chuẩn bị dữ liệu cập nhật
+            const updateData = { quantity: newQuantity }; 
+
+            const token = getAuthToken();
+            if (token) {
+                 // **Gọi PUT API để cập nhật số lượng sản phẩm trong đơn hàng**
+                fetch(`${API_BASE_URL}/Orders/${currentOrderId}/items/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(updateData),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        // Xử lý lỗi API (ví dụ: message.error)
+                        console.error("Lỗi cập nhật số lượng trên server");
+                        // Có thể cần rollback local state nếu cập nhật server thất bại
+                    }
+                })
+                .catch(error => console.error("Lỗi network/server:", error));
+            }
+        } 
+       
+        const newCart = prev
+            .map((item) =>
+                item.product_id === id
+                ? { ...item, quantity: newQuantity }
+                : item
+            )
+            .filter((item) => item.quantity > 0);
+
+        setChosenIds((prevIds) =>
+            prevIds.filter((pid) => newCart.some((item) => item.product_id === pid))
+        );
+        return newCart;
+    });
+};
 
     const removeFromCart = (id) => {
       setCart((prev) => {
@@ -376,93 +426,254 @@ const { subtotal, discountAmount, total } = useMemo(() => {
     
     return { subtotal: currentSubtotal, discountAmount: currentDiscount, total: currentTotal };
 }, [cart, selectedPromoId, promotions]);
-
-
+const mapPaymentMethodToServer = (method) => {
+    switch (method) {
+        case "Tiền mặt": return "Cash";
+        case "Thẻ": return "Card"; // Thay 'Thẻ' bằng giá trị tiếng Việt thực tế trong state của bạn
+        case "Chuyển khoản": return "BankTransfer"; // Thay 'Chuyển khoản' bằng giá trị thực tế
+        case "Ví điện tử": return "EWallet"; // Thay 'Ví điện tử' bằng giá trị thực tế
+        default: return "Cash"; 
+    }
+};
 const handlePayment = async () => {
-    console.log("Xử lý thanh toán..."); 
+  
+    
     if (cart.length === 0) {
-        message.warning("Giỏ hàng đang trống. Vui lòng thêm sản phẩm.");
+        Modal.warning({ title: 'Giỏ hàng trống', content: 'Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán.', centered: true });
         return;
     }
     
-    // 1. Kiểm tra điều kiện Tiền mặt
     if (paymentMethod === "Tiền mặt" && customerPaid < total) {
-        message.error("Số tiền khách đưa không đủ!");
+        Modal.error({ title: 'Lỗi Thanh Toán Tiền Mặt', content: `Số tiền khách đưa không đủ!`, centered: true });
         return;
     }
-    
-    // 2. Thu thập dữ liệu
-    const orderDetails = cart.map(item => ({
-        productId: item.product_id,
-        quantity: item.quantity,
-        price: item.price, // Giá bán tại thời điểm tạo đơn
-        productName: item.product_name
-    }));
-
-    const orderData = {
-        // Kiểm tra xem đã tìm thấy khách hàng chưa, nếu không thì dùng ID mặc định (ví dụ: 1 cho khách vãng lai)
-        customerId: customerName ? 3 : 2, // Tạm gán: 3 là user_id từ file đính kèm, 2 là customer_id từ file đính kèm
-        promoId: selectedPromoId ? Number(selectedPromoId) : null,
-        totalAmount: total, // Tổng tiền cuối cùng sau giảm giá
-        discountAmount: discountAmount,
-        paymentMethod: paymentMethod,
-        customerPaid: customerPaid, // Tiền mặt, Chuyển khoản, Thẻ
-        orderDetails: orderDetails,
-        subtotal: subtotal,
-    };
 
     const token = getAuthToken();
     if (!token) {
-        message.error("Phiên đăng nhập đã hết hạn.");
+        Modal.error({ title: 'Lỗi Phiên Đăng Nhập', content: 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.', centered: true });
         return;
     }
+    
+    let finalCustomerId = 2; // Khách vãng lai
+    if (phone) { 
+        message.loading({ content: 'Đang kiểm tra thông tin khách hàng...', key: 'customerCheck' });
+        finalCustomerId = await fetchCustomerByPhone(phone) || 2;
+        message.destroy('customerCheck');
+    }
 
-    try {
-        message.loading({ content: 'Đang xử lý thanh toán...', key: 'payment' });
-        const response = await fetch(`${API_BASE_URL}/Order`, {
+   
+    const orderDetails = cart.map(item => ({
+        productId: item.product_id,
+        quantity: item.quantity,
+        price: item.price,
+    }));
+
+    const createOrderData = {
+        customerId: finalCustomerId, 
+        promoId: selectedPromoId ? Number(selectedPromoId) : null,
+        
+        totalAmount: total, 
+        discountAmount: discountAmount,
+        subtotal: subtotal,
+        // Backend CreateOrderRequest có thể cần OrderItems trong Request Body
+        orderDetails: orderDetails, 
+    };
+
+    // --- [BẮT ĐẦU GỌI API] ---
+    let orderId = null;
+    let finalOrderResult = null;
+    
+   try {
+        
+        // ===================================================================
+        // ⭐ BƯỚC 1: TẠO ĐƠN HÀNG NHÁP (POST api/Orders) - ĐÃ TĂNG CƯỜNG KIỂM TRA
+        // ===================================================================
+        message.loading({ content: 'Bước 1/4: Đang tạo đơn hàng nháp...', key: 'payment' });
+        
+        const createResponse = await fetch(`${API_BASE_URL}/Orders`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(orderData),
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(createOrderData),
         });
 
-        const result = await response.json();
-
-        if (!response.ok) {
-            throw new Error(result.message || `Lỗi HTTP: ${response.status}`);
+        const createResult = await handleApiResponse(createResponse);
+        
+        if (!createResponse.ok) {
+            // Xử lý lỗi HTTP (4xx, 5xx)
+            const errorMessage = createResult.message || `Lỗi HTTP: ${createResponse.status} - Lỗi khi tạo đơn hàng.`;
+            throw new Error(`Tạo đơn hàng thất bại: ${errorMessage}`);
         }
 
-        message.success({ content: `✅ Thanh toán thành công! Mã đơn: ${result.data.orderId}`, key: 'payment', duration: 3 });
+        // ⭐ SỬA LỖI: Trích xuất orderId an toàn bằng Optional Chaining
+        orderId = createResult.data?.orderId;
         
-       Modal.confirm({
-            title: 'In hóa đơn',
-            content: 'Bạn có muốn tạo và tải xuống hóa đơn PDF không?',
-            okText: 'Tải xuống PDF',
-            cancelText: 'Không, cảm ơn',
-            onOk: () => {
-                // Kết hợp orderData với ID trả về từ server để in
-                printInvoice({ ...orderData, orderId: result.data.orderId }); 
+        if (!orderId) {
+            // Xử lý lỗi nếu HTTP 200/201 nhưng Server không trả về Order ID
+            const serverMessage = createResult.message || JSON.stringify(createResult);
+            throw new Error(`Tạo đơn hàng thất bại: Server không trả về Order ID. Phản hồi: ${serverMessage}`);
+        }
+        
+        message.success({ content: `✅ Bước 1/4: Đã tạo đơn hàng nháp ID: ${orderId}`, key: 'payment', duration: 1.5 });
+        
+
+        // ===================================================================
+        // ⭐ BƯỚC 2: THÊM TỪNG SẢN PHẨM VÀO ĐƠN HÀNG (POST api/Orders/{id}/items)
+        // (orderId đã chắc chắn có giá trị)
+        // ===================================================================
+        message.loading({ content: 'Bước 2/4: Đang thêm sản phẩm vào đơn hàng...', key: 'payment' });
+        
+        for (const item of cart) {
+            const addRequestData = {
+                productId: item.product_id,
+                quantity: item.quantity,
+            };
+            
+            const addResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/items`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify(addRequestData),
+            });
+            
+            const addResult = await handleApiResponse(addResponse);
+            
+            if (!addResponse.ok) {
+                // Xử lý lỗi rõ ràng hơn
+                const validationError = addResult.errors ? Object.values(addResult.errors).flat().join(" | ") : "";
+                const errorMessage = addResult.message || validationError || `Lỗi khi thêm sản phẩm ${item.product_name}.`;
+                throw new Error(`Thêm sản phẩm thất bại: ${errorMessage}`);
+            }
+        }
+        
+        message.success({ content: `✅ Bước 2/4: Đã thêm sản phẩm thành công.`, key: 'payment', duration: 1.5 });
+
+
+        // ===================================================================
+        // ⭐ BƯỚC 3: CẬP NHẬT ĐƠN HÀNG (PUT api/Orders/{id})
+        // ===================================================================
+        message.loading({ content: 'Bước 3/4: Đang cập nhật đơn hàng (buộc tính lại tổng tiền)...', key: 'payment' });
+      
+        const updateRequestData = {}; 
+
+        const updateResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(updateRequestData),
+        });
+
+        const updateResult = await handleApiResponse(updateResponse);
+
+        if (!updateResponse.ok) {
+            const errorMessage = updateResult.message || `Lỗi HTTP: ${updateResponse.status} - Lỗi khi cập nhật đơn hàng.`;
+            throw new Error(`Cập nhật đơn hàng thất bại: ${errorMessage}`);
+        }
+        // Lúc này, Backend đã tính lại tổng tiền chính xác (415725.00 + 209283.00 = 625008.00)
+        message.success({ content: `✅ Bước 3/4: Đã cập nhật tổng tiền thành công.`, key: 'payment', duration: 1.5 });
+        // ===================================================================
+        // ⭐ BƯỚC 4: THANH TOÁN (POST api/Orders/{id}/checkout)
+        // ===================================================================
+        message.loading({ content: `Bước 4/4: Đang xử lý thanh toán cho đơn hàng ${orderId}...`, key: 'payment' });
+        const serverPaymentMethod = mapPaymentMethodToServer(paymentMethod);
+
+        const checkoutData = {
+            paymentMethod: serverPaymentMethod, 
+            amount: total, // Gửi tổng tiền chính xác từ Frontend
+            customerPaid: customerPaid
+        };
+        
+        const checkoutResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/checkout`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(checkoutData),
+        });
+
+        finalOrderResult = await handleApiResponse(checkoutResponse);
+
+        if (!checkoutResponse.ok) {
+            let errorMessage = finalOrderResult.message || `Lỗi HTTP: ${checkoutResponse.status} - Lỗi khi thanh toán`;
+            
+            if (finalOrderResult.errors) {
+                const validationErrors = Object.values(finalOrderResult.errors).flat().join(" | ");
+                errorMessage = `Thanh toán thất bại: ${validationErrors}`;
+            }
+            
+            throw new Error(errorMessage);
+        }
+        
+        // --- [XỬ LÝ THÀNH CÔNG] ---
+        message.success({ content: `✅ Thanh toán thành công! Mã đơn: ${finalOrderResult.data.orderId}`, key: 'payment', duration: 3 });
+       // Tạo dữ liệu hóa đơn để in
+        const orderToPrint = {
+            orderId: finalOrderResult.data.orderId || orderId,
+            subtotal: subtotal,
+            discountAmount: discountAmount,
+            totalAmount: total, // Dùng 'total' và đặt tên là 'totalAmount'
+            customerPaid: customerPaid,
+            customerName: customerName || (phone ? `Khách hàng (${phone})` : "Khách vãng lai"),
+            // Map cart items to the format expected by printInvoice.js
+            orderDetails: cart.map(item => ({
+                productName: item.product_name,
+                quantity: item.quantity,
+                price: item.price
+            }))
+        };
+
+        // Yêu cầu 3: Thêm logic in hóa đơn
+        Modal.confirm({
+            title: 'Thanh toán thành công',
+            content: 'Bạn có muốn in hóa đơn cho giao dịch này không?',
+            okText: 'In Hóa đơn',
+            cancelText: 'Bỏ qua',
+            centered: true,
+            onOk() {
+                // Gọi hàm printInvoice đã import
+                printInvoice(orderToPrint);
             },
-            onCancel: () => {
-                console.log("Không in hóa đơn");
+            // Reset trạng thái sau khi modal đóng (dù In hay Bỏ qua)
+            afterClose() { 
+                setCart([]);
+                setSelectedPromoId("");
+                setCustomerPaid(0);
+                setPhone("");
+                setCustomerName("");
+                setChosenIds([]);
+                if (refetchProducts) refetchProducts(); 
             }
         });
-        
         // 4. Reset giỏ hàng và thanh toán
-        setCart([]);
-        setChosenIds([]);
-        setSelectedPromoId("");
-        setCustomerPaid(0);
-        setPhone("");
-        setCustomerName("");
+      
 
     } catch (error) {
         console.error("Lỗi thanh toán:", error);
-        message.error({ content: `❌ Thanh toán thất bại: ${error.message}`, key: 'payment', duration: 5 });
+        
+        // Hiển thị Modal Lỗi Server
+        Modal.error({
+            title: '❌ Thanh toán thất bại',
+            content: error.message || 'Đã xảy ra lỗi không xác định trong quá trình xử lý.',
+            centered: true
+        });
+
     }
 };
+
+// Hàm hỗ trợ đọc JSON an toàn (từ câu trả lời trước)
+const handleApiResponse = async (response) => {
+    let result = {};
+    const contentType = response.headers.get("content-type");
+    
+    if (contentType && contentType.includes("application/json")) {
+        try {
+            result = await response.json();
+        } catch (e) {
+            // Lỗi SyntaxError: Unexpected end of JSON input
+            result = { message: `Phản hồi không phải JSON hợp lệ: ${e.message}` };
+        }
+    } else if (response.status !== 204) {
+        const text = await response.text();
+        result = { message: text || `Lỗi HTTP: ${response.status}` };
+    }
+    return result;
+};
+
   const handlePaymentChange = (value) => {
       setPaymentMethod(value);
       console.log("Phương thức thanh toán:", value);
