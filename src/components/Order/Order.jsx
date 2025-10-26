@@ -91,6 +91,7 @@ const calculateDiscountAmount = (subtotal, selectedPromoId, promotions) => {
     const fetchProductsData = useCallback(async () => {
       setLoading(true);
       const token = getAuthToken(); 
+    console.log("Fetching products with token:", token);
       
       if (!token) {
           message.error("Không tìm thấy token. Vui lòng đăng nhập lại.");
@@ -242,6 +243,7 @@ export default function Order() {
   const [cart, setCart] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedPromoId, setSelectedPromoId] = useState("");
+  const [selectedPromoName, setSelectedPromoName] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Tiền mặt");
   const [customerPaid, setCustomerPaid] = useState(0);
   const [chosenIds, setChosenIds] = useState([]);
@@ -437,7 +439,8 @@ const mapPaymentMethodToServer = (method) => {
 };
 const handlePayment = async () => {
   
-    
+    console.log("🚀 [Start] handlePayment");
+
     if (cart.length === 0) {
         Modal.warning({ title: 'Giỏ hàng trống', content: 'Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán.', centered: true });
         return;
@@ -456,10 +459,12 @@ const handlePayment = async () => {
     
     let finalCustomerId = 2; // Khách vãng lai
     if (phone) { 
+        console.log("📞 Đang tìm khách hàng với phone:", phone);
         message.loading({ content: 'Đang kiểm tra thông tin khách hàng...', key: 'customerCheck' });
         finalCustomerId = await fetchCustomerByPhone(phone) || 2;
         message.destroy('customerCheck');
     }
+    console.log("👤 CustomerId cuối cùng:", finalCustomerId);
 
    
     const orderDetails = cart.map(item => ({
@@ -484,6 +489,7 @@ const handlePayment = async () => {
     let finalOrderResult = null;
     
    try {
+    console.log("📦 Dữ liệu gửi tạo đơn hàng:", createOrderData);
         
         // ===================================================================
         // ⭐ BƯỚC 1: TẠO ĐƠN HÀNG NHÁP (POST api/Orders) - ĐÃ TĂNG CƯỜNG KIỂM TRA
@@ -495,8 +501,11 @@ const handlePayment = async () => {
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
             body: JSON.stringify(createOrderData),
         });
+    console.log("📡 Phản hồi API tạo đơn hàng:", createResponse);
 
         const createResult = await handleApiResponse(createResponse);
+    console.log("🧾 Nội dung phản hồi:", createResult);
+    
         
         if (!createResponse.ok) {
             // Xử lý lỗi HTTP (4xx, 5xx)
@@ -506,6 +515,7 @@ const handlePayment = async () => {
 
         // ⭐ SỬA LỖI: Trích xuất orderId an toàn bằng Optional Chaining
         orderId = createResult.data?.orderId;
+    console.log("✅ OrderId nhận được:", orderId);
         
         if (!orderId) {
             // Xử lý lỗi nếu HTTP 200/201 nhưng Server không trả về Order ID
@@ -514,7 +524,24 @@ const handlePayment = async () => {
         }
         
         message.success({ content: `✅ Bước 1/4: Đã tạo đơn hàng nháp ID: ${orderId}`, key: 'payment', duration: 1.5 });
-        
+        // 2️⃣ Nếu có promoId thì gọi thêm /promotion
+        if (selectedPromoName) {
+          console.log("🎟️ Đang áp dụng khuyến mãi:", selectedPromoName);
+
+          const applyPromoResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/promotion`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              promoCode: selectedPromoName // hoặc mã khuyến mãi thật
+            }),
+          });
+
+            const promoResult = await applyPromoResponse.json();
+            console.log("🎉 Phản hồi áp dụng promotion:", promoResult);
+        }
 
         // ===================================================================
         // ⭐ BƯỚC 2: THÊM TỪNG SẢN PHẨM VÀO ĐƠN HÀNG (POST api/Orders/{id}/items)
@@ -527,7 +554,8 @@ const handlePayment = async () => {
                 productId: item.product_id,
                 quantity: item.quantity,
             };
-            
+      console.log(`📦 Thêm sản phẩm:`, addRequestData);
+
             const addResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/items`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -535,6 +563,7 @@ const handlePayment = async () => {
             });
             
             const addResult = await handleApiResponse(addResponse);
+      console.log(`🧾 Phản hồi thêm sản phẩm (${item.product_name}):`, addResult);
             
             if (!addResponse.ok) {
                 // Xử lý lỗi rõ ràng hơn
@@ -561,6 +590,7 @@ const handlePayment = async () => {
         });
 
         const updateResult = await handleApiResponse(updateResponse);
+    console.log("🔄 Cập nhật đơn hàng:", updateResult);
 
         if (!updateResponse.ok) {
             const errorMessage = updateResult.message || `Lỗi HTTP: ${updateResponse.status} - Lỗi khi cập nhật đơn hàng.`;
@@ -579,6 +609,7 @@ const handlePayment = async () => {
             amount: total, // Gửi tổng tiền chính xác từ Frontend
             customerPaid: customerPaid
         };
+    console.log("💳 Gửi thanh toán:", checkoutData);
         
         const checkoutResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/checkout`, {
             method: "POST",
@@ -587,8 +618,9 @@ const handlePayment = async () => {
         });
 
         finalOrderResult = await handleApiResponse(checkoutResponse);
+    console.log("💰 Kết quả thanh toán:", finalOrderResult);
 
-        if (!checkoutResponse.ok) {
+        if (!checkoutResponse.ok || !finalOrderResult.success) {
             let errorMessage = finalOrderResult.message || `Lỗi HTTP: ${checkoutResponse.status} - Lỗi khi thanh toán`;
             
             if (finalOrderResult.errors) {
@@ -1178,19 +1210,25 @@ const handleApiResponse = async (response) => {
                       value={customerName}
                       readOnly
                       style={{ height: 36, borderRadius: 6, marginTop: 8 }}
-                    />
-                    
-                    <Select
-                      value={selectedPromoId}
-                      onChange={(v) => setSelectedPromoId(v)}
-                      placeholder="Chọn mã khuyến mãi"
-                      style={{ width: "100%", height: 36, borderRadius: 6 }}
-                    >
-                    <Option value="">Không áp dụng</Option>
-                      {promotions.map((promo) => (
-                        <Option key={promo.promo_id} value={promo.promo_id}>{promo.name}</Option>
-                      ))}
-                    </Select>
+                    />               
+                    <Select
+                      value={selectedPromoId || ""}
+                      onChange={(v) => {
+                        setSelectedPromoId(v);
+                        const selectedPromo = promotions.find((p) => p.promo_id === v);
+                        setSelectedPromoName(selectedPromo ? selectedPromo.name : "");
+                      }}
+                      placeholder="Chọn mã khuyến mãi"
+                      style={{ width: "100%", height: 36, borderRadius: 6 }}
+                    >
+                      <Option value="">Không áp dụng</Option>
+                      {promotions.map((promo) => (
+                        <Option key={promo.promo_id} value={promo.promo_id}>
+                          {promo.name}
+                        </Option>
+                      ))}
+                    </Select>
+
                     <Input.TextArea placeholder="Ghi chú cho đơn" rows={2} style={{ borderRadius: 6, resize: "none"}}  />
                     <Select
                       value={paymentMethod}
