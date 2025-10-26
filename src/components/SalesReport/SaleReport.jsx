@@ -314,7 +314,7 @@ export default function ProductAnalysis() {
                     dataSource={tableData}
                     columns={columns}
                     rowKey={(r) => r.productId ?? `${r.productName}-${Math.random()}`}
-                    pagination={{ pageSize: 10 }}
+                    pagination={false}
                     size="small"
                   />
                 </Card>
