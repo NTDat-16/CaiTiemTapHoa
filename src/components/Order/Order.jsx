@@ -504,19 +504,32 @@ const updateOrderItemsOnServer = async (orderId, cart) => {
     Modal.error({ title: 'Lỗi Phiên Đăng Nhập', content: 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.', centered: true });
     return;
   }
-
-  let finalCustomerId = 2;
+ let finalCustomerId = 1;
   if (phone) {
-    message.loading({ content: 'Đang kiểm tra thông tin khách hàng...', key: 'customerCheck' });
+        message.loading({ content: 'Đang kiểm tra thông tin khách hàng...', key: 'customerCheck' });
     finalCustomerId = await fetchCustomerByPhone(phone) || 2;
     message.destroy('customerCheck');
   }
-
-  const orderDetails = cart.map(item => ({
-    productId: item.product_id,
-    quantity: item.quantity,
-    price: item.price,
-  }));
+  
+ 
+    finalCustomerId = 2;
+    let customerFromPhone = null;
+    if (phone) {
+      message.loading({ content: 'Đang kiểm tra thông tin khách hàng...', key: 'customerCheck' });
+      // fetchCustomerByPhone trả về result.data (object) hoặc null
+      customerFromPhone = await fetchCustomerByPhone(phone);
+      message.destroy('customerCheck');
+      if (customerFromPhone && (customerFromPhone.customerId || customerFromPhone.customerId === 0)) {
+        finalCustomerId = customerFromPhone.customerId;
+        setCustomerName(customerFromPhone.name || customerFromPhone.customerName || customerName);
+      }
+    }
+    
+    const orderDetails = cart.map(item => ({
+      productId: item.product_id,
+      quantity: item.quantity,
+      price: item.price,
+    }));
 
   const createOrderData = {
     customerId: finalCustomerId,
@@ -823,33 +836,43 @@ const handleApiResponse = async (response) => {
       }
     };
 
-    const fetchCustomerByPhone = async (phone) => {
-      try {
-        setLoadingCustomer(true);
+   const fetchCustomerByPhone = async (phone) => {
+    try {
+      setLoadingCustomer(true);
 
-        const response = await fetch(`http://localhost:5000/api/Customer/by-phone/${phone}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+      const response = await fetch(`http://localhost:5000/api/Customer/by-phone/${phone}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-        const result = await response.json();
+      const result = await response.json();
 
-        if (response.ok && result?.data) {
-          setCustomerName(result.data.name || ""); 
-        } else {
-          setCustomerName("");
-          message.warning("Không tìm thấy khách hàng này");
-        }
-      } catch (error) {
-        console.error("Lỗi khi tìm khách hàng:", error);
-        message.error("Không thể kết nối đến server");
-      } finally {
-        setLoadingCustomer(false);
-      }
-    };
+      if (response.ok && result?.data) {
+        setCustomerName(result.data.name || ""); 
+      } else {
+          setCustomerName("");
+        message.warning("Không tìm thấy khách hàng này");
+      }   
+   if (response.ok && result?.data) {
+        // cập nhật tên hiển thị và trả về toàn bộ object data để caller sử dụng
+        setCustomerName(result.data.name || "");
+        return result.data;
+      } else {
+       setCustomerName("");
+        message.warning("Không tìm thấy khách hàng này");
+       return null;
+      }
+    } catch (error) {
+      console.error("Lỗi khi tìm khách hàng:", error);
+      message.error("Không thể kết nối đến server");
+      return null;
+    } finally {
+      setLoadingCustomer(false);
+    }
+  };
 
     //Thêm khách hàng mới
     const AddNewCustomer = async (values) => {
