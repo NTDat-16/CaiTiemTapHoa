@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from "react"
-import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Tooltip,Tag } from "antd"
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons"
+import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Tooltip,Tag, Dropdown } from "antd"
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined,FilterOutlined  } from "@ant-design/icons"
 import "./Customer.css"
 
 const { Option } = Select
-
-const deleteCustomerAPI = async (id) => new Promise(resolve => setTimeout(() => resolve({ success: true }), 300));
 
 export default function Customer() {
     const [loading, setLoading] = useState(false)
@@ -15,7 +13,9 @@ export default function Customer() {
     const [searchTerm, setSearchTerm] = useState("")
     const [form] = Form.useForm()
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
-    
+    const [filterType, setFilterType] = useState(null)
+    const [filterId, setFilterId] = useState(null)
+
     // --- Địa chỉ Việt Nam API ---
     const [provinces, setProvinces] = useState([])
     const [districts, setDistricts] = useState([])
@@ -285,11 +285,15 @@ export default function Customer() {
 
                 const result = await response.json();
                 const newCustomer = result.data || result;
+                const newTotal = pagination.total + 1;
+                const lastPage = Math.ceil(newTotal / pagination.pageSize);
                 setCustomers(prev => [...prev, newCustomer]);
                 setPagination((prev) => ({
                     ...prev,
                     total: prev.total + 1,
+                    current: lastPage,
                 }));
+                fetchCustomers(lastPage, pagination.pageSize);
                 message.success("Thêm khách hàng thành công");
             }
 
@@ -330,10 +334,28 @@ export default function Customer() {
     }
 
     const filteredCustomers = customers.filter(c => {
-        if (!searchTerm) return true
-        const lower = searchTerm.toLowerCase()
-        return c.name?.toLowerCase().includes(lower) || c.phone?.includes(lower) || c.email?.toLowerCase().includes(lower)
-    })
+        // Lọc theo trạng thái
+        if (filterType === "status" && filterId !== null) {
+            if (c.status !== filterId) return false;
+        }
+
+        // Tìm kiếm theo tên, username, email hoặc số điện thoại
+        if (searchTerm) {
+            const lower = searchTerm.toLowerCase();
+            if (
+            !c.fullName?.toLowerCase().includes(lower) &&
+            !c.username?.toLowerCase().includes(lower) &&
+            !c.name?.toLowerCase().includes(lower) &&
+            !c.phone?.includes(lower) &&
+            !c.email?.toLowerCase().includes(lower)
+            ) {
+            return false;
+            }
+        }
+
+        return true; // Nếu không bị lọc bỏ thì giữ lại
+    });
+
     
     const handleSearch = (value) => {
         setSearchTerm(value)
@@ -343,7 +365,7 @@ export default function Customer() {
         { title: "ID", dataIndex: "customerId", key: "customerId", width: 60, align: "center" },
         { title: "Họ và tên", dataIndex: "name", key: "name", width: 150 },
         { title: "Số điện thoại", dataIndex: "phone", key: "phone", width: 120, align: "center" },
-        { title: "Email", dataIndex: "email", key: "email", width: 180 },
+        { title: "Email", dataIndex: "email", key: "email", width: 150 },
         {
             title: "Địa chỉ",
             key: "address",
@@ -361,11 +383,11 @@ export default function Customer() {
             title: "Trạng thái",
             dataIndex: "status",
             key: "status",
-            width: 120,
+            width: 150,
             align: "center",
             render: (status) => (
                 <Tag color={status === 'Active' ? 'green' : 'red'}>
-                    {status === 'Active' ? 'HOẠT ĐỘNG' : 'KHÓA'}
+                    {status === 'Active' ? 'CÒN MUA HÀNG' : 'NGỪNG MUA HÀNG'}
                 </Tag>
             ),
         },
@@ -390,20 +412,86 @@ export default function Customer() {
         form.setFieldValue("status", value);
     };
 
+    const handleFilterByStatus = (status) => {
+        setFilterType("status");
+        setFilterId(status);
+        message.success(`Đang lọc theo trạng thái: ${status === "Active" ? "Còn mua hàng" : "Ngừng mua hàng"}`);
+    };
+
+    const handleClearFilter = () => {
+        setFilterType(null)
+        setFilterId(null)
+        message.info("Đã xóa bộ lọc")
+    }
+
+    const filterMenuItems = [
+        {
+            key: "status",
+            label: "Lọc theo trạng thái",
+            children: [
+                {
+                    key: "status-active",
+                    label: "Còn mua hàng",
+                    onClick: () => handleFilterByStatus("Active"),
+                },
+                {
+                    key: "status-inactive",
+                    label: "Ngừng mua hàng",
+                    onClick: () => handleFilterByStatus("Inactive"),
+                },
+            ],
+        },
+        {
+            type: "divider",
+        },
+        {
+            key: "clear",
+            label: "Xóa bộ lọc",
+            onClick: handleClearFilter,
+            disabled: filterType === null,
+        },
+    ];
+
+    const getFilterDisplayName = () => {
+        if (!filterType || filterId === null) return "Lọc";
+
+        if (filterType === "status") {
+            return filterId === "Active" ? "Lọc: Còn mua hàng" : "Lọc: Ngừng mua hàng";
+        }
+
+        return "Lọc";
+    };
+
     return (
         <div className="customer-manage-container">
             <div className="customer-manage-header">
                 <h2 className="customer-manage-title">Quản Lý Khách Hàng</h2>
                 <div className="header-actions">
-                    <Input.Search 
-                        placeholder="Tìm kiếm theo tên, số điện thoại, email..." 
-                        allowClear 
-                        enterButton={<SearchOutlined />} 
-                        size="large" 
-                        onSearch={handleSearch}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        className="customer-search-input" 
-                    />
+                    <div className="search-filter-group">
+                        <Input.Search 
+                            placeholder="Tìm kiếm theo tên, số điện thoại, email..." 
+                            allowClear 
+                            enterButton={<SearchOutlined />} 
+                            size="large" 
+                            onSearch={handleSearch}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            className="customer-search-input" 
+                        />
+                        <Dropdown
+                            menu={{ items: filterMenuItems }}
+                            trigger={["click"]}
+                            placement="bottomLeft"
+                        >
+                            <Button
+                            icon={<FilterOutlined />}
+                            size="large"
+                            className="filter-button"
+                            type={filterType ? "primary" : "default"}
+                            >
+                            {getFilterDisplayName()}
+                            </Button>
+                        </Dropdown>
+                    </div>
                     <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large" className="product-search-btn">Thêm khách hàng</Button>
                 </div>
             </div>
@@ -475,8 +563,8 @@ export default function Customer() {
                                 placeholder="Trạng thái"
                                 onChange={handleStatusChange}
                             >
-                                <Option value="Inactive">Khóa</Option>
-                                <Option value="Active">Hoạt Động</Option>
+                                <Option value="Inactive">Ngừng Mua Hàng</Option>
+                                <Option value="Active">Còn Mua Hàng</Option>
                             </Select>
                         </Form.Item>}
                     </div>

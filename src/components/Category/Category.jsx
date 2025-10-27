@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
-import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm } from "antd"
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons"
+import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Tag, Dropdown} from "antd"
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, FilterOutlined } from "@ant-design/icons"
 import "./Category.css"
 
 const { Option } = Select
@@ -13,8 +13,10 @@ export default function Category() {
   const [searchTerm, setSearchTerm] = useState("")
   const [form] = Form.useForm()
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
+  const [filterType, setFilterType] = useState(null)
+  const [filterId, setFilterId] = useState(null)
 
-  //Lấy danh sách danh mục từ database
+  //Lấy danh sách danh mục
   const fetchCategories = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
@@ -54,36 +56,47 @@ export default function Category() {
     }
   };
 
-  // Xóa danh mục nếu chưa là khóa ngoại
+  useEffect(() => {
+    fetchCategories()
+  }, [])
+
+  // Xóa danh mục
   const handleDelete = async (categoryId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/Categories/${categoryId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
+      const response = await fetch(
+        `http://localhost:5000/api/Categories/${categoryId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      const data = await response.json();
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Xóa danh mục thất bại");
+        throw new Error(data.message || "Xóa danh mục thất bại");
       }
 
-      setCategories(categories.filter((p) => p.categoryId !== categoryId));
+      setCategories((prev) => prev.filter((p) => p.categoryId !== categoryId));
+      setPagination((prev) => ({
+        ...prev,
+        total: prev.total > 0 ? prev.total - 1 : 0,
+      }));
       message.success("Xóa danh mục thành công");
     } catch (error) {
-      message.error(error.message || "Danh mục đang được sử dụng, không thể xóa");
+       message.error("Lỗi khi xóa danh mục");
     }
   };
 
-  //Thêm danh mục
+  //Sự kiện xử lý khi nhấn thêm danh mục
   const handleAdd = () => {
     setEditingCategory(null)
     form.resetFields()
     setIsModalOpen(true)
   }
 
-  //Sửa danh mục
+  //Sự kiện xử lý khi nhấn sửa danh mục
   const handleEdit = (category) => {
     setEditingCategory(category)
     form.setFieldsValue(category)
@@ -93,7 +106,7 @@ export default function Category() {
   //Thêm hoặc cập nhật sản phẩm
   const handleSubmit = async (values) => {
     try {
-      const { categoryName } = values;
+      const { categoryName, status } = values;
 
       // Kiểm tra trùng tên (không phân biệt hoa thường)
       const isDuplicate = categories.some(
@@ -112,16 +125,16 @@ export default function Category() {
         ]);
         return;
       }
-
+      // Sửa danh mục
       if (editingCategory) {
-        // --- Sửa danh mục ---
+        
         const response = await fetch(`http://localhost:5000/api/Categories/${editingCategory.categoryId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({ categoryName }),
+          body: JSON.stringify({ categoryName, status}),
         });
 
         if (!response.ok) {
@@ -130,9 +143,8 @@ export default function Category() {
         }
 
         setCategories(categories.map((c) =>
-          c.categoryId === editingCategory.categoryId ? { ...c, categoryName: categoryName } : c
+          c.categoryId === editingCategory.categoryId ? { ...c, categoryName: categoryName, status: status } : c
         ));
-
         message.success("Cập nhật danh mục thành công");
       } else {
         // --- Thêm danh mục ---
@@ -142,7 +154,7 @@ export default function Category() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({ categoryName }),
+          body: JSON.stringify({ categoryName, status: "Active" }),
         });
 
         if (!response.ok) {
@@ -152,7 +164,16 @@ export default function Category() {
 
         const result = await response.json();
         const newCategory = result.data;
+        // Tính page cuối
+        const newTotal = pagination.total + 1;
+        const lastPage = Math.ceil(newTotal / pagination.pageSize);
         setCategories([...categories, newCategory]);
+        setPagination((prev) => ({
+          ...prev,
+          total: prev.total + 1,
+          current: lastPage,
+        }));
+        fetchCategories(lastPage, pagination.pageSize);
         message.success("Thêm danh mục thành công");
       }
 
@@ -163,7 +184,6 @@ export default function Category() {
     }
   };
 
-
   //Nhấn cancel trong form
   const handleCancel = () => {
     setIsModalOpen(false)
@@ -173,15 +193,71 @@ export default function Category() {
 
   //Tìm kiếm các danh mục theo tên
   const filteredCategories = categories.filter((category) => {
-    if (!searchTerm) return true
+    // Lọc theo trạng thái nếu có
+    if (filterType === "status" && filterId !== null) {
+      if (category.status !== filterId) return false;
+    }
 
-    const searchLower = searchTerm.toLowerCase()
+    // Lọc theo searchTerm nếu có
+    if (!searchTerm) return true;
 
-    // Search in all fields
+    const searchLower = searchTerm.toLowerCase();
+
     return (
-      category.categoryName.toLowerCase().includes(searchLower)
-    )
-  })
+      category.categoryName?.toLowerCase().includes(searchLower)
+    );
+  });
+
+
+  const handleFilterByStatus = (status) => {
+    setFilterType("status");
+    setFilterId(status);
+    message.success(`Đang lọc theo trạng thái: ${status === "Active" ? "Còn sử dụng" : "Ngừng sử dụng"}`);
+  };
+
+  const handleClearFilter = () => {
+    setFilterType(null)
+    setFilterId(null)
+    message.info("Đã xóa bộ lọc")
+  };
+
+  const filterMenuItems = [
+    {
+      key: "status",
+      label: "Lọc theo trạng thái",
+      children: [
+        {
+          key: "status-active",
+          label: "Còn sử dụng",
+          onClick: () => handleFilterByStatus("Active"),
+        },
+        {
+          key: "status-inactive",
+          label: "Hết sử dụng",
+          onClick: () => handleFilterByStatus("Inactive"),
+        },
+      ],
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "clear",
+      label: "Xóa bộ lọc",
+      onClick: handleClearFilter,
+      disabled: filterType === null,
+    },
+  ];
+
+  const getFilterDisplayName = () => {
+    if (!filterType || filterId === null) return "Lọc";
+
+    if (filterType === "status") {
+      return filterId === "Active" ? "Lọc: Còn sử dụng" : "Lọc: Hết sử dụng";
+    }
+
+    return "Lọc";
+  };
 
   const handleSearch = (value) => {
     setSearchTerm(value)
@@ -189,9 +265,21 @@ export default function Category() {
 
   //Danh sách các cột trong bảng
   const columns = [
-    {title: "Mã danh mục",dataIndex: "categoryId",key: "categoryId",width: 150,align: "center",},
-    {title: "Tên danh mục",dataIndex: "categoryName",key: "categoryName",width: 700,align: "center",},
-    {title: "Thao tác",key: "action",width: 150,fixed: "right",align: "center",
+    {title: "Mã danh mục",dataIndex: "categoryId",key: "categoryId",width: 180,align: "center",},
+    {title: "Tên danh mục",dataIndex: "categoryName",key: "categoryName",width: 600,align: "center",},
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      width: 160,
+      align: "center",
+      render: (status) => (
+        <Tag color={status === 'Active' ? 'green' : 'red'}>
+          {status === 'Active' ? 'CÒN SỬ DỤNG' : 'HẾT SỬ DỤNG'}
+        </Tag>
+      ),
+    },
+    {title: "Thao tác",key: "action",width: 180,fixed: "right",align: "center",
       render: (_, record) => (
         <Space size="small">
           <Button className="btn-edit" type="primary" icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)}>
@@ -213,24 +301,41 @@ export default function Category() {
     },
   ]
 
-  useEffect(() => {
-    fetchCategories()
-  }, [])
+  //Xử lý thay đổi trạng thái trong form sửa
+  const handleStatusChange = async (value) => {
+    form.setFieldValue("status", value);
+  };
 
   return (
     <div className="category-manage-container">
       <div className="category-manage-header">
         <h2>Quản Lý Danh Mục</h2>
         <div className="header-actions">
-          <Input.Search
-            placeholder="Tìm kiếm theo tên danh mục"
-            allowClear
-            enterButton={<SearchOutlined />}
-            size="large"
-            onSearch={handleSearch}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="category-search-input"
-          />
+          <div className="search-filter-group">
+            <Input.Search
+              placeholder="Tìm kiếm theo tên danh mục"
+              allowClear
+              enterButton={<SearchOutlined />}
+              size="large"
+              onSearch={handleSearch}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="category-search-input"
+            />
+            <Dropdown
+                menu={{ items: filterMenuItems }}
+                trigger={["click"]}
+                placement="bottomLeft"
+            >
+              <Button
+                icon={<FilterOutlined />}
+                size="large"
+                className="filter-button"
+                type={filterType ? "primary" : "default"}
+              >
+                {getFilterDisplayName()}
+              </Button>
+            </Dropdown>
+          </div>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large" className="category-search-btn">
             Thêm danh mục
           </Button>
@@ -266,9 +371,9 @@ export default function Category() {
         open={isModalOpen}
         onCancel={handleCancel}
         footer={null}
-        width={600}
+        width={500}
         closable={false}
-        style={{ top: 100 }} 
+        style={{ top: 150 }}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off">
           <Form.Item
@@ -281,6 +386,20 @@ export default function Category() {
           >
             <Input placeholder="Nhập tên danh mục" />
           </Form.Item>
+          {editingCategory && 
+            <Form.Item
+              label="Trạng thái"
+              name="status"
+            >
+              <Select
+                placeholder="Trạng thái"
+                onChange={handleStatusChange}
+              >
+                <Option value="Inactive">Hết Sử Dụng</Option>
+                <Option value="Active">Còn Sử Dụng</Option>
+              </Select>
+            </Form.Item>
+          }
           <Form.Item className="form-actions">
             <Space>
               <Button onClick={handleCancel}>Hủy</Button>

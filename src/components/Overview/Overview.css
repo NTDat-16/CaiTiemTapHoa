@@ -1,0 +1,199 @@
+/* --- Container --- */
+.Overview-container {
+  width: 100%;
+  background: #f5f7fa;
+  height: calc(100vh - 205px);
+  overflow: hidden;
+}
+
+/* --- Card --- */
+.Overview-card {
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+}
+
+/* --- Title --- */
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #1a1a1a;
+  font-family: 'Inter', sans-serif;
+}
+
+/* --- Filter --- */
+.Overview-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.Overview-filter .modern-picker {
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.Overview-filter .modern-picker:hover {
+  border-color: #008f5a;
+  box-shadow: 0 0 8px rgba(0, 143, 90, 0.3);
+}
+
+.Overview-filter .modern-button {
+  border-radius: 8px;
+  height: 40px;
+  line-height: 40px;
+  padding: 0 20px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  background: #008f5a;
+  border: 1px solid #008f5a;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.Overview-filter .modern-button:hover {
+  background: #00c48f;
+  border-color: #00c48f;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 143, 90, 0.3);
+}
+
+.Overview-filter .modern-button-secondary {
+  border-color: #008f5a;
+  color: #008f5a;
+  background: #fff;
+}
+
+.Overview-filter .modern-button-secondary:hover {
+  background: #e6fff7;
+  color: #008f5a;
+  transform: scale(1.05);
+}
+
+/* --- Stats & Chart Panel --- */
+.Overview-body {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.Overview-stats-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.stats-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* --- Stat Boxes (giữ background xanh) --- */
+.stat-box {
+  background: linear-gradient(135deg, #e6fff7 0%, #c8f0e0 100%);
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* --- Icon & Text --- */
+.stat-box .stat-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+  color: #008f5a; /* icon xanh */
+}
+
+.stat-box h3 {
+  font-size: 14px;
+  color: #1a1a1a; /* tiêu đề đen */
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+/* --- Số liệu màu theo loại --- */
+.stat-total p { color: #00c48f; }     /* xanh lá */
+.stat-avg p { color: #ff7b00; }       /* cam */
+.stat-actual p { color: #ff4d4f; }    /* đỏ */
+.stat-accuracy p { color: #facc15; }  /* vàng */
+.stat-trend p { color: #8b5cf6; }     /* tím */
+
+/* --- Chart Panel --- */
+.Overview-chart-panel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  position: relative;
+  height: 420px;
+  overflow: hidden;
+}
+
+.Overview-chart-panel .ant-spin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .Overview-container {
+    height: auto;
+    padding: 12px;
+  }
+
+  .Overview-body {
+    grid-template-columns: 1fr;
+  }
+
+  .Overview-stats-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .Overview-chart-panel {
+    height: 300px;
+  }
+
+  .card-title {
+    font-size: 16px;
+  }
+
+  .stat-box p {
+    font-size: 18px;
+  }
+}
+
+/* --- Picker & Button fix height --- */
+.Overview-filter .modern-picker,
+.Overview-filter .modern-button {
+  height: 40px;
+  line-height: 40px;
+}

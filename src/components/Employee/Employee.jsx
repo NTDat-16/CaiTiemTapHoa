@@ -11,13 +11,15 @@ import {
     Popconfirm,
     Typography,
     Tooltip,
-    Tag
+    Tag,
+    Dropdown
 } from "antd";
 import {
     PlusOutlined,
     EditOutlined,
     DeleteOutlined,
     SearchOutlined,
+    FilterOutlined
 } from "@ant-design/icons";
 import "./Employee.css";
 
@@ -36,6 +38,8 @@ export default function Employee() {
         pageSize: 10,
         total: 0,
     });
+    const [filterType, setFilterType] = useState(null)
+    const [filterId, setFilterId] = useState(null)
 
     // Load dữ liệu nhân viên
     const fetchEmployees = async (page = 1, pageSize = 10) => {
@@ -96,35 +100,12 @@ export default function Employee() {
         fetchEmployees(pag.current, pag.pageSize);
     };
 
-    // 🧩 Danh sách các cột
+    // Danh sách các cột
     const columns = [
-        {
-            title: "Mã nhân viên",
-            dataIndex: "userId",
-            key: "userId",
-            width: 120,
-            align: "center",
-        },
-        {
-            title: "Họ và Tên",
-            dataIndex: "fullName",
-            key: "fullName",
-            width: 250,
-            align: "center",
-        },
-        {
-            title: "Tên đăng nhập",
-            dataIndex: "username",
-            key: "username",
-            width: 220,
-            align: "center",
-        },
-        {
-            title: "Chức vụ",
-            dataIndex: "role",
-            key: "role",
-            width: 150,
-            align: "center",
+        {title: "Mã NV",dataIndex: "userId",key: "userId",width: 80,align: "center",},
+        {title: "Họ và Tên",dataIndex: "fullName",key: "fullName",width: 300,align: "center",},
+        {title: "Tên đăng nhập",dataIndex: "username",key: "username",width: 180,align: "center",},
+        {title: "Chức vụ",dataIndex: "role",key: "role",width: 150,align: "center",
             render: (role) => (
                 <span
                     style={{
@@ -136,12 +117,7 @@ export default function Employee() {
                 </span>
             ),
         },
-        {
-            title: "Ngày vào làm",
-            dataIndex: "createdAt",
-            key: "createdAt",
-            width: 180,
-            align: "center",
+        {title: "Ngày vào làm",dataIndex: "createdAt",key: "createdAt",width: 170,align: "center",
             render: (date) => {
                 if (!date) return "-";
                 const d = new Date(date);
@@ -151,26 +127,16 @@ export default function Employee() {
                 return `${day}-${month}-${year}`;
             },
         },
-        {
-            title: "Trạng thái",
-            dataIndex: "status",
-            key: "status",
-            width: 120,
-            align: "center",
+        {title: "Trạng thái",dataIndex: "status",key: "status",width: 150,align: "center",
             render: (status) => (
                 <Tag color={status === 'Active' ? 'green' : 'red'}>
-                    {status === 'Active' ? 'HOẠT ĐỘNG' : 'NGƯNG HOẠT ĐỘNG'}
+                    {status === 'Active' ? 'ĐANG LÀM VIỆC' : 'TẠM NGHỈ'}
                 </Tag>
             ),
         },
-        {
-            title: "Thao tác",
-            key: "action",
-            width: 180,
-            fixed: "right",
-            align: "center",
+        {title: "Thao tác",key: "action",width: 180,fixed: "right",align: "center",
             render: (_, record, index) => {
-                const isFirstRow = index === 0; // ✅ Dòng đầu tiên bị khóa
+                const isFirstRow = index === 0;
                 return (
                     <Space size="small">
                         <Tooltip
@@ -223,21 +189,21 @@ export default function Employee() {
         },
     ];
 
-    // 🧩 Sự kiện thêm nhân viên
+    // Sự kiện thêm nhân viên
     const handleAdd = () => {
         setEditingEmployee(null);
         form.resetFields();
         setIsModalOpen(true);
     };
 
-    // 🧩 Sự kiện sửa nhân viên
+    // Sự kiện sửa nhân viên
     const handleEdit = (employee) => {
         setEditingEmployee(employee);
         form.setFieldsValue(employee);
         setIsModalOpen(true);
     };
 
-    // 🧩 Xóa nhân viên
+    // Xóa nhân viên
     const handleDelete = async (employeeId) => {
         try {
             const response = await fetch(
@@ -269,7 +235,7 @@ export default function Employee() {
         }
     };
 
-    // 🧩 Thêm hoặc sửa nhân viên
+    // Thêm hoặc sửa nhân viên
     const handleSubmit = async (values) => {
         try {
             const { fullName, role, status } = values;
@@ -332,7 +298,16 @@ export default function Employee() {
 
                 const result = await response.json();
                 const addedEmployee = result.data || result;
+                // Tính page cuối
+                const newTotal = pagination.total + 1;
+                const lastPage = Math.ceil(newTotal / pagination.pageSize);
                 setEmployees([...employees, addedEmployee]);
+                setPagination((prev) => ({
+                    ...prev,
+                    total: prev.total + 1,
+                    current: lastPage,
+                }));
+                fetchEmployees(lastPage, pagination.pageSize);
                 message.success("Thêm nhân viên thành công");
             }
 
@@ -350,21 +325,33 @@ export default function Employee() {
         setEditingEmployee(null);
     };
 
-    // 🧩 Tìm kiếm nhân viên
+    // Tìm kiếm nhân viên
     const filteredUsers = employees.filter((user) => {
-        if (!searchTerm) return true;
-        const searchLower = searchTerm.toLowerCase();
-        return (
-            user.fullName?.toLowerCase().includes(searchLower) ||
-            user.username?.toLowerCase().includes(searchLower)
-        );
+        // Lọc theo trạng thái
+        if (filterType === "status" && filterId !== null) {
+            if (user.status !== filterId) return false;
+        }
+
+        // Tìm kiếm theo tên hoặc username
+        if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
+            if (
+                !user.fullName?.toLowerCase().includes(searchLower) &&
+                !user.username?.toLowerCase().includes(searchLower)
+            ) {
+                return false;
+            }
+        }
+
+        return true;
     });
+
 
     const handleSearch = (value) => {
         setSearchTerm(value);
     };
 
-    // 🧩 Tạo tên đăng nhập tự động
+    // Tạo tên đăng nhập tự động
     const generateUsername = async () => {
         try {
             const response = await fetch(
@@ -394,8 +381,59 @@ export default function Employee() {
     const handleRoleChange = async (value) => {
         form.setFieldValue("role", value);
     };
+    
     const handleStatusChange = async (value) => {
         form.setFieldValue("status", value);
+    };
+
+    const handleFilterByStatus = (status) => {
+        setFilterType("status");
+        setFilterId(status);
+        message.success(`Đang lọc theo trạng thái: ${status === "Active" ? "Đang làm việc" : "Tạm nghỉ"}`);
+    };
+
+    const handleClearFilter = () => {
+        setFilterType(null)
+        setFilterId(null)
+        message.info("Đã xóa bộ lọc")
+    }
+
+    const filterMenuItems = [
+        {
+            key: "status",
+            label: "Lọc theo trạng thái",
+            children: [
+                {
+                    key: "status-active",
+                    label: "Đang làm việc",
+                    onClick: () => handleFilterByStatus("Active"),
+                },
+                {
+                    key: "status-inactive",
+                    label: "Tạm nghỉ",
+                    onClick: () => handleFilterByStatus("Inactive"),
+                },
+            ],
+        },
+        {
+            type: "divider",
+        },
+        {
+            key: "clear",
+            label: "Xóa bộ lọc",
+            onClick: handleClearFilter,
+            disabled: filterType === null,
+        },
+    ];
+
+    const getFilterDisplayName = () => {
+        if (!filterType || filterId === null) return "Lọc";
+
+        if (filterType === "status") {
+            return filterId === "Active" ? "Lọc: Đang làm việc" : "Lọc: Tạm nghỉ";
+        }
+
+        return "Lọc";
     };
 
     return (
@@ -403,15 +441,31 @@ export default function Employee() {
             <div className="employee-manage-header">
                 <h2 className="employee-manage-title">Quản Lý Nhân Viên</h2>
                 <div className="header-actions">
-                    <Input.Search
-                        placeholder="Tìm kiếm theo tên, tên đăng nhập, chức vụ"
-                        allowClear
-                        enterButton={<SearchOutlined />}
-                        size="large"
-                        onSearch={handleSearch}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        className="employee-search-input"
-                    />
+                    <div className="search-filter-group">
+                        <Input.Search
+                            placeholder="Tìm kiếm theo tên, tên đăng nhập, chức vụ"
+                            allowClear
+                            enterButton={<SearchOutlined />}
+                            size="large"
+                            onSearch={handleSearch}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            className="employee-search-input"
+                        />
+                        <Dropdown
+                            menu={{ items: filterMenuItems }}
+                            trigger={["click"]}
+                            placement="bottomLeft"
+                        >
+                            <Button
+                            icon={<FilterOutlined />}
+                            size="large"
+                            className="filter-button"
+                            type={filterType ? "primary" : "default"}
+                            >
+                            {getFilterDisplayName()}
+                            </Button>
+                        </Dropdown>
+                    </div>
                     <Button
                         type="primary"
                         icon={<PlusOutlined />}
@@ -510,8 +564,8 @@ export default function Employee() {
                             placeholder="Trạng thái"
                             onChange={handleStatusChange}
                         >
-                            <Option value="Inactive">Ngưng Hoạt Động</Option>
-                            <Option value="Active">Hoạt Động</Option>
+                            <Option value="Inactive">Tạm Nghỉ</Option>
+                            <Option value="Active">Đang Làm Việc</Option>
                         </Select>
                     </Form.Item>}
                     <Form.Item className="form-actions">

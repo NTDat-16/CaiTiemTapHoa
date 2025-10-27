@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
-import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Tag } from "antd"
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons"
+import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Tag, Dropdown } from "antd"
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, FilterOutlined} from "@ant-design/icons"
 import "./Supplier.css"
 
 const { Option } = Select
@@ -14,6 +14,8 @@ export default function Supplier() {
   const [form] = Form.useForm()
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
   const [provinces, setProvinces] = useState([]);
+  const [filterType, setFilterType] = useState(null)
+  const [filterId, setFilterId] = useState(null)
 
   //Lấy danh sách các nhà cung cấp
   const fetchSuppliers = async (page = 1, pageSize = 10) => {
@@ -71,34 +73,34 @@ export default function Supplier() {
 
   // Xóa danh mục nếu chưa là khóa ngoại
   const handleDelete = async (supplierId) => {
-        try {
-            const response = await fetch(
-                `http://localhost:5000/api/Suppliers/${supplierId}`,
-                {
-                    method: "DELETE",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                }
-            );
-
-            // Kiểm tra phản hồi
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.message || "Xóa nhà cung cấp thất bại");
-            }
-
-            setSuppliers((prev) => prev.filter((p) => p.supplierId !== supplierId));
-            setPagination((prev) => ({
-              ...prev,
-              total: prev.total > 0 ? prev.total - 1 : 0,
-            }));
-            message.success("Xóa nhà cung cấp thành công");
-        } catch (error) {
-            message.error("Lỗi khi xóa nhà cung cấp");
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/Suppliers/${supplierId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
-    };
+      );
+
+      // Kiểm tra phản hồi
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Xóa nhà cung cấp thất bại");
+      }
+
+      setSuppliers((prev) => prev.filter((p) => p.supplierId !== supplierId));
+      setPagination((prev) => ({
+        ...prev,
+        total: prev.total > 0 ? prev.total - 1 : 0,
+      }));
+      message.success("Xóa nhà cung cấp thành công");
+    } catch (error) {
+      message.error("Lỗi khi xóa nhà cung cấp");
+    }
+  };
 
   //Xử lý sự kiện thêm nhà cung cấp
   const handleAdd = () => {
@@ -194,17 +196,73 @@ export default function Supplier() {
   }
 
   //Tìm kiếm các danh mục theo tên
-  const filteredCategories = suppliers.filter((supplier) => {
+  const filteredSuppliers = suppliers.filter((supplier) => {
+    // Lọc theo trạng thái nếu có
+    if (filterType === "status" && filterId !== null) {
+      if (supplier.status !== filterId) return false;
+    }
+
+    // Lọc theo searchTerm nếu có
     if (!searchTerm) return true;
 
     const searchLower = searchTerm.toLowerCase();
 
     return (
-      supplier.name.toLowerCase().includes(searchLower) ||
-      supplier.phone.toLowerCase().includes(searchLower) ||
-      supplier.email.toLowerCase().includes(searchLower)
+      supplier.name?.toLowerCase().includes(searchLower) ||
+      supplier.phone?.toLowerCase().includes(searchLower) ||
+      supplier.email?.toLowerCase().includes(searchLower)
     );
-  }).sort((a, b) => a.supplierId - b.supplierId);;
+  });
+
+  const handleFilterByStatus = (status) => {
+    setFilterType("status");
+    setFilterId(status);
+    message.success(`Đang lọc theo trạng thái: ${status === "Active" ? "CÒN mua hàng" : "NGỪNG mua hàng"}`);
+  };
+
+  const handleClearFilter = () => {
+    setFilterType(null)
+    setFilterId(null)
+    message.info("Đã xóa bộ lọc")
+  };
+
+  const filterMenuItems = [
+    {
+      key: "status",
+      label: "Lọc theo trạng thái",
+      children: [
+        {
+          key: "status-active",
+          label: "Còn nhập hàng",
+          onClick: () => handleFilterByStatus("Active"),
+        },
+        {
+          key: "status-inactive",
+          label: "Ngừng nhập hàng",
+          onClick: () => handleFilterByStatus("Inactive"),
+        },
+      ],
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "clear",
+      label: "Xóa bộ lọc",
+      onClick: handleClearFilter,
+      disabled: filterType === null,
+    },
+  ];
+
+  const getFilterDisplayName = () => {
+    if (!filterType || filterId === null) return "Lọc";
+
+    if (filterType === "status") {
+      return filterId === "Active" ? "Lọc: Còn nhập hàng" : "Lọc: Ngừng nhập hàng";
+    }
+
+    return "Lọc";
+  };
 
   const handleSearch = (value) => {
     setSearchTerm(value)
@@ -213,22 +271,23 @@ export default function Supplier() {
   const handleStatusChange = async (value) => {
     form.setFieldValue("status", value);
   };
+
   //Danh sách các cột trong bảng
   const columns = [
     { title: "Mã NCC", dataIndex: "supplierId", key: "supplierId", width: 120, align: "center" },
     { title: "Tên NCC", dataIndex: "name", key: "name", width: 200, align: "left" },
     { title: "SĐT", dataIndex: "phone", key: "phone", width: 150, align: "center" },
-    { title: "Email", dataIndex: "email", key: "email", width: 220, align: "left" },
+    { title: "Email", dataIndex: "email", key: "email", width: 200, align: "left" },
     { title: "Địa chỉ", dataIndex: "address", key: "address", width: 250, align: "left" },
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      width: 120,
+      width: 150,
       align: "center",
       render: (status) => (
         <Tag color={status === 'Active' ? 'green' : 'red'}>
-          {status === 'Active' ? 'CÒN HỢP TÁC' : 'NGƯNG HỢP TÁC'}
+          {status === 'Active' ? 'CÒN NHẬP HÀNG' : 'NGƯNG NHẬP HÀNG'}
         </Tag>
       ),
     },
@@ -273,20 +332,37 @@ export default function Supplier() {
   const handleTableChange = (pag) => {
     fetchSuppliers(pag.current, pag.pageSize);
   };
+  
   return (
     <div className="supplier-manage-container">
       <div className="supplier-manage-header">
         <h2>Quản Lý Nhà Cung Cấp</h2>
         <div className="header-actions">
-          <Input.Search
-            placeholder="Tìm kiếm theo tên nhà cung cấp, email, sđt."
-            allowClear
-            enterButton={<SearchOutlined />}
-            size="large"
-            onSearch={handleSearch}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="supplier-search-input"
-          />
+          <div className="search-filter-group">
+            <Input.Search
+              placeholder="Tìm kiếm theo tên nhà cung cấp, email, sđt."
+              allowClear
+              enterButton={<SearchOutlined />}
+              size="large"
+              onSearch={handleSearch}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="supplier-search-input"
+            />
+            <Dropdown
+              menu={{ items: filterMenuItems }}
+              trigger={["click"]}
+              placement="bottomLeft"
+              >
+                <Button
+                  icon={<FilterOutlined />}
+                  size="large"
+                  className="filter-button"
+                  type={filterType ? "primary" : "default"}
+                >
+                  {getFilterDisplayName()}
+                </Button>
+              </Dropdown>
+          </div>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} size="large" className="supplier-search-btn">
             Thêm nhà cung cấp
           </Button>
@@ -296,7 +372,7 @@ export default function Supplier() {
       <div className="supplier-manage-table">
         <Table
           columns={columns}
-          dataSource={filteredCategories}
+          dataSource={filteredSuppliers}
           rowKey="supplierId"
           loading={loading}
           pagination={{
@@ -386,8 +462,8 @@ export default function Supplier() {
               placeholder="Trạng thái"
               onChange={handleStatusChange}
             >
-              <Option value="Inactive">Ngưng Hợp Tác</Option>
-              <Option value="Active">Còn Hợp Tác</Option>
+              <Option value="Inactive">Ngừng Nhập Hàng</Option>
+              <Option value="Active">Còn Nhập Hàng</Option>
             </Select>
           </Form.Item>}
           <Form.Item className="form-actions">
