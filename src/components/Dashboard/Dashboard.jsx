@@ -4,6 +4,7 @@ import SalesReport from "../SalesReport/SaleReport";
 import Forecast from "../Forecast/Forecast";
 // import Inventory from "./Inventory";
 // import DeadStock from "./DeadStock";
+import DeadStock from "../DeadStock/Deadstock";
 import {
   BarChartOutlined,
   LineChartOutlined,
@@ -33,7 +34,7 @@ export default function Dashboard() {
       case "inventory":
         // return <Inventory />;
       case "deadstock":
-        // return <DeadStock />;
+        return <DeadStock />;
       default:
         // return <Overview />
     }
