@@ -7,8 +7,10 @@
     background-color: #f8f9fa;
     padding: 10px 20px;
     overflow: hidden;
+    z-index: 1; /* thấp hơn modal/notification */
 }
 
+/* ...existing code... */
 .cart-item-row {
   display: flex;
   justify-content: space-between;
@@ -65,4 +67,47 @@
 .order-container .ant-table-tbody > tr:hover > td {
   background-color: #e6f4ea !important;
   cursor: pointer;
+}
+
+/* Force modal/notification/message lên trên cùng */
+.ant-modal-root, .ant-modal {
+  z-index: 14000 !important;
+}
+
+/* wrap và mask */
+.ant-modal-wrap, .ant-modal-wrap-centered {
+  z-index: 14000 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* backdrop */
+.ant-modal-mask {
+  z-index: 13990 !important;
+  background-color: rgba(0,0,0,0.45) !important;
+  pointer-events: auto !important;
+}
+
+/* nội dung modal khôi phục layout mặc định nếu trước đó bị chỉnh */
+.ant-modal-content {
+  width: auto !important;
+  max-width: 90vw !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.15) !important;
+  z-index: 14010 !important;
+}
+
+/* nút đóng / tiêu đề */
+.ant-modal-close, .ant-modal-header {
+  z-index: 14020 !important;
+}
+
+/* Đảm bảo notification / message hiển thị trên modal nếu cần */
+.ant-notification, .ant-notification-notice, .ant-message {
+  z-index: 15000 !important;
+}
+
+/* Nếu có custom full-screen overlays, đảm bảo chúng không che modal */
+[data-overlay] {
+  z-index: 1;
 }

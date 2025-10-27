@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-const printInvoice = (orderData) => {
+export function printInvoice(orderData) {
     // 1. Tạo một container HTML tạm thời cho hóa đơn
     const invoiceContent = document.createElement('div');
     // ... (nội dung HTML giữ nguyên)
@@ -79,7 +79,4 @@ const printInvoice = (orderData) => {
     });
 };
 
-// Đảm bảo import 2 thư viện jspdf và html2canvas ở đầu file Order.jsx
-// import jsPDF from 'jspdf';
-// import html2canvas from 'html2canvas'; 
-// (nếu bạn đặt hàm này ở file helper, nhớ export nó ra)
+export default printInvoice;
