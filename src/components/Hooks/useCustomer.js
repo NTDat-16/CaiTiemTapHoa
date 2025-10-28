@@ -14,7 +14,6 @@ export default function useCustomer() {
 
   const token = localStorage.getItem("token");
 
-  // 🟢 Lấy danh sách khách hàng (có phân trang)
   const fetchCustomers = useCallback(async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {

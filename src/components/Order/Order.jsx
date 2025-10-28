@@ -1,14 +1,18 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  Form, Table, Row, Col, Input, Select, Button, Card, Modal, message, Space, Tag, Pagination, Spin,Divider, InputNumber
+  Form, Table, Row, Col, Input, Select, Button, Card,  Space, Tag, Pagination, Spin,Divider, InputNumber, notification
 } from "antd";
+import { Modal, message } from "antd"; 
 import { SearchOutlined, DeleteOutlined, MinusOutlined, PlusOutlined, QrcodeOutlined } from "@ant-design/icons";
 import "./Order.css";
 import aquavoiem from "../../assets/aquavoiem.png";
 import QR from "../../assets/QR.png";
 import useFetchPromotions from "../Hooks/useFetchpPromotion";
 import useCustomer from "../Hooks/useCustomer";
-// import printInvoice from "./printInvoice";
+import printInvoice from "./printInvoice";
+import 'antd/dist/reset.css';
+import { ConfigProvider } from "antd";
+
   const { Option } = Select;
 
 
@@ -228,6 +232,7 @@ const calculateDiscountAmount = (subtotal, selectedPromoId, promotions) => {
 }
 
 
+
 export default function Order() {
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage, setProductsPerPage] = useState(25);
@@ -252,37 +257,52 @@ export default function Order() {
   const [phone, setPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [loadingCustomer, setLoadingCustomer] = useState(false);
-
-   
   const { inventory } = useFetchInventory(productIds, currentPage, productsPerPage);
+// Modal kết quả thanh toán
+const [resultModal, setResultModal] = useState({
+  visible: false,
+  type: "",     
+  title: "",
+  message: "",
+  showPrint: false,
+  orderToPrint: null,
+});
 
+const { activePromotions, currentProducts } = useMemo(() => {
+  if (!Array.isArray(products)) return { activePromotions: [], currentProducts: [] };
 
-  const currentProducts = useMemo(() => {
-      if (!Array.isArray(products)) return [];
-      
-      // Lọc sản phẩm theo Category và Search
-      const filtered = products.filter((p) => {
-          const productName = p.product_name ?? ""; 
-          
-          // 1. LỌC THEO DANH MỤC (ĐÃ SỬA)
-          // Lấy slug từ categoryId của sản phẩm (vì selectedCategory là slug)
-          const productCategorySlug = getCategoryData(p.categoryId)?.slug; 
-          
-          // So sánh slug của sản phẩm với selectedCategory state
-          const matchCategory = selectedCategory === "all" || productCategorySlug === selectedCategory;
-          
-          // 2. Lọc theo tìm kiếm
-          const matchSearch = productName.toLowerCase().includes(search.toLowerCase());
-          
-          return matchCategory && matchSearch;
-      });
+  // 1️⃣ Lọc khuyến mãi đang hoạt động
+  const activePromotions = promotions.filter((p) => {
+    const status = p.status?.toLowerCase();
+    return status === "active" || status === "hoạt động";
+  });
 
-      // Thêm thông tin tồn kho vào sản phẩm đã lọc
-      return filtered.map(p => ({
-          ...p,
-          stock: inventory?.[p.product_id] ?? 0, 
-      }));
-  }, [products, inventory, selectedCategory, search]);
+  // 2️⃣ Lọc sản phẩm theo danh mục + tìm kiếm
+  const filteredProducts = products.filter((p) => {
+    const productName = p.product_name ?? "";
+
+    // Lấy slug của category (vì selectedCategory là slug)
+    const productCategorySlug = getCategoryData(p.categoryId)?.slug;
+
+    // Điều kiện lọc danh mục
+    const matchCategory =
+      selectedCategory === "all" || productCategorySlug === selectedCategory;
+
+    // Điều kiện tìm kiếm
+    const matchSearch = productName.toLowerCase().includes(search.toLowerCase());
+
+    return matchCategory && matchSearch;
+  });
+
+  // 3️⃣ Gắn thông tin tồn kho vào sản phẩm đã lọc
+  const currentProducts = filteredProducts.map((p) => ({
+    ...p,
+    stock: inventory?.[p.product_id] ?? 0,
+  }));
+
+  return { activePromotions, currentProducts };
+}, [promotions, products, inventory, selectedCategory, search, getCategoryData]);
+
 
     const handleAddToCart = (product) => {
       setCart(prev => {
@@ -304,72 +324,91 @@ export default function Order() {
       );
     };
 
-  //   const updateQuantity = (id, delta) => {
-  //     setCart((prev) => {
-  //       const newCart = prev
-  //         .map((item) =>
-  //           item.product_id === id
-  //           ? { ...item, quantity: Math.max(item.quantity + delta, 0) }
-  //           : item
-  //       )
-  //       .filter((item) => item.quantity > 0);
 
-  //       setChosenIds((prevIds) =>
-  //         prevIds.filter((pid) => newCart.some((item) => item.product_id === pid))
-  //       );
-  //       return newCart;
-  //     });
-  //   };
-  const updateQuantity = (id, delta) => {
-    // Lấy ID đơn hàng đang mở/giỏ hàng hiện tại
-    const currentOrderId = getActiveOrderId(); // Giả sử có hàm này
+ const updateQuantity = async (id, delta) => {
+  // Lấy item hiện tại từ state (synchronous read)
+  const itemToUpdate = cart.find(item => item.product_id === id);
+  if (!itemToUpdate) return;
 
-    setCart((prev) => {
-        const itemToUpdate = prev.find(item => item.product_id === id);
-        if (!itemToUpdate) return prev; // Không tìm thấy
+  const prevCart = [...cart];
+  const newQuantity = Math.max((itemToUpdate.quantity || 0) + delta, 0);
 
-        const newQuantity = Math.max(itemToUpdate.quantity + delta, 0);
+  // Cập nhật UI tối ưu (optimistic)
+  setCart((prev) => {
+    const newCart = prev
+      .map((item) =>
+        item.product_id === id ? { ...item, quantity: newQuantity } : item
+      )
+      .filter((item) => item.quantity > 0);
+    setChosenIds((prevIds) =>
+      prevIds.filter((pid) => newCart.some((item) => item.product_id === pid))
+    );
+    return newCart;
+  });
 
-        // --- Bắt đầu tích hợp API ---
-        if (currentOrderId && newQuantity > 0) {
-            // Chuẩn bị dữ liệu cập nhật
-            const updateData = { quantity: newQuantity }; 
+  // Nếu không có order trên server thì không cần gọi API
+  const currentOrderId = (typeof getActiveOrderId === "function") ? getActiveOrderId() : null;
+  if (!currentOrderId) return;
 
-            const token = getAuthToken();
-            if (token) {
-                 // **Gọi PUT API để cập nhật số lượng sản phẩm trong đơn hàng**
-                fetch(`${API_BASE_URL}/Orders/${currentOrderId}/items/${id}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify(updateData),
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        // Xử lý lỗi API (ví dụ: message.error)
-                        console.error("Lỗi cập nhật số lượng trên server");
-                        // Có thể cần rollback local state nếu cập nhật server thất bại
-                    }
-                })
-                .catch(error => console.error("Lỗi network/server:", error));
-            }
-        } 
-       
-        const newCart = prev
-            .map((item) =>
-                item.product_id === id
-                ? { ...item, quantity: newQuantity }
-                : item
-            )
-            .filter((item) => item.quantity > 0);
+  const token = getAuthToken();
+  if (!token) return;
 
-        setChosenIds((prevIds) =>
-            prevIds.filter((pid) => newCart.some((item) => item.product_id === pid))
-        );
-        return newCart;
+  try {
+    // Nếu số lượng mới bằng 0 => cố gắng xóa item trên server (nếu backend hỗ trợ)
+    if (newQuantity === 0) {
+      try {
+        const delResp = await fetch(`${API_BASE_URL}/Orders/${currentOrderId}/items/${id}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        });
+        if (!delResp.ok) {
+          // nếu backend không hỗ trợ DELETE, bỏ qua (UI đã cập nhật)
+          console.warn("Xóa item trên server không thành công:", delResp.status);
+        }
+      } catch (e) {
+        console.warn("Lỗi xóa item trên server:", e);
+      }
+      return;
+    }
+
+    // Thử cập nhật (PUT). Nếu 404 => item chưa tồn tại trên server => POST tạo mới
+    const putResp = await fetch(`${API_BASE_URL}/Orders/${currentOrderId}/items/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ quantity: newQuantity }),
     });
+
+    if (putResp.ok) {
+      return; // thành công
+    }
+
+    // Nếu PUT trả về 404 (item chưa tồn tại) hoặc server yêu cầu POST thì tạo item mới
+    if (putResp.status === 404 || putResp.status === 400) {
+      const postResp = await fetch(`${API_BASE_URL}/Orders/${currentOrderId}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          productId: id,
+          quantity: newQuantity,
+          price: itemToUpdate.price,
+        }),
+      });
+      if (postResp.ok) return;
+      // nếu POST cũng lỗi -> rơi ra xử lý chung
+    }
+
+    // Nếu tới đây vẫn không ok thì throw để rollback
+    const text = await putResp.text().catch(() => "");
+    throw new Error(`Server cập nhật thất bại: ${putResp.status} ${text}`);
+  } catch (error) {
+    console.error("Lỗi đồng bộ số lượng:", error);
+    // rollback UI
+    setCart(prev => {
+      // cố gắng restore prevCart (an toàn)
+      return prevCart;
+    });
+    message.error("Không thể cập nhật số lượng trên server. Đã phục hồi trạng thái.");
+  }
 };
 
     const removeFromCart = (id) => {
@@ -437,274 +476,286 @@ const mapPaymentMethodToServer = (method) => {
         default: return "Cash"; 
     }
 };
-const handlePayment = async () => {
-  
-    console.log("🚀 [Start] handlePayment");
+// 🧩 Hàm đảm bảo OrderItems đã được đồng bộ lên server
+const updateOrderItemsOnServer = async (orderId, cart) => {
+  console.log("🔄 Đồng bộ OrderItems với server...");
 
-    if (cart.length === 0) {
-        Modal.warning({ title: 'Giỏ hàng trống', content: 'Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán.', centered: true });
-        return;
-    }
-    
-    if (paymentMethod === "Tiền mặt" && customerPaid < total) {
-        Modal.error({ title: 'Lỗi Thanh Toán Tiền Mặt', content: `Số tiền khách đưa không đủ!`, centered: true });
-        return;
-    }
-
-    const token = getAuthToken();
-    if (!token) {
-        Modal.error({ title: 'Lỗi Phiên Đăng Nhập', content: 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.', centered: true });
-        return;
-    }
-    
-    let finalCustomerId = 2; // Khách vãng lai
-    if (phone) { 
-        console.log("📞 Đang tìm khách hàng với phone:", phone);
-        message.loading({ content: 'Đang kiểm tra thông tin khách hàng...', key: 'customerCheck' });
-        finalCustomerId = await fetchCustomerByPhone(phone) || 2;
-        message.destroy('customerCheck');
-    }
-    console.log("👤 CustomerId cuối cùng:", finalCustomerId);
-
-   
-    const orderDetails = cart.map(item => ({
+  for (const item of cart) {
+    await fetch(`${API_BASE_URL}/Orders/${orderId}/items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         productId: item.product_id,
         quantity: item.quantity,
-        price: item.price,
-    }));
+      }),
+    });
+  }
 
-    const createOrderData = {
-        customerId: finalCustomerId, 
-        promoId: selectedPromoId ? Number(selectedPromoId) : null,
-        
-        totalAmount: total, 
-        discountAmount: discountAmount,
-        subtotal: subtotal,
-        // Backend CreateOrderRequest có thể cần OrderItems trong Request Body
-        orderDetails: orderDetails, 
+  console.log("✅ OrderItems đã đồng bộ xong!");
+};
+
+// thanh toan 
+const handlePayment = async () => {
+  console.log("🚀 [Start] handlePayment");
+
+  // 🔹 1. Giỏ hàng trống
+  if (cart.length === 0) {
+    setResultModal({
+      visible: true,
+      type: "warning",
+      title: "Giỏ hàng trống",
+      message: "Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán.",
+    });
+    return;
+  }
+
+  // 🔹 2. Thiếu số điện thoại
+  if (!phone || phone.trim() === "") {
+    setResultModal({
+      visible: true,
+      type: "warning",
+      title: "Thiếu thông tin khách hàng",
+      message: "Vui lòng nhập số điện thoại khách hàng trước khi thanh toán.",
+    });
+    return;
+  }
+
+  // 🔹 3. Thanh toán tiền mặt nhưng không đủ tiền
+  if (paymentMethod === "Tiền mặt" && customerPaid < total) {
+    setResultModal({
+      visible: true,
+      type: "error",
+      title: "Lỗi Thanh Toán Tiền Mặt",
+      message: "Số tiền khách đưa không đủ để thanh toán đơn hàng.",
+    });
+    return;
+  }
+
+  // 🔹 4. Kiểm tra token
+  const token = getAuthToken();
+  if (!token) {
+    setResultModal({
+      visible: true,
+      type: "error",
+      title: "Lỗi Phiên Đăng Nhập",
+      message: "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.",
+    });
+    return;
+  }
+
+  // 🔹 5. Kiểm tra khách hàng
+  let finalCustomerId = 1;
+  let customerFromPhone = null;
+
+  message.loading({ content: "Đang kiểm tra thông tin khách hàng...", key: "customerCheck" });
+  customerFromPhone = await fetchCustomerByPhone(phone);
+  message.destroy("customerCheck");
+
+  if (customerFromPhone?.customerId) {
+    finalCustomerId = customerFromPhone.customerId;
+    setCustomerName(customerFromPhone.name || customerFromPhone.customerName || customerName);
+  }
+
+  // 🔹 6. Chuẩn bị dữ liệu đơn hàng
+  const orderDetails = cart.map((item) => ({
+    productId: item.product_id,
+    quantity: item.quantity,
+    price: item.price,
+  }));
+
+  const createOrderData = {
+    customerId: finalCustomerId,
+    promoId: selectedPromoId ? Number(selectedPromoId) : null,
+    totalAmount: total,
+    discountAmount: discountAmount,
+    subtotal: subtotal,
+    orderDetails: [],
+  };
+
+  let orderId = null;
+  let finalOrderResult = null;
+
+  try {
+    // 🟢 BƯỚC 1: Tạo đơn hàng
+    message.loading({ content: "Bước 1/5: Đang tạo đơn hàng nháp...", key: "payment" });
+
+    const createResponse = await fetch(`${API_BASE_URL}/Orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(createOrderData),
+    });
+    const createResult = await handleApiResponse(createResponse);
+    if (!createResponse.ok || !createResult.data?.orderId)
+      throw new Error(createResult?.message || "Tạo đơn hàng thất bại!");
+    orderId = createResult.data.orderId;
+
+    message.success({
+      content: `✅ Bước 1/5: Đã tạo đơn hàng nháp (ID: ${orderId})`,
+      key: "payment",
+      duration: 1.2,
+    });
+
+    // 🟢 BƯỚC 2: Thêm sản phẩm
+    message.loading({ content: "Bước 2/5: Đang thêm sản phẩm...", key: "payment" });
+    for (const item of orderDetails) {
+      const addResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(item),
+      });
+      const addResult = await handleApiResponse(addResponse);
+      if (!addResponse.ok) throw new Error(addResult?.message || `Lỗi khi thêm sản phẩm ${item.productId}`);
+    }
+
+    message.success({
+      content: "✅ Bước 2/5: Đã thêm sản phẩm thành công.",
+      key: "payment",
+      duration: 1.2,
+    });
+
+    // 🟢 BƯỚC 3: Áp dụng khuyến mãi (nếu có)
+    if (selectedPromoId) {
+      const selectedPromo = promotions.find((p) => Number(p.promo_id) === Number(selectedPromoId));
+      const promoCode = selectedPromo?.promo_code || selectedPromoName;
+
+      if (promoCode) {
+        message.loading({ content: "Bước 3/5: Đang áp dụng khuyến mãi...", key: "payment" });
+        const promoResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/promotion`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ promoCode }),
+        });
+        const promoResult = await handleApiResponse(promoResponse);
+        if (!promoResponse.ok || !promoResult?.success) {
+          throw new Error(promoResult?.message || "Lỗi khi áp dụng khuyến mãi.");
+        }
+
+        // ✅ Cập nhật đã sử dụng mã khuyến mãi
+        await fetch(`${API_BASE_URL}/Promotion/${selectedPromoId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            ...selectedPromo,
+            used_count: (selectedPromo.used_count || 0) + 1,
+          }),
+        });
+
+        message.success({
+          content: "✅ Bước 3/5: Áp dụng mã khuyến mãi thành công.",
+          key: "payment",
+          duration: 1.2,
+        });
+      }
+    }
+
+    // 🟢 BƯỚC 4: Cập nhật đơn hàng
+    message.loading({ content: "Bước 4/5: Cập nhật đơn hàng...", key: "payment" });
+    const updateResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({}),
+    });
+    const updateResult = await handleApiResponse(updateResponse);
+    if (!updateResponse.ok) throw new Error(updateResult?.message || "Lỗi khi cập nhật đơn hàng.");
+
+    // 🟢 BƯỚC 5: Thanh toán
+    message.loading({ content: `Bước 5/5: Đang xử lý thanh toán...`, key: "payment" });
+
+    const checkoutData = {
+      paymentMethod: mapPaymentMethodToServer(paymentMethod),
+      amount: total,
+      customerPaid,
+      customerId: finalCustomerId,
+      customerName: customerName || (phone ? `Khách hàng (${phone})` : "Khách vãng lai"),
     };
 
-    // --- [BẮT ĐẦU GỌI API] ---
-    let orderId = null;
-    let finalOrderResult = null;
-    
-   try {
-    console.log("📦 Dữ liệu gửi tạo đơn hàng:", createOrderData);
-        
-        // ===================================================================
-        // ⭐ BƯỚC 1: TẠO ĐƠN HÀNG NHÁP (POST api/Orders) - ĐÃ TĂNG CƯỜNG KIỂM TRA
-        // ===================================================================
-        message.loading({ content: 'Bước 1/4: Đang tạo đơn hàng nháp...', key: 'payment' });
-        
-        const createResponse = await fetch(`${API_BASE_URL}/Orders`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify(createOrderData),
-        });
-    console.log("📡 Phản hồi API tạo đơn hàng:", createResponse);
+    const checkoutResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/checkout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(checkoutData),
+    });
+    finalOrderResult = await handleApiResponse(checkoutResponse);
 
-        const createResult = await handleApiResponse(createResponse);
-    console.log("🧾 Nội dung phản hồi:", createResult);
-    
-        
-        if (!createResponse.ok) {
-            // Xử lý lỗi HTTP (4xx, 5xx)
-            const errorMessage = createResult.message || `Lỗi HTTP: ${createResponse.status} - Lỗi khi tạo đơn hàng.`;
-            throw new Error(`Tạo đơn hàng thất bại: ${errorMessage}`);
-        }
+    if (finalOrderResult?.success === true) {
+      message.destroy("payment");
 
-        // ⭐ SỬA LỖI: Trích xuất orderId an toàn bằng Optional Chaining
-        orderId = createResult.data?.orderId;
-    console.log("✅ OrderId nhận được:", orderId);
-        
-        if (!orderId) {
-            // Xử lý lỗi nếu HTTP 200/201 nhưng Server không trả về Order ID
-            const serverMessage = createResult.message || JSON.stringify(createResult);
-            throw new Error(`Tạo đơn hàng thất bại: Server không trả về Order ID. Phản hồi: ${serverMessage}`);
-        }
-        
-        message.success({ content: `✅ Bước 1/4: Đã tạo đơn hàng nháp ID: ${orderId}`, key: 'payment', duration: 1.5 });
-        // 2️⃣ Nếu có promoId thì gọi thêm /promotion
-        if (selectedPromoName) {
-          console.log("🎟️ Đang áp dụng khuyến mãi:", selectedPromoName);
+      const orderData = finalOrderResult.data;
+      const orderToPrint = {
+        orderId: orderData.orderId,
+        subtotal: orderData.totalAmount,
+        discountAmount: orderData.discountAmount,
+        totalAmount: orderData.finalAmount,
+        customerPaid,
+        customerName: orderData.customerName,
+        orderDetails: orderData.orderItems.map((item) => ({
+          productName: item.productName,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      };
 
-          const applyPromoResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/promotion`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              promoCode: selectedPromoName // hoặc mã khuyến mãi thật
-            }),
-          });
+      setResultModal({
+        visible: true,
+        type: "success",
+        title: "Thanh toán thành công!",
+        message: `Đơn hàng #${orderData.orderId} đã được thanh toán.`,
+        showPrint: true,
+        orderToPrint,
+      });
 
-            const promoResult = await applyPromoResponse.json();
-            console.log("🎉 Phản hồi áp dụng promotion:", promoResult);
-        }
-
-        // ===================================================================
-        // ⭐ BƯỚC 2: THÊM TỪNG SẢN PHẨM VÀO ĐƠN HÀNG (POST api/Orders/{id}/items)
-        // (orderId đã chắc chắn có giá trị)
-        // ===================================================================
-        message.loading({ content: 'Bước 2/4: Đang thêm sản phẩm vào đơn hàng...', key: 'payment' });
-        
-        for (const item of cart) {
-            const addRequestData = {
-                productId: item.product_id,
-                quantity: item.quantity,
-            };
-      console.log(`📦 Thêm sản phẩm:`, addRequestData);
-
-            const addResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/items`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify(addRequestData),
-            });
-            
-            const addResult = await handleApiResponse(addResponse);
-      console.log(`🧾 Phản hồi thêm sản phẩm (${item.product_name}):`, addResult);
-            
-            if (!addResponse.ok) {
-                // Xử lý lỗi rõ ràng hơn
-                const validationError = addResult.errors ? Object.values(addResult.errors).flat().join(" | ") : "";
-                const errorMessage = addResult.message || validationError || `Lỗi khi thêm sản phẩm ${item.product_name}.`;
-                throw new Error(`Thêm sản phẩm thất bại: ${errorMessage}`);
-            }
-        }
-        
-        message.success({ content: `✅ Bước 2/4: Đã thêm sản phẩm thành công.`, key: 'payment', duration: 1.5 });
-
-
-        // ===================================================================
-        // ⭐ BƯỚC 3: CẬP NHẬT ĐƠN HÀNG (PUT api/Orders/{id})
-        // ===================================================================
-        message.loading({ content: 'Bước 3/4: Đang cập nhật đơn hàng (buộc tính lại tổng tiền)...', key: 'payment' });
-      
-        const updateRequestData = {}; 
-
-        const updateResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify(updateRequestData),
-        });
-
-        const updateResult = await handleApiResponse(updateResponse);
-    console.log("🔄 Cập nhật đơn hàng:", updateResult);
-
-        if (!updateResponse.ok) {
-            const errorMessage = updateResult.message || `Lỗi HTTP: ${updateResponse.status} - Lỗi khi cập nhật đơn hàng.`;
-            throw new Error(`Cập nhật đơn hàng thất bại: ${errorMessage}`);
-        }
-        // Lúc này, Backend đã tính lại tổng tiền chính xác (415725.00 + 209283.00 = 625008.00)
-        message.success({ content: `✅ Bước 3/4: Đã cập nhật tổng tiền thành công.`, key: 'payment', duration: 1.5 });
-        // ===================================================================
-        // ⭐ BƯỚC 4: THANH TOÁN (POST api/Orders/{id}/checkout)
-        // ===================================================================
-        message.loading({ content: `Bước 4/4: Đang xử lý thanh toán cho đơn hàng ${orderId}...`, key: 'payment' });
-        const serverPaymentMethod = mapPaymentMethodToServer(paymentMethod);
-
-        const checkoutData = {
-            paymentMethod: serverPaymentMethod, 
-            amount: total, // Gửi tổng tiền chính xác từ Frontend
-            customerPaid: customerPaid
-        };
-    console.log("💳 Gửi thanh toán:", checkoutData);
-        
-        const checkoutResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/checkout`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify(checkoutData),
-        });
-
-        finalOrderResult = await handleApiResponse(checkoutResponse);
-    console.log("💰 Kết quả thanh toán:", finalOrderResult);
-
-        if (!checkoutResponse.ok || !finalOrderResult.success) {
-            let errorMessage = finalOrderResult.message || `Lỗi HTTP: ${checkoutResponse.status} - Lỗi khi thanh toán`;
-            
-            if (finalOrderResult.errors) {
-                const validationErrors = Object.values(finalOrderResult.errors).flat().join(" | ");
-                errorMessage = `Thanh toán thất bại: ${validationErrors}`;
-            }
-            
-            throw new Error(errorMessage);
-        }
-        
-        // --- [XỬ LÝ THÀNH CÔNG] ---
-        message.success({ content: `✅ Thanh toán thành công! Mã đơn: ${finalOrderResult.data.orderId}`, key: 'payment', duration: 3 });
-       // Tạo dữ liệu hóa đơn để in
-        const orderToPrint = {
-            orderId: finalOrderResult.data.orderId || orderId,
-            subtotal: subtotal,
-            discountAmount: discountAmount,
-            totalAmount: total, // Dùng 'total' và đặt tên là 'totalAmount'
-            customerPaid: customerPaid,
-            customerName: customerName || (phone ? `Khách hàng (${phone})` : "Khách vãng lai"),
-            // Map cart items to the format expected by printInvoice.js
-            orderDetails: cart.map(item => ({
-                productName: item.product_name,
-                quantity: item.quantity,
-                price: item.price
-            }))
-        };
-
-        // Yêu cầu 3: Thêm logic in hóa đơn
-        Modal.confirm({
-            title: 'Thanh toán thành công',
-            content: 'Bạn có muốn in hóa đơn cho giao dịch này không?',
-            okText: 'In Hóa đơn',
-            cancelText: 'Bỏ qua',
-            centered: true,
-            onOk() {
-                // Gọi hàm printInvoice đã import
-                printInvoice(orderToPrint);
-            },
-            // Reset trạng thái sau khi modal đóng (dù In hay Bỏ qua)
-            afterClose() { 
-                setCart([]);
-                setSelectedPromoId("");
-                setCustomerPaid(0);
-                setPhone("");
-                setCustomerName("");
-                setChosenIds([]);
-                if (refetchProducts) refetchProducts(); 
-            }
-        });
-        // 4. Reset giỏ hàng và thanh toán
-      
-
-    } catch (error) {
-        console.error("Lỗi thanh toán:", error);
-        
-        // Hiển thị Modal Lỗi Server
-        Modal.error({
-            title: '❌ Thanh toán thất bại',
-            content: error.message || 'Đã xảy ra lỗi không xác định trong quá trình xử lý.',
-            centered: true
-        });
-
+      // ✅ Reset khi thành công
+      setCart([]);
+      setSelectedPromoId("");
+      setSelectedPromoName("");
+      setCustomerPaid(0);
+      setPhone("");
+      setCustomerName("");
+      setChosenIds([]);
+      if (typeof refetchProducts === "function") refetchProducts();
+    } else {
+      throw new Error(finalOrderResult?.message || "Thanh toán thất bại từ máy chủ.");
     }
+  } catch (error) {
+    console.error("❌ Lỗi thanh toán:", error);
+    message.destroy("payment");
+
+    setResultModal({
+      visible: true,
+      type: "error",
+      title: "Thanh toán thất bại",
+      message: error?.message || "Đã xảy ra lỗi trong quá trình xử lý.",
+    });
+  }
 };
 
-// Hàm hỗ trợ đọc JSON an toàn (từ câu trả lời trước)
 const handleApiResponse = async (response) => {
-    let result = {};
-    const contentType = response.headers.get("content-type");
-    
-    if (contentType && contentType.includes("application/json")) {
-        try {
-            result = await response.json();
-        } catch (e) {
-            // Lỗi SyntaxError: Unexpected end of JSON input
-            result = { message: `Phản hồi không phải JSON hợp lệ: ${e.message}` };
-        }
-    } else if (response.status !== 204) {
-        const text = await response.text();
-        result = { message: text || `Lỗi HTTP: ${response.status}` };
+  let result = {};
+
+  try {
+    const contentType = response?.headers?.get?.("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      result = await response.json(); // ✅ Giữ nguyên toàn bộ JSON từ server
+    } else if (response && response.status !== 204) {
+      const text = await response.text();
+      result = { message: text || `Lỗi HTTP: ${response.status}` };
     }
-    return result;
+
+    // ✅ Gắn metadata
+    result.status = response?.status || 0;
+    result.ok = response?.ok === true;
+  } catch (e) {
+    result = {
+      success: false,
+      message: `Lỗi xử lý phản hồi: ${e.message}`,
+      ok: false,
+      status: 0,
+    };
+  }
+
+  return result;
 };
+
 
   const handlePaymentChange = (value) => {
       setPaymentMethod(value);
@@ -810,33 +861,43 @@ const handleApiResponse = async (response) => {
       }
     };
 
-    const fetchCustomerByPhone = async (phone) => {
-      try {
-        setLoadingCustomer(true);
+   const fetchCustomerByPhone = async (phone) => {
+    try {
+      setLoadingCustomer(true);
 
-        const response = await fetch(`http://localhost:5000/api/Customer/by-phone/${phone}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+      const response = await fetch(`http://localhost:5000/api/Customer/by-phone/${phone}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-        const result = await response.json();
+      const result = await response.json();
 
-        if (response.ok && result?.data) {
-          setCustomerName(result.data.name || ""); 
-        } else {
-          setCustomerName("");
-          message.warning("Không tìm thấy khách hàng này");
-        }
-      } catch (error) {
-        console.error("Lỗi khi tìm khách hàng:", error);
-        message.error("Không thể kết nối đến server");
-      } finally {
-        setLoadingCustomer(false);
-      }
-    };
+      if (response.ok && result?.data) {
+        setCustomerName(result.data.name || ""); 
+      } else {
+          setCustomerName("");
+        message.warning("Không tìm thấy khách hàng này");
+      }   
+   if (response.ok && result?.data) {
+        // cập nhật tên hiển thị và trả về toàn bộ object data để caller sử dụng
+        setCustomerName(result.data.name || "");
+        return result.data;
+      } else {
+       setCustomerName("");
+        message.warning("Không tìm thấy khách hàng này");
+       return null;
+      }
+    } catch (error) {
+      console.error("Lỗi khi tìm khách hàng:", error);
+      message.error("Không thể kết nối đến server");
+      return null;
+    } finally {
+      setLoadingCustomer(false);
+    }
+  };
 
     //Thêm khách hàng mới
     const AddNewCustomer = async (values) => {
@@ -882,6 +943,8 @@ const handleApiResponse = async (response) => {
       return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(change);
     }
   return (
+      <ConfigProvider getPopupContainer={() => document.body}>
+
     <div className="order-container">
       <Row gutter={16}>
         {/* Cột bên trái */}
@@ -1212,22 +1275,55 @@ const handleApiResponse = async (response) => {
                       style={{ height: 36, borderRadius: 6, marginTop: 8 }}
                     />               
                     <Select
-                      value={selectedPromoId || ""}
-                      onChange={(v) => {
-                        setSelectedPromoId(v);
-                        const selectedPromo = promotions.find((p) => p.promo_id === v);
-                        setSelectedPromoName(selectedPromo ? selectedPromo.name : "");
-                      }}
-                      placeholder="Chọn mã khuyến mãi"
-                      style={{ width: "100%", height: 36, borderRadius: 6 }}
-                    >
-                      <Option value="">Không áp dụng</Option>
-                      {promotions.map((promo) => (
-                        <Option key={promo.promo_id} value={promo.promo_id}>
-                          {promo.name}
-                        </Option>
-                      ))}
-                    </Select>
+                        value={selectedPromoId || ""}
+                        onChange={(v) => {
+                          setSelectedPromoId(v);
+                          const selectedPromo = activePromotions.find((p) => p.promo_id === v);
+                          setSelectedPromoName(selectedPromo ? selectedPromo.name : "");
+                        }}
+                        placeholder="Chọn mã khuyến mãi"
+                        style={{ width: "100%", height: 36, borderRadius: 6 }}
+                      >
+                        <Option value="">Không áp dụng</Option>
+
+                        {promotions.map((promo) => {
+                          const now = new Date();
+                          const startDate = new Date(promo.start_date);
+                          const endDate = new Date(promo.end_date);
+                          const status = promo.status?.toLowerCase();
+                          const minOrder = promo.min_order_amount || 0;
+
+                          // Điều kiện hợp lệ
+                          const isActive =
+                            (status === "active" || status === "hoạt động") &&
+                            now >= startDate &&
+                            now <= endDate &&
+                            subtotal >= minOrder;
+
+                          // Thông báo lý do không hợp lệ (nếu có)
+                          let reason = "";
+                          if (status !== "active" && status !== "hoạt động") reason = " (Đã khóa)";
+                          else if (now < startDate) reason = " (Chưa bắt đầu)";
+                          else if (now > endDate) reason = " (Hết hạn)";
+                          else if (subtotal < minOrder)
+                            reason = ` (Đơn tối thiểu ${minOrder.toLocaleString()}₫)`;
+
+                          return (
+                            <Option
+                              key={promo.promo_id}
+                              value={promo.promo_id}
+                              disabled={!isActive} // ❌ Không đủ điều kiện thì disable
+                            >
+                              {promo.name}
+                              {!isActive && (
+                                <span style={{ color: "#999", marginLeft: 4 }}>{reason}</span>
+                              )}
+                            </Option>
+                          );
+                        })}
+                      </Select>
+
+
 
                     <Input.TextArea placeholder="Ghi chú cho đơn" rows={2} style={{ borderRadius: 6, resize: "none"}}  />
                     <Select
@@ -1344,6 +1440,92 @@ const handleApiResponse = async (response) => {
             </Form.Item>
           </Form>
       </Modal>
+      
     </div>
+    {/* Modal kết quả thanh toán */}
+<Modal
+  open={resultModal.visible}
+  onCancel={() => setResultModal({ ...resultModal, visible: false })}
+  footer={null}
+  centered
+  width={420}
+  closable={false}
+>
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      textAlign: "center",
+      padding: "10px 10px 0",
+    }}
+  >
+    <div
+      style={{
+        width: 70,
+        height: 70,
+        borderRadius: "50%",
+        backgroundColor:
+          resultModal.type === "success"
+            ? "#16a34a"
+            : resultModal.type === "error"
+            ? "#dc2626"
+            : "#facc15",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#fff",
+        fontSize: 36,
+        marginBottom: 16,
+      }}
+    >
+      {resultModal.type === "success" && "✓"}
+      {resultModal.type === "error" && "✕"}
+      {resultModal.type === "warning" && "!"}
+    </div>
+
+    <h3
+      style={{
+        fontSize: 20,
+        fontWeight: 700,
+        color:
+          resultModal.type === "success"
+            ? "#16a34a"
+            : resultModal.type === "error"
+            ? "#dc2626"
+            : "#ca8a04",
+      }}
+    >
+      {resultModal.title}
+    </h3>
+
+    <p style={{ fontSize: 15, marginTop: 8, color: "#444" }}>
+      {resultModal.message}
+    </p>
+
+    <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 24 }}>
+      {resultModal.showPrint && (
+        <Button
+          type="primary"
+          style={{ background: "#16a34a" }}
+          onClick={() => {
+            if (resultModal.orderToPrint) {
+              printInvoice(resultModal.orderToPrint);
+            }
+            setResultModal({ ...resultModal, visible: false });
+          }}
+        >
+          In Hóa Đơn
+        </Button>
+      )}
+      <Button onClick={() => setResultModal({ ...resultModal, visible: false })}>
+        Đóng
+      </Button>
+    </div>
+  </div>
+</Modal>
+
+      </ConfigProvider>
+
   );
 }

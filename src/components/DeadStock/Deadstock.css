@@ -1,0 +1,90 @@
+/* Page wrapper */
+.deadstock-page {
+  padding: 16px;
+  background: transparent;
+}
+
+/* Controls card */
+.deadstock-controls .ant-row {
+  align-items: center;
+}
+.deadstock-controls label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #222;
+  font-size: 13px;
+}
+.deadstock-controls .ant-picker,
+.deadstock-controls .ant-select {
+  width: 100%;
+}
+
+/* Cards */
+.deadstock-card .ant-card-body,
+.chart-card .ant-card-body {
+  padding: 12px;
+}
+
+/* Table visuals */
+.deadstock-table img,
+.deadstock-table .product-image {
+  width: 56px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* Table spacing */
+.deadstock-table .ant-table-thead > tr > th {
+  background: #f7faf7;
+  color: #213;
+  font-weight: 600;
+}
+
+/* Chart area */
+.chart-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+/* Small card for secondary chart */
+.small-chart {
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Loading container */
+.deadstock-loading {
+  display: flex;
+  height: 300px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Buttons layout */
+.deadstock-actions .ant-btn + .ant-btn {
+  margin-left: 8px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 991px) {
+  .deadstock-controls .ant-col {
+    margin-bottom: 12px;
+  }
+  .chart-card .ant-card-body {
+    height: auto;
+  }
+}
+
+/* Ensure modal/notification not hidden by this page */
+.deadstock-page,
+.deadstock-card,
+.chart-card {
+  z-index: 1;
+}
