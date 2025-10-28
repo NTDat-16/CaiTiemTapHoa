@@ -6,8 +6,9 @@
     min-height: calc(100vh - 60px);
     background-color: #f8f9fa;
     padding: 10px 20px;
-    overflow: hidden;
-    z-index: 1; /* thấp hơn modal/notification */
+    overflow-y: auto;   /* ✅ cho phép cuộn */
+    overflow-x: hidden; /* tránh tràn ngang */
+    z-index: 1;
 }
 
 /* ...existing code... */
@@ -105,6 +106,9 @@
 /* Đảm bảo notification / message hiển thị trên modal nếu cần */
 .ant-notification, .ant-notification-notice, .ant-message {
   z-index: 15000 !important;
+    position: fixed !important;
+    background-color: red !important;
+
 }
 
 /* Nếu có custom full-screen overlays, đảm bảo chúng không che modal */
