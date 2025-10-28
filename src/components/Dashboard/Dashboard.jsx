@@ -12,7 +12,7 @@ import {
   WarningOutlined,
 } from "@ant-design/icons";
 import "./Dashboard.css";
-// import Overview from "../Overview/Overview";
+import Overview from "../Overview/Overview";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -32,11 +32,11 @@ export default function Dashboard() {
       case "forecast":
         return <Forecast />;
       case "inventory":
-        // return <Inventory />;
+        return <h2>Chưa làm</h2>;
       case "deadstock":
         return <DeadStock />;
       default:
-        // return <Overview />
+        return <Overview />
     }
   };
 

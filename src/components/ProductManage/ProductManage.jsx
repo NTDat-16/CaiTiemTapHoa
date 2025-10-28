@@ -61,12 +61,13 @@
   const fetchSuppliers = async () => {
     try {
       // TODO: Uncomment when API is ready
-      const response = await fetch(`${API_BASE}/Suppliers`, {
+      const response = await fetch(`${API_BASE}/Suppliers?PageNumber=1&PageSize=100`, {
         headers: { ...authHeader },
       });
       const result = await response.json();
       const suppliersArray = Array.isArray(result?.data?.items) ? result.data.items : [];
-      setSuppliers(suppliersArray);
+      const supplierStatus = suppliersArray.filter(sup => sup.status?.toLowerCase() === "active");
+      setSuppliers(supplierStatus);
     } catch (error) {
       message.error("Lỗi khi tải nhà cung cấp")
     }
@@ -75,12 +76,13 @@
   const fetchCategories = async () => {
     try {
       // TODO: Uncomment when API is ready
-      const response = await fetch(`${API_BASE}/Categories`, {
+      const response = await fetch(`${API_BASE}/Categories?PageNumber=1&PageSize=100`, {
         headers: { ...authHeader },
       });
       const result = await response.json();
       const categoriesArray = Array.isArray(result?.data?.items) ? result.data.items : [];
-      setCategories(categoriesArray);
+      const categoriesStatus = categoriesArray.filter(cat => cat.status?.toLowerCase() === "active")
+      setCategories(categoriesStatus);
     } catch (error) {
       message.error("Lỗi khi tải danh mục")
     }
