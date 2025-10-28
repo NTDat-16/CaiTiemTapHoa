@@ -41,23 +41,27 @@ const MOCK_OVERVIEW = Array.from({ length: 30 }, (_, i) => {
 
 export default function Overview() {
     const [data, setData] = useState(MOCK_OVERVIEW);
-    const [startDate, setStartDate] = useState(dayjs("2025-10-01"));
-    const [endDate, setEndDate] = useState(dayjs("2025-10-30"));
     const [loading, setLoading] = useState(false);
     const [totalEmployees, setTotalEmployees] = useState(0);
     const [totalCustomers, setTotalCustomers] = useState(0);
+    const [totalCusNewToday, setTotalCusNewToday] = useState(0);
+    const API_BASE = "http://localhost:5000/api";
+    const token = localStorage.getItem("token");
+    const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const [customerChartData, setCustomerChartData] = useState([]);
     
-    // Hàm lấy số lượng nhân viên active từ API
+    const today = dayjs();
+    const oneMonthAgo = today.subtract(1, "month");
+
+    const [startDate, setStartDate] = useState(oneMonthAgo);
+    const [endDate, setEndDate] = useState(today);
+
+    //Lấy số lượng nhân viên còn hoạt động
     const getActiveEmployeeCount = async () => {
         try {
-            const response = await fetch(
-                "http://localhost:5000/api/Users",
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                }
+            const response = await fetch(`${API_BASE}/Users`,
+                {headers: {...authHeader},}
             );
 
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -65,35 +69,46 @@ export default function Overview() {
             const data = await response.json();
             const items = Array.isArray(data?.data?.items) ? data.data.items : [];
             const activeCount = items.filter(u => u.status === "Active").length;
-
-            return activeCount;
+            setTotalEmployees(activeCount);
         } catch (error) {
             console.error("Lỗi khi lấy số lượng nhân viên active:", error);
             return 0;
         }
     };
 
-    const getAllActiveCustomers = async () => {
+    //Lấy số lượng khách hàng còn hoạt động
+    const fetchCustomer = async () => {
         try {
-            const res = await fetch(
-                `http://localhost:5000/api/Customer?pageNumber=1&pageSize=10000&status=Active`,
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                }
-            );
-
-            if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-
-            const data = await res.json();
-            // trả về tất cả Active
-            const activeCustomers = Array.isArray(data?.data?.items) ? data.data.items : [];
-            return activeCustomers;
+            const response = await fetch(`${API_BASE}/Customer?PageNumber=1&PageSize=100`, {
+                headers: {...authHeader},
+            });
+            const result = await response.json();
+            const customersArray = Array.isArray(result?.data?.items) ? result.data.items : [];
+            const customersStatus = customersArray.filter(cus => cus.status?.toLowerCase() === "active").length
+            setTotalCustomers(customersStatus);
         } catch (error) {
-            console.error("Lỗi khi lấy khách hàng Active:", error);
-            return [];
+            message.error("Lỗi khi tải khách hàng")
+        }
+    }
+
+    //Lấy số lượng khách hàng mới trong ngày hôm nay
+    const fetchNewCustomersToday = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/Customer?PageNumber=1&PageSize=100`, {
+                headers: {...authHeader},
+            });
+            const result = await response.json();
+            const customersArray = Array.isArray(result?.data?.items) ? result.data.items : [];
+
+            const today = dayjs().format("YYYY-MM-DD");
+            const newTodayCount = customersArray.filter(
+            c => c.status?.toLowerCase() === "active" &&
+                dayjs(c.createdAt).isSame(today, "day")
+            ).length;
+
+            setTotalCusNewToday(newTodayCount);
+        } catch (error) {
+            message.error("Lỗi khi lấy khách hàng hôm nay");
         }
     };
 
@@ -101,28 +116,38 @@ export default function Overview() {
     // Khi component mount
     useEffect(() => {
         const fetchTotal = async () => {
-            const count = await getActiveEmployeeCount();
-            setTotalEmployees(count);
+            await getActiveEmployeeCount();
+            await fetchCustomer();
+            await fetchNewCustomersToday();
+            await fetchCustomerChartData(oneMonthAgo, today);
         };
-
-        
         fetchTotal();
     }, []);
 
-    const fetchOverview = () => {
-        if (startDate.isAfter(endDate)) {
+    const fetchOverview = async () => {
+    if (!startDate || !endDate) {
+        message.error("Vui lòng chọn ngày bắt đầu và kết thúc");
+        return;
+    }
+
+    if (startDate.isAfter(endDate, "day")) {
         message.error("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
         return;
-        }
-        setLoading(true);
-        const filteredData = MOCK_OVERVIEW.filter(
-        (d) =>
-            dayjs(d.date).isSameOrAfter(startDate) &&
-            dayjs(d.date).isSameOrBefore(endDate)
-        );
-        setData(filteredData);
+    }
+
+    setLoading(true);
+    try {
+        await fetchCustomerChartData(startDate, endDate); // fetch lại từ API
+    } catch (error) {
+        message.error("Lỗi khi tải dữ liệu khách hàng");
+    } finally {
         setLoading(false);
-    };
+    }
+};
+
+
+
+
 
     // Tính toán xu hướng khách hàng mới
     const customerTrend = useMemo(() => {
@@ -177,8 +202,48 @@ export default function Overview() {
         URL.revokeObjectURL(url);
     };
 
-    const chartData = useMemo(
-        () => ({
+    const fetchCustomerChartData = async (startDateParam, endDateParam) => {
+        try {
+            const response = await fetch(`${API_BASE}/Customer?PageNumber=1&PageSize=100`, {
+                headers: {...authHeader},
+            });
+            const result = await response.json();
+            const customersArray = Array.isArray(result?.data?.items) ? result.data.items : [];
+
+            // Lọc khách hàng active
+            const activeCustomers = customersArray.filter(c => c.status?.toLowerCase() === "active");
+
+            // Khởi tạo map ngày với 0
+            let dateMap = {};
+            let currentDate = dayjs(startDateParam);
+            while (!currentDate.isAfter(endDateParam, "day")) {
+                dateMap[currentDate.format("YYYY-MM-DD")] = 0;
+                currentDate = currentDate.add(1, "day");
+            }
+
+            // Đếm khách hàng theo ngày
+            activeCustomers.forEach(c => {
+                const date = dayjs(c.createdAt).format("YYYY-MM-DD");
+                if (dateMap[date] !== undefined) dateMap[date]++;
+            });
+
+            const chartDataArray = Object.keys(dateMap).sort().map(date => ({
+                date,
+                newCustomers: dateMap[date],
+                totalRevenue: 0,
+                totalOrders: 0,
+                lowStockItems: 0,
+                deadStockItems: 0
+            }));
+
+            setCustomerChartData(chartDataArray);
+            setData(chartDataArray);
+        } catch (error) {
+            message.error("Lỗi khi lấy dữ liệu khách hàng chart");
+            console.error(error);
+        }
+    };
+    const chartData = useMemo(() => ({
         labels: data.map((d) => dayjs(d.date).format("DD/MM")),
         datasets: [
             {
@@ -198,30 +263,30 @@ export default function Overview() {
             pointBackgroundColor: "#fff",
             pointBorderWidth: 2,
             },
-            {
-            label: "Doanh thu (Triệu VND)",
-            data: data.map((d) => d.totalRevenue / 1000000),
-            borderColor: "#ff7b00",
-            borderDash: [6, 4],
-            tension: 0.3,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            pointBackgroundColor: "#fff",
-            pointBorderWidth: 2,
-            yAxisID: "y1",
-            },
-            {
-            label: "Số đơn hàng",
-            data: data.map((d) => d.totalOrders),
-            borderColor: "#3b82f6",
-            borderDash: [3, 3],
-            tension: 0.3,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            pointBackgroundColor: "#fff",
-            pointBorderWidth: 2,
-            yAxisID: "y2",
-            },
+            // {
+            // label: "Doanh thu (Triệu VND)",
+            // data: data.map((d) => d.totalRevenue / 1000000),
+            // borderColor: "#ff7b00",
+            // borderDash: [6, 4],
+            // tension: 0.3,
+            // pointRadius: 4,
+            // pointHoverRadius: 6,
+            // pointBackgroundColor: "#fff",
+            // pointBorderWidth: 2,
+            // yAxisID: "y1",
+            // },
+            // {
+            // label: "Số đơn hàng",
+            // data: data.map((d) => d.totalOrders),
+            // borderColor: "#3b82f6",
+            // borderDash: [3, 3],
+            // tension: 0.3,
+            // pointRadius: 4,
+            // pointHoverRadius: 6,
+            // pointBackgroundColor: "#fff",
+            // pointBorderWidth: 2,
+            // yAxisID: "y2",
+            // },
         ],
         }),
         [data]
@@ -302,13 +367,11 @@ export default function Overview() {
         },
     };
 
-    // const totalEmployees = data[data.length - 1]?.totalEmployees || 0;
-    const totalNewCustomers = data.reduce((sum, d) => sum + (d.newCustomers || 0), 0);
-    const totalRevenue = data.reduce((sum, d) => sum + (d.totalRevenue || 0), 0);
-    const totalOrders = data.reduce((sum, d) => sum + (d.totalOrders || 0), 0);
-    const avgNewCustomers = data.length ? Math.round(totalNewCustomers / data.length) : 0;
-    const lowStockItems = data[data.length - 1]?.lowStockItems || 0;
-    const deadStockItems = data[data.length - 1]?.deadStockItems || 0;
+    const totalRevenue = 0;
+    const totalOrders = 0;
+    const avgNewCustomers = 0;
+    const lowStockItems = 0;
+    const deadStockItems = 0;
 
     return (
         <div className="Overview-container">
@@ -361,8 +424,8 @@ export default function Overview() {
                     </div>
                     <div className="stat-box stat-actual">
                         <UserAddOutlined className="stat-icon" />
-                        <h3>Trung bình khách mới/ngày</h3>
-                        <p>{avgNewCustomers}</p>
+                        <h3>Khách mới trong ngày</h3>
+                        <p>{totalCusNewToday}</p>
                     </div>
                     </div>
                     <div className="stats-column">
@@ -389,20 +452,20 @@ export default function Overview() {
                         <p>{deadStockItems}</p>
                     </div>
                     <div className="stat-box stat-trend">
-                        <h3>Xu hướng</h3>
+                        {/* <h3>Xu hướng</h3>
                         <p>
                         Khách mới: <span style={{ color: customerTrendColor }}>{customerTrend}</span>
                         <br />
                         Doanh thu: <span style={{ color: revenueTrendColor }}>{revenueTrend}</span>
-                        </p>
+                        </p> */}
                     </div>
                     </div>
                 </div>
-                <div className="Overview-chart-panel">
+                <div className="Overview-chart-panel" >
                     {loading ? (
                     <Spin tip="Đang tải..." size="large" />
                     ) : (
-                    <Line data={chartData} options={chartOptions} />
+                    <Line data={chartData} options={chartOptions}/>
                     )}
                 </div>
                 </div>

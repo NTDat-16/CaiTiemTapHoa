@@ -149,10 +149,10 @@
 .Overview-chart-panel {
   background: #fff;
   border-radius: 12px;
-  padding: 16px;
+  /* padding: 16px; */
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
   position: relative;
-  height: 420px;
+  height: 500px;
   overflow: hidden;
 }
 

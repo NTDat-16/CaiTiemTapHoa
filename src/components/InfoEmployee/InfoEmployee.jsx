@@ -11,8 +11,8 @@ export default function InfoEmployee({ OpenInfo }) {
         <div className="ProfileHeader">
           <img src="./img/AvtUser.png" alt="" className="ProfileAvatar" />
           <div className="ProfileInfo">
-            <h2>{user.user?.fullName}</h2>
-            <p>{user.user?.role === "Admin" ? "Quản trị viên" : "Nhân viên"}</p>
+            <h2>{user.fullName}</h2>
+            <p>{user.role === "Admin" ? "Quản trị viên" : "Nhân viên"}</p>
           </div>
           <FiX
             size={30}
@@ -24,8 +24,8 @@ export default function InfoEmployee({ OpenInfo }) {
         {/* Liên hệ */}
         <div className="ProfileContact">
           <h3>Thông tin liên hệ</h3>
-          <div className="ContactRow"><span>Họ tên:</span>{user.user?.fullName}</div>
-          <div className="ContactRow"><span>Chức vụ:</span>{user.user?.role === "Admin" ? "Quản trị viên" : "Nhân viên"} </div>
+          <div className="ContactRow"><span>Họ tên:</span>{user.fullName}</div>
+          <div className="ContactRow"><span>Chức vụ:</span>{user.role === "Admin" ? "Quản trị viên" : "Nhân viên"} </div>
           <div className="ContactRow"><span>Ngày bắt đầu làm việc:</span>2025-10-01</div>
         </div>
 
