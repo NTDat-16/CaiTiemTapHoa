@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import SalesReport from "../SalesReport/SaleReport";
+import SalesReport from "../SaleReport/SaleReport";
 import Forecast from "../Forecast/Forecast";
 // import Inventory from "./Inventory";
 // import DeadStock from "./DeadStock";

@@ -125,30 +125,25 @@ export default function Overview() {
     }, []);
 
     const fetchOverview = async () => {
-    if (!startDate || !endDate) {
-        message.error("Vui lòng chọn ngày bắt đầu và kết thúc");
-        return;
-    }
+        if (!startDate || !endDate) {
+            message.error("Vui lòng chọn ngày bắt đầu và kết thúc");
+            return;
+        }
 
-    if (startDate.isAfter(endDate, "day")) {
-        message.error("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
-        return;
-    }
+        if (startDate.isAfter(endDate, "day")) {
+            message.error("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
+            return;
+        }
 
-    setLoading(true);
-    try {
-        await fetchCustomerChartData(startDate, endDate); // fetch lại từ API
-    } catch (error) {
-        message.error("Lỗi khi tải dữ liệu khách hàng");
-    } finally {
-        setLoading(false);
-    }
-};
-
-
-
-
-
+        setLoading(true);
+        try {
+            await fetchCustomerChartData(startDate, endDate); // fetch lại từ API
+        } catch (error) {
+            message.error("Lỗi khi tải dữ liệu khách hàng");
+        } finally {
+            setLoading(false);
+        }
+    };
     // Tính toán xu hướng khách hàng mới
     const customerTrend = useMemo(() => {
         if (data.length < 2) return "Không đủ dữ liệu";
