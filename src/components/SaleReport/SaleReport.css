@@ -162,7 +162,7 @@
 
 .SaleReport-top5 .value {
   font-weight: 600;
-  color: red;
+  color: #008f5a;
 }
 
 /* === CỘT 2 & 3: Biểu đồ – KHÔNG NỀN, KHÔNG VIỀN === */
@@ -276,21 +276,4 @@
   .SaleReport-revenue-summary {
     grid-template-columns: 1fr;
   }
-}
-
-.tableSale .ant-table {
-  font-size: 14px;
-}
-
-/* Tiêu đề bảng màu trắng */
-.tableSale .ant-table-thead > tr > th {
-  background-color: #008f5a !important;
-  color: #ffffff !important;
-  font-weight: 600;
-  border: none !important;
-}
-
-/* Hover hàng */
-.tableSale .ant-table-tbody > tr:hover > td {
-  background-color: #e6f4ea !important;
 }
