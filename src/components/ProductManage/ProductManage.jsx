@@ -53,7 +53,9 @@
       console.error("Fetch products error:", error);
       message.error("Lỗi khi tải danh sách sản phẩm");
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
     }
   };
 

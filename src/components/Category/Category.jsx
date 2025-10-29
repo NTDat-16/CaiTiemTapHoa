@@ -40,8 +40,7 @@ export default function Category() {
         throw new Error("Phản hồi từ server không hợp lệ");
       }
 
-      const sorted = items.sort((a, b) => a.categoryId- b.categoryId);
-      setCategories(sorted);
+      setCategories(items);
       setPagination({
         current: data.data?.pageNumber || page,
         pageSize: data.data?.pageSize || pageSize,
