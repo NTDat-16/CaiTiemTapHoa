@@ -127,7 +127,7 @@ export default function InventoryManage() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5000/api/Products?searchTerm=${searchTerm}&PageSize=25`,
+        `http://localhost:5000/api/Products?searchTerm=${searchTerm}&PageSize=100`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -285,21 +285,18 @@ export default function InventoryManage() {
       title: "Mã sản phẩm",
       dataIndex: "product_id",
       key: "product_id",
-      width: 100,
     },
     {
       title: "Tên sản phẩm",
       dataIndex: "product_name",
       key: "product_name",
-      width: 200,
     },
     {
       title: "Số lượng tồn",
       dataIndex: "quantity",
       key: "quantity",
-      width: 120,
     },
-    { title: "Đơn vị", dataIndex: "unit", key: "unit", width: 100 },
+    { title: "Đơn vị", dataIndex: "unit", key: "unit" },
   ];
 
   const importTableColumns = [
@@ -307,23 +304,26 @@ export default function InventoryManage() {
       title: "Tên sản phẩm",
       dataIndex: "productName",
       key: "productName",
+      width: "45%",
     },
     {
       title: "Số lượng",
       dataIndex: "quantity",
       key: "quantity",
-      width: 100,
+      width: "20%",
+      align: "center",
     },
     {
       title: "Đơn vị",
       dataIndex: "unit",
       key: "unit",
-      width: 100,
+      width: "20%",
+      align: "center",
     },
     {
       title: "Thao tác",
       key: "action",
-      width: 80,
+      width: "15%",
       align: "center",
       render: (_, record) => (
         <Popconfirm
@@ -403,13 +403,15 @@ export default function InventoryManage() {
           loading={loading}
           pagination={{
             ...pagination,
-            showTotal: (total) => (
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "50", "100"],
+            showTotal: (total, range) => (
               <span>
-                Tổng{" "}
+                Tổng {""}
                 <span style={{ color: "red", fontWeight: "bold" }}>
                   {total}
                 </span>{" "}
-                Sản phẩm
+                sản phẩm
               </span>
             ),
           }}
@@ -424,17 +426,18 @@ export default function InventoryManage() {
         onCancel={handleCancel}
         width={800}
         footer={null}
+        destroyOnClose
       >
         <Form
           form={importForm}
           onFinish={handleAddItemToImportList}
           autoComplete="off"
         >
-          <Space align="start" wrap style={{ width: "100%", marginBottom: 8 }}>
+          <Space align="start" wrap style={{ width: "100%", marginBottom: 16 }}>
             <Form.Item
               name="productId"
               rules={[{ required: true, message: "Vui lòng chọn sản phẩm" }]}
-              style={{ flexGrow: 1, minWidth: 400 }}
+              style={{ flexGrow: 1, minWidth: 400, marginBottom: 0 }}
             >
               <Select
                 size="large"
@@ -444,8 +447,13 @@ export default function InventoryManage() {
                 loading={productLoading}
                 filterOption={false}
                 notFoundContent={
-                  productLoading ? <Spin size="small" /> : "Không tìm thấy"
+                  productLoading ? (
+                    <Spin size="small" />
+                  ) : (
+                    "Không tìm thấy sản phẩm"
+                  )
                 }
+                getPopupContainer={(trigger) => trigger.parentNode}
                 style={{ width: "100%" }}
               >
                 {allProducts.map((product) => (
@@ -462,6 +470,7 @@ export default function InventoryManage() {
                 { required: true, message: "Nhập số lượng" },
                 { type: "number", min: 1, message: "Số lượng phải lớn hơn 0" },
               ]}
+              style={{ marginBottom: 0 }}
             >
               <InputNumber
                 size="large"
@@ -471,7 +480,7 @@ export default function InventoryManage() {
               />
             </Form.Item>
 
-            <Form.Item>
+            <Form.Item style={{ marginBottom: 0 }}>
               <Button type="primary" htmlType="submit" size="large">
                 Thêm vào danh sách
               </Button>
@@ -486,21 +495,32 @@ export default function InventoryManage() {
           rowKey="productId"
           pagination={false}
           bordered
-          title={() => <b>Danh sách nhập hàng</b>}
+          scroll={{ y: 300 }}
+          title={() => (
+            <b>Danh sách nhập hàng ({importList.length} sản phẩm)</b>
+          )}
+          locale={{ emptyText: "Chưa có sản phẩm nào trong danh sách" }}
         />
 
-        <div style={{ textAlign: "right", marginTop: "16px" }}>
+        <div
+          style={{
+            textAlign: "right",
+            marginTop: 16,
+            paddingTop: 16,
+            borderTop: "1px solid #f0f0f0",
+          }}
+        >
           <Space>
-            <Button key="back" onClick={handleCancel}>
+            <Button size="large" onClick={handleCancel}>
               Huỷ
             </Button>
             <Button
-              key="submit"
               type="primary"
+              size="large"
               onClick={handleFinalizeImport}
               disabled={importList.length === 0}
             >
-              Nhập Hàng
+              Xác nhận nhập hàng
             </Button>
           </Space>
         </div>
