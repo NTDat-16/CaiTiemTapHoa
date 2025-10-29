@@ -256,6 +256,23 @@
   color: #1a1a1a;
 }
 
+.SaleReport-modal .ant-table {
+  font-size: 14px;
+}
+
+/* Tiêu đề bảng màu trắng */
+.SaleReport-modal .ant-table-thead > tr > th {
+  background-color: #008f5a !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border: none !important;
+}
+
+/* Hover hàng */
+.SaleReport-modal .ant-table-tbody > tr:hover > td {
+  background-color: #e6f4ea !important;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .SaleReport-body {

@@ -96,9 +96,7 @@ export default function App() {
             console.error("Lỗi khi tải dữ liệu khuyến mãi:", error);
             setErrorMessage(error.message.includes("Unauthorized") ? errorMessage : "Lỗi khi tải dữ liệu. Hãy kiểm tra console.");
         } finally {
-            setTimeout(() => {
-                setLoading(false);
-            }, 1000);
+            setLoading(false);
         }
     };
 

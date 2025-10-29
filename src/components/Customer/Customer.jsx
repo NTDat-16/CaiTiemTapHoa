@@ -92,9 +92,7 @@ export default function Customer() {
             message.error("Lỗi khi tải danh sách khách hàng: " + error.message);
             console.error(error);
         } finally {
-            setTimeout(() => {
             setLoading(false);
-            }, 1000);
         }
     };
 
@@ -361,6 +359,7 @@ export default function Customer() {
         setSearchTerm(value)
     }
 
+    // Danh sách các cột trong bảng
     const columns = [
         { title: "ID", dataIndex: "customerId", key: "customerId", width: 60, align: "center" },
         { title: "Họ và tên", dataIndex: "name", key: "name", width: 150 },
@@ -518,7 +517,7 @@ export default function Customer() {
                 />
             </div>
 
-            <Modal title={editingCustomer ? "Sửa Thông Tin Khách Hàng" : "Thêm Khách Hàng Mới"} open={isModalOpen} onCancel={handleCancel} footer={null} width={720} closable={false} style={{ top: 100 }}>
+            <Modal title={editingCustomer ? "Sửa Thông Tin Khách Hàng" : "Thêm Khách Hàng Mới"} open={isModalOpen} onCancel={handleCancel} footer={null} width={720} closable={false} style={{ top: 20 }}>
                 <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off">
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                         <Form.Item label="Họ và tên" name="name" rules={[{ required: true, message: "Vui lòng nhập họ và tên" }, { max: 250, message: "Họ và tên không quá 250 ký tự" }]} style={{ marginBottom: 16 }}>
@@ -534,19 +533,19 @@ export default function Customer() {
                         </Form.Item>
 
                         <Form.Item label="Tỉnh/Thành phố" name="province" rules={[{ required: true, message: "Vui lòng chọn tỉnh/thành phố" }]} style={{ marginBottom: 16 }}>
-                            <Select placeholder="Chọn tỉnh/thành phố" style={{ width: "100%", height: 36 }} value={selectedProvince} onChange={handleProvinceChange}>
+                            <Select getPopupContainer={(trigger) => trigger.parentNode} placeholder="Chọn tỉnh/thành phố" style={{ width: "100%", height: 36 }} value={selectedProvince} onChange={handleProvinceChange}>
                                 {provinces.map(p => <Option key={p.code} value={p.code}>{p.name}</Option>)}
                             </Select>
                         </Form.Item>
 
                         <Form.Item label="Quận/Huyện" name="district" rules={[{ required: true, message: "Vui lòng chọn quận/huyện" }]} style={{ marginBottom: 16 }}>
-                            <Select placeholder="Chọn quận/huyện" style={{ width: "100%", height: 36 }} value={selectedDistrict} onChange={handleDistrictChange} disabled={!selectedProvince}>
+                            <Select getPopupContainer={(trigger) => trigger.parentNode} placeholder="Chọn quận/huyện" style={{ width: "100%", height: 36 }} value={selectedDistrict} onChange={handleDistrictChange} disabled={!selectedProvince}>
                                 {districts.map(d => <Option key={d.code} value={d.code}>{d.name}</Option>)}
                             </Select>
                         </Form.Item>
 
                         <Form.Item label="Phường/Xã" name="ward" rules={[{ required: true, message: "Vui lòng chọn phường/xã" }]} style={{ marginBottom: 16 }}>
-                            <Select placeholder="Chọn phường/xã" style={{ width: "100%", height: 36 }} disabled={!selectedDistrict}>
+                            <Select getPopupContainer={(trigger) => trigger.parentNode} placeholder="Chọn phường/xã" style={{ width: "100%", height: 36 }} disabled={!selectedDistrict}>
                                 {wards.map(w => <Option key={w.code} value={w.code}>{w.name}</Option>)}
                             </Select>
                         </Form.Item>
@@ -562,6 +561,7 @@ export default function Customer() {
                             <Select
                                 placeholder="Trạng thái"
                                 onChange={handleStatusChange}
+                                getPopupContainer={(trigger) => trigger.parentNode}
                             >
                                 <Option value="Inactive">Ngừng Mua Hàng</Option>
                                 <Option value="Active">Còn Mua Hàng</Option>

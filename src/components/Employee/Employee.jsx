@@ -88,7 +88,7 @@ export default function Employee() {
         } catch (error) {
             message.error("Lỗi khi tải danh sách nhân viên: " + error.message);
         } finally {
-            setTimeout(() => setLoading(false), 1000);
+            setLoading(false);
         }
     };
 
@@ -134,59 +134,67 @@ export default function Employee() {
                 </Tag>
             ),
         },
-        {title: "Thao tác",key: "action",width: 180,fixed: "right",align: "center",
-            render: (_, record, index) => {
-                const isFirstRow = index === 0;
+        {
+            title: "Thao tác",
+            key: "action",
+            width: 180,
+            fixed: "right",
+            align: "center",
+            render: (_, record) => {
+                const isAdmin = record.username === "admin";
+
                 return (
-                    <Space size="small">
-                        <Tooltip
-                            title={
-                                isFirstRow
-                                    ? "Dòng này bị khóa, không thể sửa"
-                                    : "Sửa thông tin"
-                            }
+                <Space size="small">
+                    <Tooltip
+                    title={
+                        isAdmin
+                        ? "Tài khoản admin bị khóa, không thể sửa"
+                        : "Sửa thông tin"
+                    }
+                    >
+                    <Button
+                        type="primary"
+                        icon={<EditOutlined />}
+                        size="small"
+                        onClick={() => handleEdit(record)}
+                        className="btn-edit"
+                        disabled={isAdmin}
+                    >
+                        Sửa
+                    </Button>
+                    </Tooltip>
+
+                    <Tooltip
+                    title={
+                        isAdmin
+                        ? "Tài khoản admin bị khóa, không thể xóa"
+                        : "Xóa nhân viên"
+                    }
+                    >
+                    <Popconfirm
+                        title="Xóa nhân viên"
+                        description="Bạn có chắc chắn muốn xóa nhân viên này?"
+                        onConfirm={() => handleDelete(record.userId)}
+                        okText="Xóa"
+                        cancelText="Hủy"
+                        disabled={isAdmin}
+                    >
+                        <Button
+                        type="primary"
+                        danger
+                        icon={<DeleteOutlined />}
+                        size="small"
+                        disabled={isAdmin}
                         >
-                            <Button
-                                type="primary"
-                                icon={<EditOutlined />}
-                                size="small"
-                                onClick={() => handleEdit(record)}
-                                className="btn-edit"
-                                disabled={isFirstRow}
-                            >
-                                Sửa
-                            </Button>
-                        </Tooltip>
-                        <Tooltip
-                            title={
-                                isFirstRow
-                                    ? "Dòng này bị khóa, không thể xóa"
-                                    : "Xóa nhân viên"
-                            }
-                        >
-                            <Popconfirm
-                                title="Xóa nhân viên"
-                                description="Bạn có chắc chắn muốn xóa nhân viên này?"
-                                onConfirm={() => handleDelete(record.userId)}
-                                okText="Xóa"
-                                cancelText="Hủy"
-                                disabled={isFirstRow}
-                            >
-                                <Button
-                                    type="primary"
-                                    danger
-                                    icon={<DeleteOutlined />}
-                                    size="small"
-                                    disabled={isFirstRow}
-                                >
-                                    Xóa
-                                </Button>
-                            </Popconfirm>
-                        </Tooltip>
-                    </Space>
+                        Xóa
+                        </Button>
+                    </Popconfirm>
+                    </Tooltip>
+                </Space>
                 );
             },
-        },
+        }
+
     ];
 
     // Sự kiện thêm nhân viên
@@ -345,7 +353,6 @@ export default function Employee() {
 
         return true;
     });
-
 
     const handleSearch = (value) => {
         setSearchTerm(value);
@@ -517,6 +524,7 @@ export default function Employee() {
                 footer={null}
                 width={500}
                 closable={false}
+                style={{ top: 20 }}
             >
                 <Form
                     form={form}
@@ -551,6 +559,7 @@ export default function Employee() {
                         <Select
                             placeholder="Chọn chức vụ"
                             onChange={handleRoleChange}
+                            getPopupContainer={(trigger) => trigger.parentNode}
                         >
                             <Option value="Admin">Quản Trị Viên</Option>
                             <Option value="Staff">Nhân Viên</Option>
@@ -563,6 +572,7 @@ export default function Employee() {
                         <Select
                             placeholder="Trạng thái"
                             onChange={handleStatusChange}
+                            getPopupContainer={(trigger) => trigger.parentNode}
                         >
                             <Option value="Inactive">Tạm Nghỉ</Option>
                             <Option value="Active">Đang Làm Việc</Option>

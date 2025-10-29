@@ -49,6 +49,7 @@ const MOCK_DAILY_REVENUE = [
   2100000, 1800000, 1600000, 1900000, 2200000, 2000000, 1750000,
 ];
 
+
 export default function SaleReport() {
   const [pieData, setPieData] = useState(null);
   const [lineData, setLineData] = useState(null);
@@ -109,7 +110,7 @@ export default function SaleReport() {
           labels: Object.keys(grouped),
           datasets: [{
             data: Object.values(grouped),
-            backgroundColor: Object.keys(grouped).map(k => (ABC_COLORS[k]?.color || "#8c8c8c") + "40"),
+            backgroundColor: Object.keys(grouped).map(k => (ABC_COLORS[k]?.color || "#8c8c8c") + "80"),
           }],
         });
 
@@ -160,7 +161,7 @@ export default function SaleReport() {
     { title: "Barcode", dataIndex: "barcode", width: 130 },
     { title: "Doanh thu", dataIndex: "value", align: "right", render: v => `${Number(v).toLocaleString()} ₫` },
     { title: "Tần suất", dataIndex: "frequency", align: "center", width: 90 },
-    { title: "Điểm", dataIndex: "score", align: "center", width: 80, render: v => Number(v).toFixed(1) },
+    { title: "Điểm", dataIndex: "score", align: "center", width: 150, render: v => Number(v).toFixed(1) },
     {
       title: "Phân loại",
       dataIndex: "abcClassification",
@@ -268,6 +269,9 @@ export default function SaleReport() {
         onCancel={() => setModalVisible(false)}
         footer={null}
         width={1100}
+        style={{ top: 10 }}
+        className="SaleReport-modal"
+        closable={false}
       >
         <Table
           dataSource={abcData}

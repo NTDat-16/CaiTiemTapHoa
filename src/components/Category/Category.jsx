@@ -49,9 +49,7 @@ export default function Category() {
     } catch (error) {
       message.error(error.message || "Lỗi khi tải danh sách danh mục");
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
+      setLoading(false);
     }
   };
 
