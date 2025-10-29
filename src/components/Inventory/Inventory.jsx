@@ -147,8 +147,8 @@ export default function InventoryManage() {
       } else if (Array.isArray(response.data)) {
         productData = response.data;
       }
-
-      setAllProducts(productData);
+      const ActiveProduct = productData.filter(p => p.status === "Active" || p.status === "active");
+      setAllProducts(ActiveProduct);
     } catch (error) {
       message.error("Lỗi khi tải danh sách sản phẩm.");
       setAllProducts([]);
@@ -301,6 +301,13 @@ export default function InventoryManage() {
 
   const importTableColumns = [
     {
+      title: "STT",
+      key: "index",
+      align: "center",
+      width: 80,
+      render: (text, record, index) => index + 1,
+    },
+    {
       title: "Tên sản phẩm",
       dataIndex: "productName",
       key: "productName",
@@ -331,8 +338,9 @@ export default function InventoryManage() {
           onConfirm={() => handleRemoveFromImportList(record.productId)}
           okText="Xoá"
           cancelText="Huỷ"
+          getPopupContainer={(trigger) => trigger.parentNode}
         >
-          <Button type="link" danger icon={<DeleteOutlined />} />
+          <Button type="primary" danger icon={<DeleteOutlined />} />
         </Popconfirm>
       ),
     },
@@ -427,6 +435,8 @@ export default function InventoryManage() {
         width={800}
         footer={null}
         destroyOnClose
+        style={{ top: 20 }}
+        closable={false}
       >
         <Form
           form={importForm}
