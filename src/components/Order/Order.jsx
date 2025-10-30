@@ -276,38 +276,39 @@ export default function Order({ onNavigate }) {
   });
 
   //Check tồn kho khi vào đầu trang
-  const getRole = localStorage.getItem("user");
-  {getRole.role === "Admin" &&
-    useEffect(() => {
-      const checkLowStock = async () => {
-        try {
-          const notificationShown = sessionStorage.getItem('lowStockNotificationShown');
-          if (notificationShown === 'true') {
-            return;
-          }
-
-          const token = localStorage.getItem("token");
-          const res = await axios.get("http://localhost:5000/api/inventory/low-stock", {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          if (res.data.success && res.data.data.length > 0) {
-            const names = res.data.data.map(item => item.product?.productName || 'N/A');
-            setProductNames(names);
-            
-            setTimeout(() => {
-              setShowNotification(true);
-              sessionStorage.setItem('lowStockNotificationShown', 'true');
-              setTimeout(() => setShowNotification(false), 8000);
-            }, 0);
-          }
-        } catch (err) {
-          console.error("Lỗi low stock:", err);
+  const getRole = JSON.parse(localStorage.getItem("user"));
+  console.log(getRole)
+  useEffect(() => {
+    if (!getRole || getRole.role !== "Admin") return;
+    const checkLowStock = async () => {
+      try {
+        const notificationShown = sessionStorage.getItem('lowStockNotificationShown');
+        if (notificationShown === 'true') {
+          return;
         }
-      };
-      checkLowStock();
-    }, []);
-  }
+
+        const token = localStorage.getItem("token");
+        const res = await axios.get("http://localhost:5000/api/inventory/low-stock", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+          
+        if (res.data.success && res.data.data.length > 0) {
+          const names = res.data.data.map(item => item.product?.productName || 'N/A');
+          setProductNames(names);
+            
+          setTimeout(() => {
+            setShowNotification(true);
+            sessionStorage.setItem('lowStockNotificationShown', 'true');
+            setTimeout(() => setShowNotification(false), 8000);
+          }, 0);
+        }
+      } catch (err) {
+        console.error("Lỗi low stock:", err);
+      }
+    };
+    checkLowStock();
+  }, []);
+
   const { activePromotions, currentProducts } = useMemo(() => {
     if (!Array.isArray(products)) return { activePromotions: [], currentProducts: [] };
 
