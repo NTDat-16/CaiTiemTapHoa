@@ -56,14 +56,14 @@
 /* ========== CẢNH BÁO HẾT HÀNG ========== */
 .ant-alert {
   border-radius: 8px !important;
-  border: 1px solid #008f5a !important; /* Viền xanh chủ đạo */
-  background-color: #e8f5ee !important; /* Xanh nhạt cùng tông */
-  box-shadow: 0 2px 6px rgba(0, 143, 90, 0.15); /* Đổ bóng nhẹ cho hiện đại */
+  border: 1px solid #ffed26 !important; /* Viền cam vàng */
+  background-color: #fff9c4d8 !important; /* Vàng nhạt */
+  box-shadow: 0 2px 6px rgba(255, 167, 38, 0.15); /* Đổ bóng nhẹ màu vàng */
 }
 
 .ant-alert-message {
   font-weight: 600;
-  color: #006e45 !important; /* Đậm hơn màu chủ đạo, dễ đọc */
+  color: #f57c00 !important; /* Cam đậm cho dễ đọc */
   font-size: 15px;
 }
 
@@ -72,7 +72,7 @@
 }
 
 .ant-alert-icon {
-  color: #008f5a !important; /* Icon đồng bộ màu chủ đạo */
+  color: #ffe626 !important; /* Icon màu cam vàng */
 }
 
 /* ========== BẢNG ========== */

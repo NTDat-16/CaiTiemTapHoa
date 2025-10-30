@@ -295,6 +295,17 @@ export default function InventoryManage() {
       title: "Số lượng tồn",
       dataIndex: "quantity",
       key: "quantity",
+      render: (quantity) => {
+        const isLowStock = quantity < 10; // Ngưỡng cảnh báo
+        return (
+          <span style={{ 
+            color: isLowStock ? 'red' : 'inherit',
+            fontWeight: isLowStock ? 'bold' : 'normal'
+          }}>
+            {quantity}
+          </span>
+        );
+      }
     },
     { title: "Đơn vị", dataIndex: "unit", key: "unit" },
   ];
@@ -388,7 +399,12 @@ export default function InventoryManage() {
         <Alert
           message={`Có ${lowStock.length} sản phẩm sắp hết hàng!`}
           description={
-            <ul style={{ margin: 0, paddingLeft: 20 }}>
+            <ul style={{ 
+              margin: 0, 
+              paddingLeft: 20,
+              maxHeight: '80px',
+              overflowY: 'auto',
+            }}>
               {lowStock.map((item) => (
                 <li key={item.inventory_id}>
                   <b>{item.product_name}</b> (Còn lại:{" "}
