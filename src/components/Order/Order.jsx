@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import axios from "axios";
 import {
   Form, Table, Row, Col, Input, Select, Button, Card,  Space, Tag, Pagination, Spin,Divider, InputNumber, notification
 } from "antd";
@@ -233,7 +234,7 @@ const calculateDiscountAmount = (subtotal, selectedPromoId, promotions) => {
 
 
 
-export default function Order() {
+export default function Order({ onNavigate }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage, setProductsPerPage] = useState(25);
   const { products, loading, totalItems } = useFetchProducts(currentPage, productsPerPage);
@@ -258,6 +259,11 @@ export default function Order() {
   const [customerName, setCustomerName] = useState("");
   const [loadingCustomer, setLoadingCustomer] = useState(false);
   const { inventory } = useFetchInventory(productIds, currentPage, productsPerPage);
+  
+  // Low Stock Notification states
+  const [showNotification, setShowNotification] = useState(false);
+  const [productNames, setProductNames] = useState([]);
+
 // Modal kết quả thanh toán
 const [resultModal, setResultModal] = useState({
   visible: false,
@@ -267,6 +273,41 @@ const [resultModal, setResultModal] = useState({
   showPrint: false,
   orderToPrint: null,
 });
+
+// Low Stock Notification - Check khi vào trang
+useEffect(() => {
+  const checkLowStock = async () => {
+    try {
+      // Kiểm tra xem đã hiển thị notification trong phiên này chưa
+      const notificationShown = sessionStorage.getItem('lowStockNotificationShown');
+      if (notificationShown === 'true') {
+        return; // Đã hiển thị rồi, không hiện nữa
+      }
+
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:5000/api/inventory/low-stock", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.data.success && res.data.data.length > 0) {
+        const names = res.data.data.map(item => item.product?.productName || 'N/A');
+        setProductNames(names);
+        
+        // Hiển thị sau 2 giây
+        setTimeout(() => {
+          setShowNotification(true);
+          sessionStorage.setItem('lowStockNotificationShown', 'true');
+          setTimeout(() => setShowNotification(false), 8000);
+        }, 2000);
+      }
+    } catch (err) {
+      console.error("Lỗi low stock:", err);
+    }
+  };
+
+  // Chỉ check 1 lần khi vào trang
+  checkLowStock();
+}, []);
 
 const { activePromotions, currentProducts } = useMemo(() => {
   if (!Array.isArray(products)) return { activePromotions: [], currentProducts: [] };
@@ -944,6 +985,43 @@ const handleApiResponse = async (response) => {
     }
   return (
       <ConfigProvider getPopupContainer={() => document.body}>
+    
+    {/* Low Stock Notification */}
+      {showNotification && (
+        <div 
+          className="low-stock-notification"
+          onClick={() => onNavigate && onNavigate('inventory')}
+        >
+          <div className="low-stock-notification-header">
+            <span className="low-stock-notification-icon">⚠️</span>
+            <div className="low-stock-notification-content">
+              <div className="low-stock-notification-title">
+                Cảnh báo tồn kho
+              </div>
+              <div className="low-stock-notification-subtitle">
+                {productNames.length} sản phẩm sắp hết
+              </div>
+            </div>
+            <button 
+              className="low-stock-notification-close"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowNotification(false);
+              }}
+            >×</button>
+          </div>
+          <div className="low-stock-notification-list">
+            {productNames.map((name, i) => (
+              <div key={i} className="low-stock-notification-item">
+                • {name}
+              </div>
+            ))}
+          </div>
+          <div className="low-stock-notification-footer">
+            👉 Click để xem chi tiết trong Inventory
+          </div>
+        </div>
+      )}
 
     <div className="order-container">
       <Row gutter={16}>

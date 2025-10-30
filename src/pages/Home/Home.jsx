@@ -33,7 +33,7 @@ export default function Home() {
           {choosen === "supplier" && <Supplier />}
           {choosen === "employee" && <Employee />}
           {choosen === "customer" && <Customer />}
-          {choosen === "order" && <Order />}
+          {choosen === "order" && <Order onNavigate={handleChoosen} />}
           {choosen === "promotion" && <Promotion />}
           {choosen === "product" && <ProductManage />}
           {choosen === "inventory" && <Inventory />}
