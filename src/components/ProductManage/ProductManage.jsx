@@ -212,16 +212,46 @@ export default function ProductManage() {
   }
 
   // DELETE product
+  // const handleDelete = async (productId) => {
+  //   try {
+  //     const response = await fetch(`${API_BASE}/Products/${productId}`, {
+  //       method: "DELETE",
+  //       headers: { ...authHeader },
+  //     });
+
+  //     if (!response.ok) throw new Error("Delete failed");
+  //     message.success("Xóa sản phẩm thành công");
+  //     fetchProducts();
+  //   } catch (error) {
+  //     message.error("Lỗi khi xóa sản phẩm");
+  //   }
+  // };
+
   const handleDelete = async (productId) => {
     try {
-      const response = await fetch(`${API_BASE}/Products/${productId}`, {
-        method: "DELETE",
-        headers: { ...authHeader },
-      });
+      const response = await fetch(
+        `http://localhost:5000/api/Products/${supplierId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
-      if (!response.ok) throw new Error("Delete failed");
+      // Kiểm tra phản hồi
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Xóa sản phẩm thất bại");
+      }
+
+      setProducts((prev) => prev.filter((p) => p.supplierId !== supplierId));
+      setPagination((prev) => ({
+        ...prev,
+        total: prev.total > 0 ? prev.total - 1 : 0,
+      }));
       message.success("Xóa sản phẩm thành công");
-      fetchProducts();
     } catch (error) {
       message.error("Lỗi khi xóa sản phẩm");
     }
@@ -304,6 +334,9 @@ export default function ProductManage() {
     if (filterType === "supplier" && filterId !== null) {
       return product.supplierId === filterId;
     }
+    if (filterType === "status" && filterId !== null) {
+      return product.status?.toLowerCase() === filterId.toLowerCase();
+    }
     if (searchTerm) {
       const keyword = searchTerm.toLowerCase();
       return (
@@ -330,6 +363,15 @@ export default function ProductManage() {
     const categories = categories.find((s) => s.categoryId === categoryId)
     message.success(`Đang lọc theo nhà cung cấp: ${categoryId?.name}`)
   }
+
+  //Lọc theo danh mục
+  const handleFilterByStatus = (status) => {
+    setFilterType("status");
+    setFilterId(status);
+
+    message.success(`Đang lọc theo trạng thái: ${status}`);
+  };
+
 
   //Xóa toàn bộ lọc
   const handleClearFilter = () => {
@@ -358,6 +400,14 @@ export default function ProductManage() {
       })),
     },
     {
+      key: "status",
+      label: "Lọc theo Trạng thái",
+      children: [
+        { key: "active", label: "Còn kinh doanh", onClick: () => handleFilterByStatus("active") },
+        { key: "inactive", label: "Ngừng kinh doanh", onClick: () => handleFilterByStatus("inactive") },
+      ],
+    },
+    {
       type: "divider",
     },
     {
@@ -378,6 +428,9 @@ export default function ProductManage() {
     if (filterType === "supplier") {
       const supplier = suppliers.find((s) => s.supplierId === filterId)
       return supplier ? `Lọc: ${supplier.name}` : "Lọc"
+    }
+    if (filterType === "status") {
+      return filterId === "active" ? "Lọc: Còn kinh doanh" : "Lọc: Ngừng kinh doanh"
     }
     return "Lọc"
   }
