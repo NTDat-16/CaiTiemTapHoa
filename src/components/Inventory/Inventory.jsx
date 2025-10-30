@@ -402,7 +402,7 @@ export default function InventoryManage() {
             <ul style={{ 
               margin: 0, 
               paddingLeft: 20,
-              maxHeight: '80px',
+              maxHeight: '70px',
               overflowY: 'auto',
             }}>
               {lowStock.map((item) => (
@@ -440,7 +440,7 @@ export default function InventoryManage() {
             ),
           }}
           onChange={handleTableChange}
-          scroll={{ y: 400, x: 1200 }}
+          scroll={{ y: 300, x: 1200 }}
         />
       </div>
 
