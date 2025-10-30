@@ -13,6 +13,7 @@ import useCustomer from "../Hooks/useCustomer";
 import printInvoice from "./printInvoice";
 import 'antd/dist/reset.css';
 import { ConfigProvider } from "antd";
+import Notification from "../Notification/Notification";
 
   const { Option } = Select;
 
@@ -264,85 +265,83 @@ export default function Order({ onNavigate }) {
   const [showNotification, setShowNotification] = useState(false);
   const [productNames, setProductNames] = useState([]);
 
-// Modal kết quả thanh toán
-const [resultModal, setResultModal] = useState({
-  visible: false,
-  type: "",     
-  title: "",
-  message: "",
-  showPrint: false,
-  orderToPrint: null,
-});
-
-// Low Stock Notification - Check khi vào trang
-useEffect(() => {
-  const checkLowStock = async () => {
-    try {
-      // Kiểm tra xem đã hiển thị notification trong phiên này chưa
-      const notificationShown = sessionStorage.getItem('lowStockNotificationShown');
-      if (notificationShown === 'true') {
-        return; // Đã hiển thị rồi, không hiện nữa
-      }
-
-      const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:5000/api/inventory/low-stock", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (res.data.success && res.data.data.length > 0) {
-        const names = res.data.data.map(item => item.product?.productName || 'N/A');
-        setProductNames(names);
-        
-        // Hiển thị sau 2 giây
-        setTimeout(() => {
-          setShowNotification(true);
-          sessionStorage.setItem('lowStockNotificationShown', 'true');
-          setTimeout(() => setShowNotification(false), 8000);
-        }, 2000);
-      }
-    } catch (err) {
-      console.error("Lỗi low stock:", err);
-    }
-  };
-
-  // Chỉ check 1 lần khi vào trang
-  checkLowStock();
-}, []);
-
-const { activePromotions, currentProducts } = useMemo(() => {
-  if (!Array.isArray(products)) return { activePromotions: [], currentProducts: [] };
-
-  // 1️⃣ Lọc khuyến mãi đang hoạt động
-  const activePromotions = promotions.filter((p) => {
-    const status = p.status?.toLowerCase();
-    return status === "active" || status === "hoạt động";
+  // Modal kết quả thanh toán
+  const [resultModal, setResultModal] = useState({
+    visible: false,
+    type: "",     
+    title: "",
+    message: "",
+    showPrint: false,
+    orderToPrint: null,
   });
 
-  // 2️⃣ Lọc sản phẩm theo danh mục + tìm kiếm
-  const filteredProducts = products.filter((p) => {
-    const productName = p.product_name ?? "";
+  //Check tồn kho khi vào đầu trang
+  const getRole = localStorage.getItem("user");
+  {getRole.role === "Admin" &&
+    useEffect(() => {
+      const checkLowStock = async () => {
+        try {
+          const notificationShown = sessionStorage.getItem('lowStockNotificationShown');
+          if (notificationShown === 'true') {
+            return;
+          }
 
-    // Lấy slug của category (vì selectedCategory là slug)
-    const productCategorySlug = getCategoryData(p.categoryId)?.slug;
+          const token = localStorage.getItem("token");
+          const res = await axios.get("http://localhost:5000/api/inventory/low-stock", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          if (res.data.success && res.data.data.length > 0) {
+            const names = res.data.data.map(item => item.product?.productName || 'N/A');
+            setProductNames(names);
+            
+            setTimeout(() => {
+              setShowNotification(true);
+              sessionStorage.setItem('lowStockNotificationShown', 'true');
+              setTimeout(() => setShowNotification(false), 8000);
+            }, 0);
+          }
+        } catch (err) {
+          console.error("Lỗi low stock:", err);
+        }
+      };
+      checkLowStock();
+    }, []);
+  }
+  const { activePromotions, currentProducts } = useMemo(() => {
+    if (!Array.isArray(products)) return { activePromotions: [], currentProducts: [] };
 
-    // Điều kiện lọc danh mục
-    const matchCategory =
-      selectedCategory === "all" || productCategorySlug === selectedCategory;
+    // 1️⃣ Lọc khuyến mãi đang hoạt động
+    const activePromotions = promotions.filter((p) => {
+      const status = p.status?.toLowerCase();
+      return status === "active" || status === "hoạt động";
+    });
 
-    // Điều kiện tìm kiếm
-    const matchSearch = productName.toLowerCase().includes(search.toLowerCase());
+    // 2️⃣ Lọc sản phẩm theo danh mục + tìm kiếm
+    const filteredProducts = products.filter((p) => {
+      const productName = p.product_name ?? "";
 
-    return matchCategory && matchSearch;
-  });
+      // Lấy slug của category (vì selectedCategory là slug)
+      const productCategorySlug = getCategoryData(p.categoryId)?.slug;
 
-  // 3️⃣ Gắn thông tin tồn kho vào sản phẩm đã lọc
-  const currentProducts = filteredProducts.map((p) => ({
-    ...p,
-    stock: inventory?.[p.product_id] ?? 0,
-  }));
+      // Điều kiện lọc danh mục
+      const matchCategory =
+        selectedCategory === "all" || productCategorySlug === selectedCategory;
 
-  return { activePromotions, currentProducts };
-}, [promotions, products, inventory, selectedCategory, search, getCategoryData]);
+      // Điều kiện tìm kiếm
+      const matchSearch = productName.toLowerCase().includes(search.toLowerCase());
+
+      return matchCategory && matchSearch;
+    });
+
+    // 3️⃣ Gắn thông tin tồn kho vào sản phẩm đã lọc
+    const currentProducts = filteredProducts.map((p) => ({
+      ...p,
+      stock: inventory?.[p.product_id] ?? 0,
+    }));
+
+    return { activePromotions, currentProducts };
+  }, [promotions, products, inventory, selectedCategory, search, getCategoryData]);
 
 
     const handleAddToCart = (product) => {
@@ -988,41 +987,45 @@ const handleApiResponse = async (response) => {
     
     {/* Low Stock Notification */}
       {showNotification && (
-        <div 
-          className="low-stock-notification"
-          onClick={() => onNavigate && onNavigate('inventory')}
-        >
-          <div className="low-stock-notification-header">
-            <span className="low-stock-notification-icon">⚠️</span>
-            <div className="low-stock-notification-content">
-              <div className="low-stock-notification-title">
-                Cảnh báo tồn kho
-              </div>
-              <div className="low-stock-notification-subtitle">
-                {productNames.length} sản phẩm sắp hết
-              </div>
-            </div>
-            <button 
-              className="low-stock-notification-close"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowNotification(false);
-              }}
-            >×</button>
-          </div>
-          <div className="low-stock-notification-list">
-            {productNames.map((name, i) => (
-              <div key={i} className="low-stock-notification-item">
-                • {name}
-              </div>
-            ))}
-          </div>
-          <div className="low-stock-notification-footer">
-            👉 Click để xem chi tiết trong Inventory
-          </div>
-        </div>
+        // <div 
+        //   className="low-stock-notification"
+        //   onClick={() => onNavigate && onNavigate('inventory')}
+        // >
+        //   <div className="low-stock-notification-header">
+        //     <span className="low-stock-notification-icon">⚠️</span>
+        //     <div className="low-stock-notification-content">
+        //       <div className="low-stock-notification-title">
+        //         Cảnh báo tồn kho
+        //       </div>
+        //       <div className="low-stock-notification-subtitle">
+        //         {productNames.length} sản phẩm sắp hết
+        //       </div>
+        //     </div>
+        //     <button 
+        //       className="low-stock-notification-close"
+        //       onClick={(e) => {
+        //         e.stopPropagation();
+        //         setShowNotification(false);
+        //       }}
+        //     >×</button>
+        //   </div>
+        //   <div className="low-stock-notification-list">
+        //     {productNames.map((name, i) => (
+        //       <div key={i} className="low-stock-notification-item">
+        //         • {name}
+        //       </div>
+        //     ))}
+        //   </div>
+        //   <div className="low-stock-notification-footer">
+        //     👉 Click để xem chi tiết trong Inventory
+        //   </div>
+        // </div>
+        <Notification
+          productNames={productNames}
+          onNavigate={onNavigate}
+          onClose={() => setShowNotification(false)}
+        />
       )}
-
     <div className="order-container">
       <Row gutter={16}>
         {/* Cột bên trái */}

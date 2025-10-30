@@ -112,12 +112,11 @@
 }
 
 /* Nếu có custom full-screen overlays, đảm bảo chúng không che modal */
-[data-overlay] {
+/* [data-overlay] {
   z-index: 1;
-}
+} */
 
-
-  /* Low Stock Notification Styles */
+/* Low Stock Notification Styles
 .low-stock-notification {
   position: fixed;
   top: 80px;
@@ -202,4 +201,4 @@
   color: #2e7d32;
   text-align: center;
   font-weight: 500;
-}
+} */
