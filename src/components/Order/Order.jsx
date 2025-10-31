@@ -275,9 +275,8 @@ export default function Order({ onNavigate }) {
     orderToPrint: null,
   });
 
-  //Check tồn kho khi vào đầu trang
+  //Check tồn kho khi vào đầu trang đối với tài khoản là Admin
   const getRole = JSON.parse(localStorage.getItem("user"));
-  console.log(getRole)
   useEffect(() => {
     if (!getRole || getRole.role !== "Admin") return;
     const checkLowStock = async () => {
