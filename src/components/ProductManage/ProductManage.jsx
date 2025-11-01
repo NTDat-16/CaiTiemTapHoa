@@ -1,37 +1,32 @@
-  import { useState, useEffect } from "react"
-  import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Dropdown, InputNumber,Upload, Row,Col } from "antd"
-  import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, FilterOutlined } from "@ant-design/icons"
-    import "./ProductManage.css"
+import { useState, useEffect } from "react"
+import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Tag, Dropdown, InputNumber,Upload, Row,Col } from "antd"
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, FilterOutlined } from "@ant-design/icons"
+import "./ProductManage.css"
+const { Option } = Select
 
-    const { Option } = Select
-
-
-  export default function ProductManage() {
-    const [products, setProducts] = useState([])
-    const [categories, setCategories] = useState([])
-    const [suppliers, setSuppliers] = useState([])
-    const [loading, setLoading] = useState(false)
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [editingProduct, setEditingProduct] = useState(null)
-    const [searchTerm, setSearchTerm] = useState("")
-    const [filterType, setFilterType] = useState(null) // 'category' or 'supplier'
-    const [filterId, setFilterId] = useState(null) // selected categoryId or supplierId
-    const [form] = Form.useForm()
-    const [pageNumber, setPageNumber] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
-    const [totalItems, setTotalItems] = useState(0);
-    const [previewImage, setPreviewImage] = useState(null);
-    const [selectedFile, setSelectedFile] = useState(null); // New state for selected file
-
-
-
+export default function ProductManage() {
+  const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
+  const [suppliers, setSuppliers] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterType, setFilterType] = useState(null)
+  const [filterId, setFilterId] = useState(null)
+  const [form] = Form.useForm()
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const API_BASE = "http://localhost:5000/api";
   const API_IMAGE = "http://localhost:5000";
   const token = localStorage.getItem('token');
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
-  // Fetch products from API (currently using mock data)
+  //Danh sách sản phẩm
   const fetchProducts = async (page = pageNumber, size = pageSize) => {
     setLoading(true);
     try {
@@ -42,7 +37,6 @@
 
       const productsArray = Array.isArray(result?.data?.items) ? result.data.items : [];
       setProducts(productsArray);
-      // ✅ Lưu tổng số phần tử để Ant Table hiển thị đúng phân trang
       if (result?.data?.totalCount) {
         setTotalItems(result.data.totalCount);
       }
@@ -57,7 +51,7 @@
     }
   };
 
-  // Fetch suppliers from API (currently using mock data)
+  //Danh sách nhà cung cấp
   const fetchSuppliers = async () => {
     try {
       // TODO: Uncomment when API is ready
@@ -73,6 +67,7 @@
     }
   }
 
+  //Danh sách danh mục
   const fetchCategories = async () => {
     try {
       // TODO: Uncomment when API is ready
@@ -117,10 +112,11 @@
 
   // Table columns definition
   const columns = [
+    {title: "Mã",dataIndex: "productId",key: "productId",width: 70,},
     {title: "Hình ảnh",
       dataIndex: "imagePath",
       key: "imagePath",
-      width: 100,
+      width: 90,
       render: (imagePath) => {
         const imageUrl = imagePath ? imagePath.startsWith("http")
         ? imagePath
@@ -142,14 +138,14 @@
         );
       },
     },
-    {title: "Mã SP",dataIndex: "productId",key: "productId",width: 100,},
-    {title: "Tên sản phẩm",dataIndex: "productName",key: "productName",width: 200,},
+    
+    {title: "Tên sản phẩm",dataIndex: "productName",key: "productName",width: 150,},
     {title: "Barcode",dataIndex: "barcode",key: "barcode",width: 150,},
     {title: "Giá (VNĐ)",dataIndex: "price",key: "price",width: 150,
       render: (price) => `${price.toLocaleString("vi-VN")} ₫`,
     },
     {title: "Đơn vị",dataIndex: "unit",key: "unit",width: 100,},
-    {title: "Danh mục",dataIndex: "categoryId",key: "categoryId",width: 150,
+    {title: "Danh mục",dataIndex: "categoryId",key: "categoryId",width: 100,
       render: (categoryId) => {
         const category = categories.find((c) => c.categoryId === categoryId);
         return category ? category.categoryName : "-";
@@ -160,6 +156,18 @@
         const supplier = suppliers.find((s) => s.supplierId === supplierId);
         return supplier ? supplier.name : "-";
        },
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      width: 150,
+      align: "center",
+      render: (status) => (
+        <Tag color={status === 'Active' ? 'green' : 'red'}>
+          {status === 'Active' ? 'CÒN KINH DOANH' : 'NGỪNG KINH DOANH'}
+        </Tag>
+      ),
     },
     {title: "Thao tác",key: "action",width: 150,fixed: "right",
       render: (_, record) => (
@@ -204,16 +212,46 @@
   }
 
   // DELETE product
+  // const handleDelete = async (productId) => {
+  //   try {
+  //     const response = await fetch(`${API_BASE}/Products/${productId}`, {
+  //       method: "DELETE",
+  //       headers: { ...authHeader },
+  //     });
+
+  //     if (!response.ok) throw new Error("Delete failed");
+  //     message.success("Xóa sản phẩm thành công");
+  //     fetchProducts();
+  //   } catch (error) {
+  //     message.error("Lỗi khi xóa sản phẩm");
+  //   }
+  // };
+
   const handleDelete = async (productId) => {
     try {
-      const response = await fetch(`${API_BASE}/Products/${productId}`, {
-        method: "DELETE",
-        headers: { ...authHeader },
-      });
+      const response = await fetch(
+        `http://localhost:5000/api/Products/${supplierId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
-      if (!response.ok) throw new Error("Delete failed");
+      // Kiểm tra phản hồi
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Xóa sản phẩm thất bại");
+      }
+
+      setProducts((prev) => prev.filter((p) => p.supplierId !== supplierId));
+      setPagination((prev) => ({
+        ...prev,
+        total: prev.total > 0 ? prev.total - 1 : 0,
+      }));
       message.success("Xóa sản phẩm thành công");
-      fetchProducts();
     } catch (error) {
       message.error("Lỗi khi xóa sản phẩm");
     }
@@ -240,6 +278,7 @@
       formData.append("Barcode", values.barcode);
       formData.append("Price", values.price);
       formData.append("Unit", values.unit);
+      formData.append("Status", editingProduct ? values.status : "active");
       if (selectedFile) {
         formData.append("Image", selectedFile);
       }
@@ -288,19 +327,15 @@
     setEditingProduct(null)
   }
 
-  // const filteredProducts = products.filter((product) => {
-  //   // Apply filter first
-  //   if (filterType === "category" && filterId !== null) {
-  //     if (product.categoryId !== filterId) return false
-  //   }
-  // });
-
   const filteredProducts = products.filter((product) => {
     if (filterType === "category" && filterId !== null) {
       return product.categoryId === filterId;
     }
     if (filterType === "supplier" && filterId !== null) {
       return product.supplierId === filterId;
+    }
+    if (filterType === "status" && filterId !== null) {
+      return product.status?.toLowerCase() === filterId.toLowerCase();
     }
     if (searchTerm) {
       const keyword = searchTerm.toLowerCase();
@@ -313,7 +348,7 @@
     return true;
   });
 
-
+  // Lọc theo nhà cung cấp
   const handleFilterBySupplier = (supplierId) => {
     setFilterType("supplier")
     setFilterId(supplierId)
@@ -321,6 +356,24 @@
     message.success(`Đang lọc theo nhà cung cấp: ${supplier?.name}`)
   }
 
+  //Lọc theo danh mục
+  const handleFilterByCategory  = (categoryId) => {
+    setFilterType("category")
+    setFilterId(categoryId)
+    const categories = categories.find((s) => s.categoryId === categoryId)
+    message.success(`Đang lọc theo nhà cung cấp: ${categoryId?.name}`)
+  }
+
+  //Lọc theo danh mục
+  const handleFilterByStatus = (status) => {
+    setFilterType("status");
+    setFilterId(status);
+
+    message.success(`Đang lọc theo trạng thái: ${status}`);
+  };
+
+
+  //Xóa toàn bộ lọc
   const handleClearFilter = () => {
     setFilterType(null)
     setFilterId(null)
@@ -347,6 +400,14 @@
       })),
     },
     {
+      key: "status",
+      label: "Lọc theo Trạng thái",
+      children: [
+        { key: "active", label: "Còn kinh doanh", onClick: () => handleFilterByStatus("active") },
+        { key: "inactive", label: "Ngừng kinh doanh", onClick: () => handleFilterByStatus("inactive") },
+      ],
+    },
+    {
       type: "divider",
     },
     {
@@ -368,12 +429,19 @@
       const supplier = suppliers.find((s) => s.supplierId === filterId)
       return supplier ? `Lọc: ${supplier.name}` : "Lọc"
     }
+    if (filterType === "status") {
+      return filterId === "active" ? "Lọc: Còn kinh doanh" : "Lọc: Ngừng kinh doanh"
+    }
     return "Lọc"
   }
   
   const handleSearch = (value) => {
     setSearchTerm(value)
   }
+
+  const handleStatusChange = async (value) => {
+    form.setFieldValue("status", value);
+  };
 
   return (
     <div className="product-manage-container">
@@ -418,8 +486,6 @@
               Thêm sản phẩm
             </Button>
           </div>
-            
-
       </div>
 
       <div className="product-manage-table">
@@ -453,7 +519,7 @@
         footer={null}
         width={700}
         closable={false}
-        style={{ top: 70 }}
+        style={{ top: 50 }}
       >
         <Form
           form={form}
@@ -462,7 +528,7 @@
           autoComplete="off"
         >
         {/* Hình ảnh sản phẩm */}
-        <Form.Item label="Hình ảnh" style={{ textAlign: "center", marginBottom: 24 }}>
+        <Form.Item style={{ textAlign: "center", marginBottom: 24 }}>
           <div style={{ position: "relative", display: "inline-block" }}>
             <img
               src={previewImage || editingProduct?.imagePath || "/img/Default_Product.png"}
@@ -566,13 +632,16 @@
 
           {/* Danh mục và nhà cung cấp */}
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={editingProduct ? 8 : 12}>
               <Form.Item
                 label="Danh mục"
                 name="categoryId"
                 rules={[{ required: true, message: "Vui lòng chọn danh mục" }]}
               >
-                <Select placeholder="Chọn danh mục">
+                <Select
+                  placeholder="Chọn danh mục"
+                  getPopupContainer={(trigger) => trigger.parentNode}
+                >
                   {categories.map((category) => (
                     <Option key={category.categoryId} value={category.categoryId}>
                       {category.categoryName}
@@ -582,13 +651,16 @@
               </Form.Item>
             </Col>
 
-            <Col span={12}>
+            <Col span={editingProduct ? 8 : 12}>
               <Form.Item
                 label="Nhà cung cấp"
                 name="supplierId"
                 rules={[{ required: true, message: "Vui lòng chọn nhà cung cấp" }]}
               >
-                <Select placeholder="Chọn nhà cung cấp">
+                <Select
+                  placeholder="Chọn nhà cung cấp"
+                  getPopupContainer={(trigger) => trigger.parentNode}
+                >
                   {suppliers.map((supplier) => (
                     <Option key={supplier.supplierId} value={supplier.supplierId}>
                       {supplier.name}
@@ -597,8 +669,22 @@
                 </Select>
               </Form.Item>
             </Col>
-          </Row>
 
+            {editingProduct && (
+              <Col span={8}>
+                <Form.Item label="Trạng thái" name="status">
+                  <Select
+                    placeholder="Trạng thái"
+                    onChange={handleStatusChange}
+                    getPopupContainer={(trigger) => trigger.parentNode}
+                  >
+                    <Option value="Inactive">Ngừng Kinh Doanh</Option>
+                    <Option value="Active">Còn Kinh Doanh</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            )}
+          </Row>
           {/* Nút hành động */}
           <Form.Item style={{ textAlign: "right", marginTop: 16 }}>
             <Space>

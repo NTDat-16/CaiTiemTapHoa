@@ -55,7 +55,7 @@ export default function Supplier() {
         } catch (error) {
             message.error("Lỗi khi tải danh sách nhân viên: " + error.message);
         } finally {
-            setTimeout(() => setLoading(false), 1000);
+          setLoading(false);
         }
   };
 
@@ -398,7 +398,7 @@ export default function Supplier() {
         footer={null}
         width={600}
         closable={false}
-        style={{ top: 100 }}
+        style={{ top: 0 }}
       >
         <Form
           form={form}
@@ -445,7 +445,7 @@ export default function Supplier() {
             name="address"
             rules={[{ required: true, message: 'Vui lòng chọn tỉnh/thành' }]}
           >
-            <Select placeholder="Chọn tỉnh/thành">
+            <Select placeholder="Chọn tỉnh/thành" getPopupContainer={(trigger) => trigger.parentNode}>
               {provinces.map((province) => (
                 <Select.Option key={province.code} value={province.name}>
                   {province.name}
@@ -459,6 +459,7 @@ export default function Supplier() {
             name="status"
           >
             <Select
+              getPopupContainer={(trigger) => trigger.parentNode}
               placeholder="Trạng thái"
               onChange={handleStatusChange}
             >

@@ -40,8 +40,7 @@ export default function Category() {
         throw new Error("Phản hồi từ server không hợp lệ");
       }
 
-      const sorted = items.sort((a, b) => a.categoryId- b.categoryId);
-      setCategories(sorted);
+      setCategories(items);
       setPagination({
         current: data.data?.pageNumber || page,
         pageSize: data.data?.pageSize || pageSize,
@@ -50,9 +49,7 @@ export default function Category() {
     } catch (error) {
       message.error(error.message || "Lỗi khi tải danh sách danh mục");
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
+      setLoading(false);
     }
   };
 

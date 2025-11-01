@@ -83,10 +83,11 @@
 }
 
 /* --- Stats & Chart Panel --- */
+/* --- Layout – GIỮ NGUYÊN 100% --- */
 .Overview-body {
   display: grid;
   grid-template-columns: 1fr 2fr;
-  gap: 20px;
+  gap: 10px;
   flex: 1;
   overflow: hidden;
 }
@@ -94,7 +95,7 @@
 .Overview-stats-panel {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
+  gap: 10px;
 }
 
 .stats-column {
@@ -103,53 +104,147 @@
   gap: 16px;
 }
 
-/* --- Stat Boxes (giữ background xanh) --- */
+/* --- Stat Box – GIỮ NGUYÊN KÍCH THƯỚC, NỔI BẬT HƠN --- */
 .stat-box {
-  background: linear-gradient(135deg, #e6fff7 0%, #c8f0e0 100%);
-  padding: 16px;
+  padding: 10px;
   border-radius: 12px;
   text-align: center;
-  font-weight: 600;
+  font-weight: 500;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
 }
 
-.stat-box:hover {
+/* --- Hiệu ứng hover nâng + viền màu --- */
+/* .stat-box:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  border-color: var(--border-color);
+  z-index: 1;
+} */
 
-/* --- Icon & Text --- */
+/* --- Icon: NỀN TRÒN + MÀU NỔI BẬT --- */
 .stat-box .stat-icon {
   font-size: 24px;
   margin-bottom: 8px;
-  color: #008f5a; /* icon xanh */
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: white;
+  background: var(--icon-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
 }
 
+.stat-box:hover .stat-icon {
+  transform: scale(1.1);
+}
+
+/* --- Text – GIỮ NGUYÊN FONT SIZE --- */
 .stat-box h3 {
   font-size: 14px;
-  color: #1a1a1a; /* tiêu đề đen */
-  margin: 0;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
   font-family: 'Inter', sans-serif;
+  font-weight: 600;
 }
 
-/* --- Số liệu màu theo loại --- */
-.stat-total p { color: #00c48f; }     /* xanh lá */
-.stat-avg p { color: #ff7b00; }       /* cam */
-.stat-actual p { color: #ff4d4f; }    /* đỏ */
-.stat-accuracy p { color: #facc15; }  /* vàng */
-.stat-trend p { color: #8b5cf6; }     /* tím */
+.stat-box p {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-color);
+  font-variant-numeric: tabular-nums;
+}
 
-/* --- Chart Panel --- */
+/* --- MÀU SẮC + NỀN RIÊNG CHO TỪNG Ô --- */
+
+/* 1. Tổng nhân viên */
+.stat-total {
+  cursor: pointer;
+  --icon-bg: #4f46e5;
+  --text-color: #4f46e5;
+  --border-color: #4f46e5;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+}
+
+/* 2. Khách hàng */
+.stat-customers {
+  cursor: pointer;
+  --icon-bg: #10b981;
+  --text-color: #10b981;
+  --border-color: #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+/* 3. Khách mới trong ngày */
+.stat-new-today {
+  cursor: pointer;
+  --icon-bg: #f59e0b;
+  --text-color: #d97706;
+  --border-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, #fde68a 100%);
+}
+
+/* 4. Doanh thu ngày */
+.stat-revenue-today {
+  cursor: pointer;
+  --icon-bg: #f97316;
+  --text-color: #ea580c;
+  --border-color: #f97316;
+  background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+}
+
+/* 5. Đơn hàng trong ngày */
+.stat-orders-today {
+  cursor: pointer;
+  --icon-bg: #8b5cf6;
+  --text-color: #7c3aed;
+  --border-color: #8b5cf6;
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+}
+
+/* 6. Đơn hàng trong tháng */
+.stat-orders-month {
+  cursor: pointer;
+  --icon-bg: #06b6d4;
+  --text-color: #0891b2;
+  --border-color: #06b6d4;
+  background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+}
+
+/* 7. Doanh thu tháng */
+.stat-revenue-month {
+  cursor: pointer;
+  --icon-bg: #ef4444;
+  --text-color: #dc2626;
+  --border-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+}
+
+/* 8. Xu hướng */
+.stat-trend {
+  cursor: pointer;
+  --icon-bg: #a855f7;
+  --text-color: #9333ea;
+  --border-color: #a855f7;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+}
+
+/* --- Chart Panel – GIỮ NGUYÊN --- */
 .Overview-chart-panel {
   background: #fff;
   border-radius: 12px;
-  /* padding: 16px; */
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
   position: relative;
   height: 500px;
@@ -163,7 +258,7 @@
   transform: translate(-50%, -50%);
 }
 
-/* --- Responsive --- */
+/* --- Responsive – GIỮ NGUYÊN --- */
 @media (max-width: 768px) {
   .Overview-container {
     height: auto;
