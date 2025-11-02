@@ -35,7 +35,9 @@
   border-radius: 4px;
   display: inline-block;
 }
+.ant-table > th{
 
+background-color: #008f5a;}
 /* Table spacing */
 .deadstock-table .ant-table-thead > tr > th {
   background: #f7faf7;
