@@ -680,6 +680,7 @@ const handlePayment = async () => {
       message.destroy("payment");
 
       const orderData = finalOrderResult.data;
+      console.log( orderData.customerNameID);
       const orderToPrint = {
         orderId: orderData.orderId,
         subtotal: orderData.totalAmount,
