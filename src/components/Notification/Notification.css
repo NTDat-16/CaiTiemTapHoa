@@ -19,12 +19,12 @@
   border-radius: 24px;
   background: conic-gradient(
     from 0deg,
-    #FACC15 0%,
-    #F59E0B 25%,
-    #EAB308 45%,
-    #CA8A04 65%,
-    #F59E0B 85%,
-    #FACC15 100%
+    #facc15 0%,
+    #f59e0b 25%,
+    #eab308 45%,
+    #ca8a04 65%,
+    #f59e0b 85%,
+    #facc15 100%
   );
   background-size: 280% 280%;
   animation: rotate 8s linear infinite;
@@ -35,7 +35,9 @@
 }
 
 @keyframes rotate {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes floatIn {
@@ -63,13 +65,11 @@
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: 20px;
-  border: 2.5px solid #FACC15;
+  border: 2.5px solid #facc15;
   overflow: hidden;
   position: relative;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 
-    0 12px 24px rgba(0, 0, 0, 0.12),
-    0 6px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12), 0 6px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* Header – Vàng */
@@ -78,24 +78,35 @@
   display: flex;
   align-items: center;
   padding: 20px 22px;
-  background: linear-gradient(135deg, #FACC15, #F59E0B, #EAB308);
-  color: #1F2937;
+  background: linear-gradient(135deg, #facc15, #f59e0b, #eab308);
+  color: #1f2937;
   overflow: hidden;
-  border-bottom: 1.5px solid #CA8A04;
+  border-bottom: 1.5px solid #ca8a04;
 }
 
 .notification-header::before {
-  content: '';
+  content: "";
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(45deg, rgba(255,255,255,0.25) 0%, transparent 50%);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.25) 0%,
+    transparent 50%
+  );
   pointer-events: none;
   animation: shimmer 3s infinite;
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .notification-icon {
@@ -104,7 +115,7 @@
 }
 
 .notification-icon svg {
-  stroke: #1F2937;
+  stroke: #1f2937;
   width: 30px;
   height: 30px;
 }
@@ -120,7 +131,7 @@
   font-size: 17.5px;
   font-weight: 850;
   letter-spacing: -0.5px;
-  color: #1F2937;
+  color: #1f2937;
 }
 
 .notification-content p {
@@ -128,7 +139,7 @@
   font-size: 13.8px;
   opacity: 0.98;
   font-weight: 650;
-  color: #4B5563;
+  color: #4b5563;
 }
 
 .notification-close {
@@ -140,7 +151,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  color: #1F2937;
+  color: #1f2937;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -160,11 +171,11 @@
   padding: 16px 22px;
   max-height: 180px;
   overflow-y: auto;
-  background: #FFFBEB;
+  background: #fffbeb;
   cursor: pointer;
   /* Scroll mượt */
   scrollbar-width: thin;
-  scrollbar-color: #F59E0B #FFF7ED;
+  scrollbar-color: #f59e0b #fff7ed;
 }
 
 .notification-body::-webkit-scrollbar {
@@ -172,12 +183,12 @@
 }
 
 .notification-body::-webkit-scrollbar-track {
-  background: #FFF7ED;
+  background: #fff7ed;
   border-radius: 3px;
 }
 
 .notification-body::-webkit-scrollbar-thumb {
-  background: #F59E0B;
+  background: #f59e0b;
   border-radius: 3px;
 }
 
@@ -185,7 +196,7 @@
   display: flex;
   align-items: center;
   font-size: 15px; /* Lớn hơn để nổi bật */
-  color: #DC2626; /* Đỏ đậm nổi bật */
+  color: #dc2626; /* Đỏ đậm nổi bật */
   margin: 11px 0;
   font-weight: 800; /* Đậm hơn */
   opacity: 0;
@@ -200,13 +211,16 @@
 }
 
 @keyframes fadeInItem {
-  to { opacity: 1; transform: translateX(0); }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .bullet {
   width: 10px; /* To hơn */
   height: 10px;
-  background: #EF4444; /* Đỏ tươi nổi bật */
+  background: #ef4444; /* Đỏ tươi nổi bật */
   border-radius: 50%;
   margin-right: 12px;
 }
@@ -216,7 +230,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
-  background: linear-gradient(90deg, #DC2626, #F87171, #F97316); /* Gradient đỏ → cam nhẹ */
+  background: linear-gradient(
+    90deg,
+    #dc2626,
+    #f87171,
+    #f97316
+  ); /* Gradient đỏ → cam nhẹ */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -227,9 +246,9 @@
 /* Footer */
 .notification-footer {
   padding: 16px 22px;
-  background: linear-gradient(to top, #FEFCE8, #FFFBEB);
+  background: linear-gradient(to top, #fefce8, #fffbeb);
   text-align: center;
-  border-top: 2.5px dashed #FACC15;
+  border-top: 2.5px dashed #facc15;
   backdrop-filter: blur(10px);
   cursor: pointer;
 }
@@ -240,19 +259,19 @@
   justify-content: center;
   gap: 12px;
   font-size: 14.2px;
-  color: #B45309;
+  color: #b45309;
   font-weight: 850;
   letter-spacing: -0.3px;
 }
 
 .footer-content svg {
-  stroke: #F59E0B;
+  stroke: #f59e0b;
   width: 18px;
   height: 18px;
 }
 
 .footer-text {
-  background: linear-gradient(90deg, #B45309, #F59E0B);
+  background: linear-gradient(90deg, #b45309, #f59e0b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

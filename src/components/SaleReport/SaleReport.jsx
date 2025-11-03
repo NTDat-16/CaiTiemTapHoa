@@ -31,7 +31,15 @@ import dayjs from "dayjs";
 import "./SaleReport.css";
 
 const { RangePicker } = DatePicker;
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement
+);
 
 const API_URL = "http://localhost:5000/api/Products/abc-analysis";
 
@@ -43,12 +51,11 @@ const ABC_COLORS = {
 
 // === DỮ LIỆU MẪU CHO LINE CHART (có thể thay bằng API sau) ===
 const MOCK_DAILY_REVENUE = [
-  1200000, 1800000, 2100000, 1600000, 1900000, 2300000, 2000000,
-  1700000, 1950000, 2200000, 1800000, 2150000, 2400000, 1900000,
-  1600000, 1850000, 2250000, 2000000, 1700000, 1950000, 2300000,
-  2100000, 1800000, 1600000, 1900000, 2200000, 2000000, 1750000,
+  1200000, 1800000, 2100000, 1600000, 1900000, 2300000, 2000000, 1700000,
+  1950000, 2200000, 1800000, 2150000, 2400000, 1900000, 1600000, 1850000,
+  2250000, 2000000, 1700000, 1950000, 2300000, 2100000, 1800000, 1600000,
+  1900000, 2200000, 2000000, 1750000,
 ];
-
 
 export default function SaleReport() {
   const [pieData, setPieData] = useState(null);
@@ -74,7 +81,7 @@ export default function SaleReport() {
           `${API_URL}?pageNumber=1&pageSize=100&fromDate=${fromDate}&toDate=${toDate}`,
           {
             headers: {
-              "Authorization": `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
           }
@@ -83,7 +90,8 @@ export default function SaleReport() {
         if (!response.ok) throw new Error(`Lỗi API: ${response.status}`);
 
         const result = await response.json();
-        if (!result.success || !result.data?.items) throw new Error("Dữ liệu không hợp lệ");
+        if (!result.success || !result.data?.items)
+          throw new Error("Dữ liệu không hợp lệ");
 
         const items = result.data.items;
 
@@ -108,30 +116,40 @@ export default function SaleReport() {
 
         setPieData({
           labels: Object.keys(grouped),
-          datasets: [{
-            data: Object.values(grouped),
-            backgroundColor: Object.keys(grouped).map(k => (ABC_COLORS[k]?.color || "#8c8c8c") + "80"),
-          }],
+          datasets: [
+            {
+              data: Object.values(grouped),
+              backgroundColor: Object.keys(grouped).map(
+                (k) => (ABC_COLORS[k]?.color || "#8c8c8c") + "80"
+              ),
+            },
+          ],
         });
 
         // === BIỂU ĐỒ LINE (dùng mock) ===
-        const days = Array.from({ length: dayjs(toDate).date() }, (_, i) => (i + 1).toString());
+        const days = Array.from({ length: dayjs(toDate).date() }, (_, i) =>
+          (i + 1).toString()
+        );
         setLineData({
           labels: days,
-          datasets: [{
-            label: "Doanh thu (₫)",
-            data: MOCK_DAILY_REVENUE,
-            borderColor: "#008f5a",
-            backgroundColor: "rgba(0, 143, 90, 0.1)",
-            fill: true,
-            tension: 0.4,
-          }]
+          datasets: [
+            {
+              label: "Doanh thu (₫)",
+              data: MOCK_DAILY_REVENUE,
+              borderColor: "#008f5a",
+              backgroundColor: "rgba(0, 143, 90, 0.1)",
+              fill: true,
+              tension: 0.4,
+            },
+          ],
         });
 
         message.success("Đã tải dữ liệu từ API thành công!");
       } catch (error) {
         console.error("Lỗi API:", error);
-        message.error("Không thể tải dữ liệu. Vui lòng kiểm tra API hoặc token.");
+        message.error(
+          "Không thể tải dữ liệu. Vui lòng kiểm tra API hoặc token."
+        );
       }
     };
 
@@ -141,16 +159,19 @@ export default function SaleReport() {
   const downloadReport = () => {
     const csv = [
       "Mã SP,Tên SP,Barcode,Doanh thu,Tần suất,Điểm,Phân loại",
-      ...abcData.map(i =>
-        `${i.productId},"${i.productName}",${i.barcode},${i.value},${i.frequency},${i.score},${i.abcClassification}`
-      )
+      ...abcData.map(
+        (i) =>
+          `${i.productId},"${i.productName}",${i.barcode},${i.value},${i.frequency},${i.score},${i.abcClassification}`
+      ),
     ].join("\n");
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `sale_report_${startDate.format("DDMM")}-${endDate.format("DDMM")}.csv`;
+    a.download = `sale_report_${startDate.format("DDMM")}-${endDate.format(
+      "DDMM"
+    )}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -159,17 +180,32 @@ export default function SaleReport() {
     { title: "Mã SP", dataIndex: "productId", width: 90 },
     { title: "Tên sản phẩm", dataIndex: "productName", ellipsis: true },
     { title: "Barcode", dataIndex: "barcode", width: 130 },
-    { title: "Doanh thu", dataIndex: "value", align: "right", render: v => `${Number(v).toLocaleString()} ₫` },
+    {
+      title: "Doanh thu",
+      dataIndex: "value",
+      align: "right",
+      render: (v) => `${Number(v).toLocaleString()} ₫`,
+    },
     { title: "Tần suất", dataIndex: "frequency", align: "center", width: 90 },
-    { title: "Điểm", dataIndex: "score", align: "center", width: 150, render: v => Number(v).toFixed(1) },
+    {
+      title: "Điểm",
+      dataIndex: "score",
+      align: "center",
+      width: 150,
+      render: (v) => Number(v).toFixed(1),
+    },
     {
       title: "Phân loại",
       dataIndex: "abcClassification",
       align: "center",
       width: 100,
-      render: text => {
+      render: (text) => {
         const cls = ABC_COLORS[text] || { label: text, color: "#8c8c8c" };
-        return <Tag color={cls.bg} style={{ color: cls.color, fontWeight: 600 }}>{cls.label}</Tag>;
+        return (
+          <Tag color={cls.bg} style={{ color: cls.color, fontWeight: 600 }}>
+            {cls.label}
+          </Tag>
+        );
       },
     },
   ];
@@ -209,7 +245,9 @@ export default function SaleReport() {
                 <CalendarOutlined className="icon" />
                 <h3>Doanh thu kỳ hiện tại</h3>
                 <div className="value">{totalRevenue.toLocaleString()} ₫</div>
-                <div className="sub">{startDate.format("DD/MM")} - {endDate.format("DD/MM")}</div>
+                <div className="sub">
+                  {startDate.format("DD/MM")} - {endDate.format("DD/MM")}
+                </div>
               </div>
             </div>
 
@@ -219,8 +257,12 @@ export default function SaleReport() {
                 {top5Products.map((p, i) => (
                   <li key={p.productId}>
                     <span className="rank">#{i + 1}</span>
-                    <span className="name" title={p.productName}>{p.productName}</span>
-                    <span className="value">{Number(p.value).toLocaleString()} ₫</span>
+                    <span className="name" title={p.productName}>
+                      {p.productName}
+                    </span>
+                    <span className="value">
+                      {Number(p.value).toLocaleString()} ₫
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -233,30 +275,54 @@ export default function SaleReport() {
               <>
                 <div className="chart-header">
                   <span>Tỷ trọng nhóm ABC</span>
-                  <Button size="small" icon={<EyeOutlined />} onClick={() => setModalVisible(true)}>
+                  <Button
+                    size="small"
+                    icon={<EyeOutlined />}
+                    onClick={() => setModalVisible(true)}
+                  >
                     Xem chi tiết
                   </Button>
                 </div>
                 <div className="chart-container">
-                  <Pie data={pieData} options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: "bottom" } }
-                  }} />
+                  <Pie
+                    data={pieData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { position: "bottom" } },
+                    }}
+                  />
                 </div>
               </>
-            ) : <Empty description="Không có dữ liệu ABC" />}
+            ) : (
+              <Empty description="Không có dữ liệu ABC" />
+            )}
           </div>
 
           {/* CỘT 3: Line */}
           <div className="SaleReport-line-block">
-            <div className="chart-header">Doanh thu mỗi ngày ({endDate.format("MM/YYYY")})</div>
+            <div className="chart-header">
+              Doanh thu mỗi ngày ({endDate.format("MM/YYYY")})
+            </div>
             <div className="chart-container">
-              {lineData ? <Line data={lineData} options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { ticks: { callback: v => `${(v / 1000000).toFixed(1)}M` } } }
-              }} /> : <Empty description="Không có dữ liệu doanh thu" />}
+              {lineData ? (
+                <Line
+                  data={lineData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        ticks: {
+                          callback: (v) => `${(v / 1000000).toFixed(1)}M`,
+                        },
+                      },
+                    },
+                  }}
+                />
+              ) : (
+                <Empty description="Không có dữ liệu doanh thu" />
+              )}
             </div>
           </div>
         </div>

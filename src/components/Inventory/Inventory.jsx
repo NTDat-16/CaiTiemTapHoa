@@ -147,7 +147,9 @@ export default function InventoryManage() {
       } else if (Array.isArray(response.data)) {
         productData = response.data;
       }
-      const ActiveProduct = productData.filter(p => p.status === "Active" || p.status === "active");
+      const ActiveProduct = productData.filter(
+        (p) => p.status === "Active" || p.status === "active"
+      );
       setAllProducts(ActiveProduct);
     } catch (error) {
       message.error("Lỗi khi tải danh sách sản phẩm.");
@@ -298,14 +300,16 @@ export default function InventoryManage() {
       render: (quantity) => {
         const isLowStock = quantity < 10; // Ngưỡng cảnh báo
         return (
-          <span style={{ 
-            color: isLowStock ? 'red' : 'inherit',
-            fontWeight: isLowStock ? 'bold' : 'normal'
-          }}>
+          <span
+            style={{
+              color: isLowStock ? "red" : "inherit",
+              fontWeight: isLowStock ? "bold" : "normal",
+            }}
+          >
             {quantity}
           </span>
         );
-      }
+      },
     },
     { title: "Đơn vị", dataIndex: "unit", key: "unit" },
   ];
@@ -399,12 +403,14 @@ export default function InventoryManage() {
         <Alert
           message={`Có ${lowStock.length} sản phẩm sắp hết hàng!`}
           description={
-            <ul style={{ 
-              margin: 0, 
-              paddingLeft: 20,
-              maxHeight: '70px',
-              overflowY: 'auto',
-            }}>
+            <ul
+              style={{
+                margin: 0,
+                paddingLeft: 20,
+                maxHeight: "70px",
+                overflowY: "auto",
+              }}
+            >
               {lowStock.map((item) => (
                 <li key={item.inventory_id}>
                   <b>{item.product_name}</b> (Còn lại:{" "}
@@ -418,9 +424,8 @@ export default function InventoryManage() {
           style={{ marginBottom: 16 }}
         />
       )}
-      
+
       <div className="inventory-manage-table">
-        
         <Table
           columns={columns}
           dataSource={filteredProducts}
