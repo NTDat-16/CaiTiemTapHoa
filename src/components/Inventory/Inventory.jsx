@@ -418,8 +418,9 @@ export default function InventoryManage() {
           style={{ marginBottom: 16 }}
         />
       )}
-
+      
       <div className="inventory-manage-table">
+        
         <Table
           columns={columns}
           dataSource={filteredProducts}
@@ -440,7 +441,7 @@ export default function InventoryManage() {
             ),
           }}
           onChange={handleTableChange}
-          scroll={{ y: 300, x: 1200 }}
+          scroll={{ y: lowStock.length > 0 ? 260 : 400, x: 1200 }}
         />
       </div>
 

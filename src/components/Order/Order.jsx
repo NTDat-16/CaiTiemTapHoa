@@ -14,6 +14,7 @@ import printInvoice from "./printInvoice";
 import 'antd/dist/reset.css';
 import { ConfigProvider } from "antd";
 import Notification from "../Notification/Notification";
+import { useAuth } from "../../context/AuthContext";
 
   const { Option } = Select;
 
@@ -260,7 +261,7 @@ export default function Order({ onNavigate }) {
   const [customerName, setCustomerName] = useState("");
   const [loadingCustomer, setLoadingCustomer] = useState(false);
   const { inventory } = useFetchInventory(productIds, currentPage, productsPerPage);
-  
+  const { user } = useAuth();
   // Low Stock Notification states
   const [showNotification, setShowNotification] = useState(false);
   const [productNames, setProductNames] = useState([]);
@@ -728,6 +729,7 @@ const handlePayment = async () => {
         totalAmount: orderData.finalAmount,
         customerPaid,
         customerName: orderData.customerName,
+        cashierName: user.fullName || "Thu ngân",
         orderDetails: orderData.orderItems.map((item) => ({
           productName: item.productName,
           quantity: item.quantity,
