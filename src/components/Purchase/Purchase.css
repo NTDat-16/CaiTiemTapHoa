@@ -1,0 +1,303 @@
+/* ========== LAYOUT CHUNG ========== */
+.purchase-manage-container {
+  position: fixed;
+  top: 60px;
+  left: 70px;
+  width: calc(100% - 70px);
+  min-height: calc(100vh - 60px);
+  background-color: #f8f9fa;
+  padding: 10px 20px;
+  overflow: hidden;
+}
+
+/* ========== HEADER ========== */
+.purchase-manage-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.purchase-manage-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #008f5a;
+}
+
+/* Thanh hành động: Search + Nút thêm */
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 👈 Đẩy 2 phần ra 2 bên */
+  width: 100%;
+}
+
+/* ========== SEARCH ========== */
+
+.search-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Khoảng cách giữa Input và nút Filter */
+  flex: 1; /* Cho phép nhóm này co giãn theo chiều rộng */
+}
+.purchase-search-input {
+  width: 40%;
+  flex-shrink: 0;
+}
+
+.purchase-search-input .ant-input {
+  font-size: 15px;
+}
+
+.purchase-search-input .ant-input::placeholder {
+  color: #bfbfbf;
+  font-size: 14px;
+}
+
+/* Bỏ viền xanh khi focus/hover */
+.ant-input:focus,
+.ant-input:hover,
+.ant-input-focused {
+  border-color: #d9d9d9 !important;
+  box-shadow: none !important;
+}
+
+/* Nút Search */
+.purchase-search-input .ant-input-search-button {
+  background-color: #008f5a !important;
+  border: none !important;
+  height: 40px;
+  transition: all 0.2s ease;
+}
+
+.purchase-search-input .ant-input-search-button:hover,
+.purchase-search-input .ant-input-search-button:focus {
+  background-color: #00b36b !important;
+  color: white !important;
+  transform: translateY(-1px);
+}
+
+/* Nút thêm sản phẩm */
+.header-actions .ant-btn {
+  background-color: #008f5a !important;
+  border: none !important;
+  transition: all 0.2s ease-in-out;
+  color: white !important;
+}
+
+.header-actions .ant-btn:hover {
+  background-color: #00b36b !important;
+  color: white !important;
+  transform: translateY(-1px);
+}
+
+/* ========== BẢNG ========== */
+.purchase-manage-table {
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.purchase-manage-table .ant-table {
+  font-size: 14px;
+}
+
+.purchase-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+
+/* Tiêu đề bảng màu trắng */
+.purchase-manage-table .ant-table-thead > tr > th {
+  background-color: #008f5a !important;
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  border: none !important;
+}
+
+/* Nền màu xanh cho header Ant Design Table */
+.ant-table-thead > tr > th {
+  background-color: #008f5a !important;
+  color: white !important;
+  text-align: center;
+}
+
+
+/* Hover hàng */
+.purchase-manage-table .ant-table-tbody > tr:hover > td {
+  background-color: #e6f4ea !important;
+}
+
+/* ========== MODAL ========== */
+.ant-modal-content {
+  padding: 0 !important;
+}
+
+.ant-modal-header {
+  background-color: #008f5a !important;
+  padding: 12px 24px !important;
+  border-bottom: none !important;
+  border-radius: 8px 8px 0 0 !important;
+}
+
+.ant-modal-title {
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+
+.ant-modal-body {
+  padding: 20px 24px !important;
+}
+
+/* ========== BUTTON ========== */
+.ant-btn-primary,
+.ant-btn-dangerous {
+  border: none !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.ant-btn-primary {
+  background-color: #008f5a !important;
+}
+
+.ant-btn-primary:hover {
+  background-color: #00b36b !important;
+  transform: translateY(-1px);
+}
+
+.ant-btn-dangerous {
+  background-color: #ff4d4f !important;
+}
+
+.ant-btn-dangerous:hover {
+  background-color: #ff7875 !important;
+  transform: translateY(-1px);
+}
+
+/* Loại bỏ viền focus */
+.ant-btn:focus,
+.ant-btn:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* ========== FORM ========== */
+.ant-form-item-label > label {
+  font-weight: 500;
+}
+
+.form-actions {
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+.form-actions .ant-space {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+/* Fix chiều cao input form đồng nhất */
+.ant-modal .ant-select-selector,
+.ant-modal .ant-input,
+.ant-modal .ant-input-number,
+.ant-modal .ant-input-number-input,
+.ant-modal .ant-btn {
+  height: 35px !important;
+  line-height: 32px !important;
+}
+
+/* Exception cho TextArea - không bị ép chiều cao */
+.ant-modal .ant-input-textarea,
+.ant-modal textarea.ant-input {
+  height: auto !important;
+  line-height: 1.5 !important;
+}
+
+.ant-modal .ant-select-selection-search-input {
+  height: 30px !important;
+}
+
+.ant-modal .ant-input-number-input {
+  height: 30px !important;
+  padding: 0 11px !important;
+}
+
+/* ========== KHÁC ========== */
+.ant-spin-container {
+  min-height: 390px;
+}
+
+.ant-empty {
+  padding: 40px 0;
+}
+
+.ant-pagination {
+  margin-top: 16px;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .purchase-manage-container {
+    padding: 16px;
+  }
+
+  .purchase-manage-header {
+    gap: 12px;
+  }
+
+  .purchase-manage-header h2 {
+    font-size: 20px;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .purchase-search-input {
+    width: 100%;
+  }
+
+  .header-actions .ant-btn {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .purchase-manage-table {
+    padding: 16px;
+  }
+}
+/* ========== CUSTOMIZE LOADING SPINNER (to #008f5a) ========== */
+
+/* Vòng quay chính */
+.ant-spin-dot-item {
+  background-color: #008f5a !important;
+}
+
+/* Loading text (nếu có) */
+.ant-spin-text {
+  color: #008f5a !important;
+  font-weight: 500;
+}
+
+/* Nút có loading */
+.ant-btn-loading .ant-spin-dot-item {
+  background-color: #ffffff !important; /* trắng cho spinner trên nút xanh */
+}
+
+/* Loading overlay (màu mờ nền bảng) */
+.ant-spin-blur {
+  opacity: 0.4;
+}
