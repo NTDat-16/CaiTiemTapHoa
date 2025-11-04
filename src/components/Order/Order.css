@@ -1,14 +1,14 @@
 .order-container {
-    position: fixed;
-    top: 60px;
-    left: 70px;
-    width: calc(100% - 70px);
-    min-height: calc(100vh - 60px);
-    background-color: #f8f9fa;
-    padding: 10px 20px;
-    overflow-y: auto;   /* ✅ cho phép cuộn */
-    overflow-x: hidden; /* tránh tràn ngang */
-    z-index: 1;
+  position: fixed;
+  top: 60px;
+  left: 70px;
+  width: calc(100% - 70px);
+  min-height: calc(100vh - 60px);
+  background-color: #f8f9fa;
+  padding: 10px 20px;
+  overflow-y: auto; /* ✅ cho phép cuộn */
+  overflow-x: hidden; /* tránh tràn ngang */
+  z-index: 1;
 }
 
 /* ...existing code... */
@@ -33,11 +33,10 @@
 }
 .ant-pagination-item-link {
   background-color: #008f5a !important; /* màu nền xanh ngọc */
-  color: white !important;              /* màu chữ */
-  border-radius: 8px !important;        /* bo góc mềm */
-  border: none !important;              /* bỏ viền mặc định */
+  color: white !important; /* màu chữ */
+  border-radius: 8px !important; /* bo góc mềm */
+  border: none !important; /* bỏ viền mặc định */
   transition: all 0.2s ease;
-  
 }
 .ant-pagination-item-link:hover {
   background-color: #008f5a !important;
@@ -71,12 +70,14 @@
 }
 
 /* Force modal/notification/message lên trên cùng */
-.ant-modal-root, .ant-modal {
+.ant-modal-root,
+.ant-modal {
   z-index: 14000 !important;
 }
 
 /* wrap và mask */
-.ant-modal-wrap, .ant-modal-wrap-centered {
+.ant-modal-wrap,
+.ant-modal-wrap-centered {
   z-index: 14000 !important;
   display: flex;
   align-items: center;
@@ -86,7 +87,7 @@
 /* backdrop */
 .ant-modal-mask {
   z-index: 13990 !important;
-  background-color: rgba(0,0,0,0.45) !important;
+  background-color: rgba(0, 0, 0, 0.45) !important;
   pointer-events: auto !important;
 }
 
@@ -94,21 +95,23 @@
 .ant-modal-content {
   width: auto !important;
   max-width: 90vw !important;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.15) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
   z-index: 14010 !important;
 }
 
 /* nút đóng / tiêu đề */
-.ant-modal-close, .ant-modal-header {
+.ant-modal-close,
+.ant-modal-header {
   z-index: 14020 !important;
 }
 
 /* Đảm bảo notification / message hiển thị trên modal nếu cần */
-.ant-notification, .ant-notification-notice, .ant-message {
+.ant-notification,
+.ant-notification-notice,
+.ant-message {
   z-index: 15000 !important;
-    position: fixed !important;
-    background-color: red !important;
-
+  position: fixed !important;
+  background-color: red !important;
 }
 
 /* Nếu có custom full-screen overlays, đảm bảo chúng không che modal */

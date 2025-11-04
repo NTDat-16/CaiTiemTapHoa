@@ -1187,41 +1187,7 @@ export default function Order({ onNavigate }) {
   }
   return (
     <ConfigProvider getPopupContainer={() => document.body}>
-      {/* Low Stock Notification */}
       {showNotification && (
-        // <div
-        //   className="low-stock-notification"
-        //   onClick={() => onNavigate && onNavigate('inventory')}
-        // >
-        //   <div className="low-stock-notification-header">
-        //     <span className="low-stock-notification-icon">⚠️</span>
-        //     <div className="low-stock-notification-content">
-        //       <div className="low-stock-notification-title">
-        //         Cảnh báo tồn kho
-        //       </div>
-        //       <div className="low-stock-notification-subtitle">
-        //         {productNames.length} sản phẩm sắp hết
-        //       </div>
-        //     </div>
-        //     <button
-        //       className="low-stock-notification-close"
-        //       onClick={(e) => {
-        //         e.stopPropagation();
-        //         setShowNotification(false);
-        //       }}
-        //     >×</button>
-        //   </div>
-        //   <div className="low-stock-notification-list">
-        //     {productNames.map((name, i) => (
-        //       <div key={i} className="low-stock-notification-item">
-        //         • {name}
-        //       </div>
-        //     ))}
-        //   </div>
-        //   <div className="low-stock-notification-footer">
-        //     👉 Click để xem chi tiết trong Inventory
-        //   </div>
-        // </div>
         <Notification
           productNames={productNames}
           onNavigate={onNavigate}
@@ -1251,7 +1217,7 @@ export default function Order({ onNavigate }) {
                 },
               }}
             >
-                          {/* Header */}           {" "}
+              {/* Header */}
               <div
                 style={{
                   padding: "10px 20px",
@@ -1262,11 +1228,9 @@ export default function Order({ onNavigate }) {
                   zIndex: 2,
                 }}
               >
-                             {" "}
                 <Space
                   style={{ width: "100%", justifyContent: "space-between" }}
                 >
-                                 {" "}
                   <Select
                     onChange={(val) => setSelectedCategory(val)}
                     value={selectedCategory}
@@ -1281,7 +1245,6 @@ export default function Order({ onNavigate }) {
                       </Option>
                     ))}
                   </Select>
-                                 {" "}
                   <Input
                     prefix={<SearchOutlined style={{ color: "#999" }} />}
                     placeholder="Tìm sản phẩm..."
@@ -1290,11 +1253,9 @@ export default function Order({ onNavigate }) {
                     style={{ width: 240, height: 36, borderRadius: 6 }}
                     size="middle"
                   />
-                               {" "}
                 </Space>
-                           {" "}
               </div>
-                          {/* Danh sách sản phẩm*/}           {" "}
+              {/* Danh sách sản phẩm*/}
               <div
                 style={{
                   flex: 1,
@@ -1303,10 +1264,9 @@ export default function Order({ onNavigate }) {
                   background: "#fafafa",
                 }}
               >
-                             {" "}
                 {loading ? (
                   <div style={{ textAlign: "center", padding: "60px 0" }}>
-                                      <Spin size="large" />               {" "}
+                    <Spin size="large" />
                   </div>
                 ) : (
                   <div
@@ -1319,7 +1279,6 @@ export default function Order({ onNavigate }) {
                       alignItems: "start",
                     }}
                   >
-                                     {" "}
                     {currentProducts.map((p) => (
                       <Card
                         key={p.product_id}
@@ -1530,12 +1489,10 @@ export default function Order({ onNavigate }) {
                         </div>
                       </Card>
                     ))}
-                                   {" "}
                   </div>
                 )}
-                           {" "}
               </div>
-                          {/* Footer */}           {" "}
+              {/* Footer */}
               <div
                 style={{
                   padding: "10px 24px",
@@ -1561,15 +1518,11 @@ export default function Order({ onNavigate }) {
                     setProductsPerPage(size);
                   }}
                 />
-                           {" "}
               </div>
-                       {" "}
             </Card>
-                 {" "}
           </Col>
-          {/* Cột bên phải*/}     {" "}
+          {/* Cột bên phải*/}
           <Col span={8} style={{ paddingRight: 0 }}>
-                     {" "}
             <Card
               bordered
               style={{
@@ -1580,7 +1533,7 @@ export default function Order({ onNavigate }) {
               }}
               bodyStyle={{ padding: 0 }}
             >
-                          {/* Danh sách sản phẩm */}           {" "}
+              {/* Danh sách sản phẩm */}
               <div
                 style={{
                   flex: 1,
@@ -1589,7 +1542,6 @@ export default function Order({ onNavigate }) {
                   padding: 0,
                 }}
               >
-                             {" "}
                 <Table
                   columns={columns}
                   dataSource={cart}
@@ -1612,16 +1564,14 @@ export default function Order({ onNavigate }) {
                             textAlign: "center",
                           }}
                         >
-                                                  {children}                   
-                           {" "}
+                           {children}                   
                         </th>
                       ),
                     },
                   }}
                 />
-                           {" "}
               </div>
-                          {/* 2. Thông tin khách + thanh toán */}             {" "}
+              {/* 2. Thông tin khách + thanh toán */}
               <div
                 style={{
                   display: "flex",
@@ -1632,7 +1582,7 @@ export default function Order({ onNavigate }) {
                   background: "#fff",
                 }}
               >
-                                {/* Cột trái */}               {" "}
+                {/* Cột trái */}
                 <div
                   style={{
                     flex: 1,
@@ -1641,7 +1591,6 @@ export default function Order({ onNavigate }) {
                     gap: 12,
                   }}
                 >
-                                   {" "}
                   <Input
                     placeholder="Nhập SĐT khách hàng"
                     value={phone}
@@ -1651,20 +1600,19 @@ export default function Order({ onNavigate }) {
                         type="primary"
                         style={{ padding: "0 12px", height: 28 }}
                       >
-                                                + Thêm                      {" "}
+                        + Thêm
                       </Button>
                     }
                     suffix={loadingCustomer ? <Spin size="small" /> : null}
                     style={{ height: 36, borderRadius: 6 }}
                     onChange={handlePhoneChange}
                   />
-                                                     {" "}
                   <Input
                     placeholder="Tên khách hàng "
                     value={customerName}
                     readOnly
                     style={{ height: 36, borderRadius: 6, marginTop: 8 }}
-                  />{" "}
+                  />
                                
                   <Select
                     value={selectedPromoId || ""}
@@ -1721,28 +1669,23 @@ export default function Order({ onNavigate }) {
                       );
                     })}
                   </Select>
-                                   {" "}
                   <Input.TextArea
                     placeholder="Ghi chú cho đơn"
                     rows={2}
                     style={{ borderRadius: 6, resize: "none" }}
                   />
-                                   {" "}
                   <Select
                     value={paymentMethod}
                     //                     onChange={handlePayment}
                     onChange={handlePaymentChange}
                     style={{ width: "100%", height: 36, borderRadius: 6 }}
                   >
-                                       {" "}
                     <Option value="Tiền mặt">Tiền mặt</Option>                 
                       <Option value="Chuyển khoản">Chuyển khoản</Option>       
-                                <Option value="Thẻ">Thẻ</Option>               
-                     {" "}
+                      <Option value="Thẻ">Thẻ</Option>               
                   </Select>
-                                 {" "}
                 </div>
-                                {/* Cột phải */}               {" "}
+                {/* Cột phải */}
                 <div
                   style={{
                     flex: 1,
@@ -1751,7 +1694,6 @@ export default function Order({ onNavigate }) {
                     gap: 8,
                   }}
                 >
-                                   {" "}
                   <div
                     style={{
                       display: "flex",
@@ -1760,11 +1702,9 @@ export default function Order({ onNavigate }) {
                       color: "#555",
                     }}
                   >
-                                        <span>Tổng phụ:</span>                 
-                      <span>{subtotal.toLocaleString()} ₫</span>               
-                     {" "}
+                      <span>Tổng phụ:</span>
+                    <span>{subtotal.toLocaleString()} ₫</span>               
                   </div>
-                                   {" "}
                   <div
                     style={{
                       display: "flex",
@@ -1773,11 +1713,9 @@ export default function Order({ onNavigate }) {
                       color: "#555",
                     }}
                   >
-                                        <span>Giảm giá:</span>                 
-                      <span>- {discountAmount.toLocaleString()} ₫</span>       
-                             {" "}
+                      <span>Giảm giá:</span>
+                    <span>- {discountAmount.toLocaleString()} ₫</span>       
                   </div>
-                                   {" "}
                   <div
                     style={{
                       display: "flex",
@@ -1786,14 +1724,11 @@ export default function Order({ onNavigate }) {
                       fontSize: 18,
                     }}
                   >
-                                        <span>Tổng cộng:</span>                 
-                      <span>{total.toLocaleString()} ₫</span>                   
-                                     {" "}
+                      <span>Tổng cộng:</span>
+                    <span>{total.toLocaleString()} ₫</span>                   
                   </div>
-                                   {" "}
                   {paymentMethod === "Tiền mặt" && (
                     <>
-                                           {" "}
                       <div
                         style={{
                           display: "flex",
@@ -1802,8 +1737,7 @@ export default function Order({ onNavigate }) {
                           fontWeight: "bold",
                         }}
                       >
-                                                <span>Khách đưa:</span>         
-                                       {" "}
+                        <span>Khách đưa:</span>         
                         <InputNumber
                           min={0}
                           value={customerPaid}
@@ -1812,9 +1746,7 @@ export default function Order({ onNavigate }) {
                           onChange={(value) => setCustomerPaid(value)}
                           style={{ width: 120 }}
                         />
-                                             {" "}
                       </div>
-                                           {" "}
                       <div
                         style={{
                           display: "flex",
@@ -1824,20 +1756,14 @@ export default function Order({ onNavigate }) {
                           fontWeight: "bold",
                         }}
                       >
-                                                <span>Tiền thừa:</span>         
-                                     {" "}
+                        <span>Tiền thừa:</span>         
                         <span>
-                                                   {" "}
                           {customerPaid != null &&
                             tienthua(customerPaid, total)}
-                                                 {" "}
                         </span>
-                                             {" "}
                       </div>
-                                         {" "}
                     </>
                   )}
-                                   {" "}
                   {paymentMethod === "Chuyển khoản" && (
                     <div
                       style={{
@@ -1848,7 +1774,6 @@ export default function Order({ onNavigate }) {
                         marginTop: "5px",
                       }}
                     >
-                                           {" "}
                       <img
                         src={QR}
                         alt="QR Payment"
@@ -1858,7 +1783,6 @@ export default function Order({ onNavigate }) {
                           objectFit: "contain",
                         }}
                       />
-                                           {" "}
                       <div
                         style={{
                           textAlign: "center",
@@ -1866,18 +1790,15 @@ export default function Order({ onNavigate }) {
                           fontWeight: 500,
                         }}
                       >
-                                                Tên tài khoản: CaiTiemTapHoa{" "}
-                        <br />                        STK: 1010101010          
-                                   {" "}
+                         Tên tài khoản: CaiTiemTapHoa
+                        <br />
+                        STK: 1010101010          
                       </div>
-                                         {" "}
                     </div>
                   )}
-                                 {" "}
                 </div>
-                             {" "}
               </div>
-                          {/* 3. Footer: nút luôn sát đáy */}           {" "}
+              {/* 3. Footer: nút luôn sát đáy */}
               <div
                 style={{
                   display: "flex",
@@ -1887,8 +1808,6 @@ export default function Order({ onNavigate }) {
                   flexShrink: 0,
                 }}
               >
-                {" "}
-                                                   {" "}
                 <Button
                   type="default"
                   style={{ flex: 1 }}
@@ -1905,16 +1824,13 @@ export default function Order({ onNavigate }) {
                   onClick={handlePayment}
                 >
                   Thanh toán
-                </Button>{" "}
+                </Button>
                            
               </div>
-                       {" "}
             </Card>
-                   {" "}
           </Col>
-               {" "}
         </Row>
-              {/*Model thêm khách hàng mới*/}   {" "}
+        {/*Model thêm khách hàng mới*/}
         <Modal
           title={"Thêm Khách Hàng Mới"}
           open={isModalOpen}
@@ -1924,18 +1840,15 @@ export default function Order({ onNavigate }) {
           style={{ top: 100 }}
           closeIcon={false}
         >
-             {" "}
           <Form
             form={form}
             layout="vertical"
             autoComplete="off"
             onFinish={AddNewCustomer}
           >
-               {" "}
             <div
               style={{ display: "flex", flexDirection: "column", gap: "16px" }}
             >
-                   {" "}
               <Form.Item
                 label="Họ và tên"
                 name="name"
@@ -1944,14 +1857,11 @@ export default function Order({ onNavigate }) {
                   { max: 250, message: "Họ và tên không quá 250 ký tự" },
                 ]}
               >
-                             {" "}
                 <Input
                   placeholder="Nguyễn Văn An"
                   style={{ width: "100%", height: 36 }}
                 />
-                           {" "}
               </Form.Item>
-                         {" "}
               <Form.Item
                 label="Số điện thoại"
                 name="phone"
@@ -1964,33 +1874,23 @@ export default function Order({ onNavigate }) {
                   },
                 ]}
               >
-                             {" "}
                 <Input
                   placeholder="090xxxxxxx"
                   style={{ width: "100%", height: 36 }}
                   maxLength={10}
                 />
-                           {" "}
               </Form.Item>
-                       {" "}
             </div>
-                     {" "}
             <Form.Item
               style={{ marginTop: 24, textAlign: "right", marginBottom: 0 }}
             >
-                         {" "}
               <Space>
-                             {" "}
                 <Button onClick={() => setIsModalOpen(false)}>Hủy</Button>     
-                       {" "}
                 <Button type="primary" htmlType="submit">
                   Thêm mới
                 </Button>
-                           {" "}
               </Space>
-                       {" "}
             </Form.Item>
-                   {" "}
           </Form>
         </Modal>
       </div>
