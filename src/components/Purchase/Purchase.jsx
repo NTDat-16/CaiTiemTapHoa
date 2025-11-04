@@ -155,16 +155,36 @@ export default function Purchase() {
 
   // View purchase detail
   const handleViewDetail = async (purchase) => {
-    setCurrentPurchase(purchase);
-    setPurchaseItems(purchase.purchaseItems || []);
-    form.setFieldsValue({
-      supplierId: purchase.supplierId,
-      notes: purchase.notes,
-    });
-    setIsDetailModalOpen(true);
-    // Load suppliers and products when opening modal
-    fetchSuppliers();
-    fetchProducts();
+    try {
+      setLoading(true);
+      // Gọi API để lấy chi tiết đầy đủ
+      const response = await fetch(`${API_BASE}/purchases/${purchase.purchaseId}`, {
+        headers: getAuthHeaders()
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        const purchaseDetail = result.data;
+        setCurrentPurchase(purchaseDetail);
+        setPurchaseItems(purchaseDetail.purchaseItems || []);
+        form.setFieldsValue({
+          supplierId: purchaseDetail.supplierId,
+          notes: purchaseDetail.notes || "",
+        });
+        setIsDetailModalOpen(true);
+        // Load suppliers and products when opening modal
+        fetchSuppliers();
+        fetchProducts();
+      } else {
+        message.error(result.message || "Lỗi khi tải chi tiết đơn nhập hàng");
+      }
+    } catch (error) {
+      console.error("Error fetching purchase detail:", error);
+      message.error("Lỗi khi tải chi tiết đơn nhập hàng");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Save draft (Pending status)
@@ -672,19 +692,21 @@ export default function Purchase() {
 
           {/* Hiển thị nhà cung cấp khi không editable */}
           {!isEditable() && currentPurchase && (
-            <Form.Item
-              label="Nhà cung cấp"
-              name="supplierId"
-              style={{ marginBottom: 16 }}
-            >
-              <Select disabled>
-                {suppliers.map((supplier) => (
-                  <Option key={supplier.supplierId} value={supplier.supplierId}>
-                    {supplier.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+            <div style={{ marginBottom: 16 }}>
+              <Form.Item
+                label="Nhà cung cấp"
+                name="supplierId"
+                style={{ marginBottom: 0 }}
+              >
+                <Select disabled>
+                  {suppliers.map((supplier) => (
+                    <Option key={supplier.supplierId} value={supplier.supplierId}>
+                      {supplier.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </div>
           )}
 
           {/* Bảng danh sách sản phẩm */}
@@ -698,14 +720,14 @@ export default function Purchase() {
             size="small"
             title={() => <b>Danh sách sản phẩm ({purchaseItems.length})</b>}
             locale={{ emptyText: "Chưa có sản phẩm nào" }}
-            style={{ marginBottom: -80 }}
+            style={{ marginBottom: 8 }}
           />
 
           {/* Ghi chú dưới bảng */}
           <Form.Item 
             label="Ghi chú" 
             name="notes"
-            style={{ marginBottom: 12 }}
+            style={{ marginBottom: 12, marginTop: -16 }}
           >
             <Input.TextArea
               placeholder="Nhập ghi chú cho đơn nhập hàng..."
