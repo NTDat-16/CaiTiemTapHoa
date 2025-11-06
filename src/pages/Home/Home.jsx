@@ -10,16 +10,16 @@ import Category from "../../components/Category/Category";
 import Employee from "../../components/Employee/Employee";
 import Customer from "../../components/Customer/Customer";
 import Supplier from "../../components/Supplier/Supplier";
+import Purchase from "../../components/Purchase/Purchase";
 import "./Home.css";
 
 export default function Home() {
-  
   const [choosen, setChoosen] = useState("order");
 
   function handleChoosen(frame) {
     setChoosen(frame);
   }
-  
+
   return (
     <div className="home-container">
       <Navbar />
@@ -33,11 +33,12 @@ export default function Home() {
           {choosen === "supplier" && <Supplier />}
           {choosen === "employee" && <Employee />}
           {choosen === "customer" && <Customer />}
-          {choosen === "order" && <Order />}
+          {choosen === "order" && <Order onNavigate={handleChoosen} />}
           {choosen === "promotion" && <Promotion />}
           {choosen === "product" && <ProductManage />}
           {choosen === "inventory" && <Inventory />}
           {choosen === "report" && <Dashboard />}
+          {choosen === "purchase" && <Purchase />}
         </div>
       </div>
     </div>

@@ -1,250 +1,331 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import axios from "axios";
 import {
-  Form, Table, Row, Col, Input, Select, Button, Card,  Space, Tag, Pagination, Spin,Divider, InputNumber, notification
+  Form,
+  Table,
+  Row,
+  Col,
+  Input,
+  Select,
+  Button,
+  Card,
+  Space,
+  Tag,
+  Pagination,
+  Spin,
+  Divider,
+  InputNumber,
+  notification,
 } from "antd";
-import { Modal, message } from "antd"; 
-import { SearchOutlined, DeleteOutlined, MinusOutlined, PlusOutlined, QrcodeOutlined } from "@ant-design/icons";
+import { Modal, message } from "antd";
+import {
+  SearchOutlined,
+  DeleteOutlined,
+  MinusOutlined,
+  PlusOutlined,
+  QrcodeOutlined,
+} from "@ant-design/icons";
 import "./Order.css";
 import aquavoiem from "../../assets/aquavoiem.png";
 import QR from "../../assets/QR.png";
 import useFetchPromotions from "../Hooks/useFetchpPromotion";
 import useCustomer from "../Hooks/useCustomer";
 import printInvoice from "./printInvoice";
-import 'antd/dist/reset.css';
+import "antd/dist/reset.css";
 import { ConfigProvider } from "antd";
+import Notification from "../Notification/Notification";
+import { useAuth } from "../../context/AuthContext";
 
-  const { Option } = Select;
+const { Option } = Select;
 
+// MOCK DATA (Vẫn giữ để đảm bảo fallback hoạt động)
+const mockProducts = [
+  {
+    product_id: 1,
+    product_name: "Nước suối Aquafina 500ml",
+    barcode: "8938505970025",
+    price: 5000,
+    unit: "chai",
+    type: "do-uong",
+    image_url: aquavoiem,
+  },
+  {
+    product_id: 2,
+    product_name: "Bánh mì sandwich",
+    barcode: "8934567823912",
+    price: 15000,
+    unit: "ổ",
+    type: "thuc-pham",
+    image_url: aquavoiem,
+  },
+  {
+    product_id: 3,
+    product_name: "Coca-Cola lon 330ml",
+    barcode: "8934823912345",
+    price: 10000,
+    unit: "lon",
+    type: "do-uong",
+    image_url: aquavoiem,
+  },
+  {
+    product_id: 4,
+    product_name: "Kẹo cao su Doublemint",
+    barcode: "8935049510011",
+    price: 3000,
+    unit: "gói",
+    type: "gia-dung",
+    image_url: aquavoiem,
+  },
+  {
+    product_id: 6,
+    product_name: "Bia Saigon",
+    barcode: "8935049510022",
+    price: 18000,
+    unit: "lon",
+    type: "do-uong",
+    image_url: aquavoiem,
+  }, // ... thêm các sản phẩm mock khác
+];
 
-  // MOCK DATA (Vẫn giữ để đảm bảo fallback hoạt động)
-  const mockProducts = [
-    { product_id: 1, product_name: "Nước suối Aquafina 500ml", barcode: "8938505970025", price: 5000, unit: "chai", type: "do-uong", image_url: aquavoiem },
-    { product_id: 2, product_name: "Bánh mì sandwich", barcode: "8934567823912", price: 15000, unit: "ổ", type: "thuc-pham", image_url: aquavoiem },
-    { product_id: 3, product_name: "Coca-Cola lon 330ml", barcode: "8934823912345", price: 10000, unit: "lon", type: "do-uong", image_url: aquavoiem },
-    { product_id: 4, product_name: "Kẹo cao su Doublemint", barcode: "8935049510011", price: 3000, unit: "gói", type: "gia-dung", image_url: aquavoiem },
-    { product_id: 6, product_name: "Bia Saigon", barcode: "8935049510022", price: 18000, unit: "lon", type: "do-uong", image_url: aquavoiem },
-    // ... thêm các sản phẩm mock khác
-  ];
-
-  const mockPromotions = [
-    { promo_id: 1, promo_code: "KM10", discount_type: "percent", discount_value: 10, name: "Giảm 10%" },
-    { promo_id: 2, promo_code: "FREESHIP", discount_type: "amount", discount_value: 20000, name: "Giảm 20K" },
-  ];
-
+const mockPromotions = [
+  {
+    promo_id: 1,
+    promo_code: "KM10",
+    discount_type: "percent",
+    discount_value: 10,
+    name: "Giảm 10%",
+  },
+  {
+    promo_id: 2,
+    promo_code: "FREESHIP",
+    discount_type: "amount",
+    discount_value: 20000,
+    name: "Giảm 20K",
+  },
+];
 
 const CATEGORY_MAP = {
-    1: { name: "Đồ uống", slug: "do-uong" },
-    2: { name: "Bánh kẹo", slug: "banh-keo" },
-    3: { name: "Gia vị", slug: "gia-vi" },
-    4: { name: "Đồ gia dụng", slug: "do-gia-dung" },
-    5: { name: "Mỹ phẩm", slug: "my-pham" },
+  1: { name: "Đồ uống", slug: "do-uong" },
+  2: { name: "Bánh kẹo", slug: "banh-keo" },
+  3: { name: "Gia vị", slug: "gia-vi" },
+  4: { name: "Đồ gia dụng", slug: "do-gia-dung" },
+  5: { name: "Mỹ phẩm", slug: "my-pham" },
 };
 
 const getCategoryData = (id) => {
-    return CATEGORY_MAP[id] || { name: "Khác", slug: "khac" };
+  return CATEGORY_MAP[id] || { name: "Khác", slug: "khac" };
 };
 const normalizeCategoryName = (name) => {
   if (!name) return "";
-  return name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
 };
 
-  const getAuthToken = () => {
-      return localStorage.getItem('token');
-  };
+const getAuthToken = () => {
+  return localStorage.getItem("token");
+};
 
-  const API_BASE_URL = "http://localhost:5000/api";
-  const API_IMAGE = "http://localhost:5000";
+const API_BASE_URL = "http://localhost:5000/api";
+const API_IMAGE = "http://localhost:5000";
 const calculateDiscountAmount = (subtotal, selectedPromoId, promotions) => {
-    const promoId = Number(selectedPromoId);
-    const selectedPromo = promotions.find(p => p.promo_id === promoId);
-    
-    if (!selectedPromo || subtotal <= 0) {
-        return 0;
-    }
+  const promoId = Number(selectedPromoId);
+  const selectedPromo = promotions.find((p) => p.promo_id === promoId);
 
-    // Lấy min_order_amount, mặc định là 0
-    const minAmount = selectedPromo.min_order_amount || 0; 
-    
-    // Kiểm tra điều kiện đơn hàng tối thiểu
-    if (subtotal < minAmount) {
-        return 0; 
-    }
-
-    const { discount_type, discount_value } = selectedPromo;
-    let discount = 0;
-    
-    // Xử lý cả "Fixed" (API) và "Percent"
-    const type = discount_type.toLowerCase();
-
-    if (type === "percent") {
-        // Đã sửa: Dùng 'subtotal' (tham số truyền vào)
-        discount = (subtotal * discount_value) / 100;
-    } else if (type === "fixed" || type === "amount") { 
-        discount = discount_value;
-    }
-
-    // Chiết khấu không được vượt quá Tổng phụ
-    return Math.max(0, Math.min(discount, subtotal));
-};
-  const useFetchProducts = (page = 1, size = 25) => { 
-    const [products, setProducts] = useState([]);
-    const [promotions, setPromotions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [totalItems, setTotalItems] = useState(0); 
-
-    const fetchProductsData = useCallback(async () => {
-      setLoading(true);
-      const token = getAuthToken(); 
-    console.log("Fetching products with token:", token);
-      
-      if (!token) {
-          message.error("Không tìm thấy token. Vui lòng đăng nhập lại.");
-          setProducts(mockProducts);
-          setPromotions(mockPromotions);
-          setLoading(false);
-          return;
-      }
-
-      try {
-          // Dùng page và size đã được cung cấp
-            const response = await fetch(`${API_BASE_URL}/Products?PageNumber=${page}&PageSize=${size}`, {
-              method: 'GET',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`,
-              },
-          });
-
-          if (!response.ok) {
-              if (response.status === 401) {
-                  message.error("Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
-              } else {
-                  // Sửa: Dùng response.status thay vì response.statusText
-                  message.error(`Lỗi khi lấy dữ liệu sản phẩm: ${response.status}`);
-              }
-              setProducts(mockProducts);
-              setPromotions(mockPromotions);
-              throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const result = await response.json(); 
-
-          
-              const fetchedProducts = Array.isArray(result?.data?.items)
-              ? result.data.items.map(p => ({
-                  ...p,
-                 product_id: p.productId || p.product?.productId, 
-                product_name: p.productName || p.product?.productName,
-                price: p.price || p.product?.price,
-                unit: p.unit || p.product?.unit,
-                imagePath: p.imagePath || p.product?.imagePath,
-                categoryName: p.categoryName || p.product?.categoryName,
-                categoryId: p.categoryId || p.product?.categoryId,
-              })) 
-              : mockProducts;
-          
-          setProducts(fetchedProducts); 
-          // Lấy tổng số lượng (Nếu API trả về trong result.data.totalItems)
-  setTotalItems(result?.data?.totalItems || result?.totalItems || result?.data?.pagination?.total || 100);
-          setPromotions(mockPromotions); // Giữ nguyên mock promotions
-          message.success("Tải dữ liệu sản phẩm thành công!");
-          
-      } catch (error) {
-          console.error("Lỗi khi fetch sản phẩm:", error);
-          message.error("Không thể kết nối đến máy chủ hoặc lỗi mạng.");
-          setProducts(mockProducts);
-          setPromotions(mockPromotions);
-      } finally {
-          setLoading(false);
-      }
-    }, [page, size]);
-  useEffect(() => {
-      fetchProductsData();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, size]); // chỉ phụ thuộc page & size
-
-
-
-    return { products, promotions, loading, totalItems, refetchProducts: fetchProductsData };
+  if (!selectedPromo || subtotal <= 0) {
+    return 0;
   }
 
-  const useFetchInventory = (productIds, page = 1, pageSize = 10) => {
-     const [inventory, setInventory] = useState({}); 
-     const [loadingInventory, setLoadingInventory] = useState(false);
-     
-     // Không cần state fetchedProductIds nữa
+  // Lấy min_order_amount, mặc định là 0
+  const minAmount = selectedPromo.min_order_amount || 0;
 
-     const shouldFetch = productIds.length > 0;
-    
-     // Khai báo hàm fetchData bên trong useEffect hoặc dùng useCallback (nhưng trong trường hợp này, bên trong useEffect là đủ)
-     useEffect(() => {
-      if (!shouldFetch) {
-        // Nếu không có productIds (ví dụ: đang loading Product), clear inventory
-        setInventory({}); 
+  // Kiểm tra điều kiện đơn hàng tối thiểu
+  if (subtotal < minAmount) {
+    return 0;
+  }
+
+  const { discount_type, discount_value } = selectedPromo;
+  let discount = 0;
+
+  // Xử lý cả "Fixed" (API) và "Percent"
+  const type = discount_type.toLowerCase();
+
+  if (type === "percent") {
+    // Đã sửa: Dùng 'subtotal' (tham số truyền vào)
+    discount = (subtotal * discount_value) / 100;
+  } else if (type === "fixed" || type === "amount") {
+    discount = discount_value;
+  }
+
+  // Chiết khấu không được vượt quá Tổng phụ
+  return Math.max(0, Math.min(discount, subtotal));
+};
+const useFetchProducts = (page = 1, size = 25) => {
+  const [products, setProducts] = useState([]);
+  const [promotions, setPromotions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [totalItems, setTotalItems] = useState(0);
+
+  const fetchProductsData = useCallback(async () => {
+    setLoading(true);
+    const token = getAuthToken();
+    console.log("Fetching products with token:", token);
+    if (!token) {
+      message.error("Không tìm thấy token. Vui lòng đăng nhập lại.");
+      setProducts(mockProducts);
+      setPromotions(mockPromotions);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Dùng page và size đã được cung cấp
+      const response = await fetch(
+        `${API_BASE_URL}/Products?PageNumber=${page}&PageSize=${size}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          message.error("Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
+        } else {
+          // Sửa: Dùng response.status thay vì response.statusText
+          message.error(`Lỗi khi lấy dữ liệu sản phẩm: ${response.status}`);
+        }
+        setProducts(mockProducts);
+        setPromotions(mockPromotions);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      const fetchedProducts = Array.isArray(result?.data?.items)
+        ? result.data.items.map((p) => ({
+            ...p,
+            product_id: p.productId || p.product?.productId,
+            product_name: p.productName || p.product?.productName,
+            price: p.price || p.product?.price,
+            unit: p.unit || p.product?.unit,
+            imagePath: p.imagePath || p.product?.imagePath,
+            categoryName: p.categoryName || p.product?.categoryName,
+            categoryId: p.categoryId || p.product?.categoryId,
+          }))
+        : mockProducts;
+
+      setProducts(fetchedProducts);
+      // Lấy tổng số lượng (Nếu API trả về trong result.data.totalItems)
+      setTotalItems(
+        result?.data?.totalItems ||
+          result?.totalItems ||
+          result?.data?.pagination?.total ||
+          100
+      );
+      setPromotions(mockPromotions); // Giữ nguyên mock promotions
+      message.success("Tải dữ liệu sản phẩm thành công!");
+    } catch (error) {
+      console.error("Lỗi khi fetch sản phẩm:", error);
+      message.error("Không thể kết nối đến máy chủ hoặc lỗi mạng.");
+      setProducts(mockProducts);
+      setPromotions(mockPromotions);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, size]);
+  useEffect(() => {
+    fetchProductsData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, size]); // chỉ phụ thuộc page & size
+
+  return {
+    products,
+    promotions,
+    loading,
+    totalItems,
+    refetchProducts: fetchProductsData,
+  };
+};
+
+const useFetchInventory = (productIds, page = 1, pageSize = 10) => {
+  const [inventory, setInventory] = useState({});
+  const [loadingInventory, setLoadingInventory] = useState(false); // Không cần state fetchedProductIds nữa
+  const shouldFetch = productIds.length > 0; // Khai báo hàm fetchData bên trong useEffect hoặc dùng useCallback (nhưng trong trường hợp này, bên trong useEffect là đủ)
+  useEffect(() => {
+    if (!shouldFetch) {
+      // Nếu không có productIds (ví dụ: đang loading Product), clear inventory
+      setInventory({});
+      return;
+    }
+    const fetchInventoryData = async () => {
+      setLoadingInventory(true);
+      const token = getAuthToken();
+
+      if (!token) {
+        setLoadingInventory(false);
         return;
       }
-      const fetchInventoryData = async () => {
-        setLoadingInventory(true);
-        const token = getAuthToken();
+      try {
+        // Gọi API với page và pageSize mới nhất
+        const response = await fetch(
+          `${API_BASE_URL}/Inventory?pageNumber=${page}&pageSize=${pageSize}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-        if (!token) {
-          setLoadingInventory(false);
-          return;
-        }
-        try {
-          // Gọi API với page và pageSize mới nhất
-          const response = await fetch(`${API_BASE_URL}/Inventory?pageNumber=${page}&pageSize=${pageSize}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-          });
+        if (!response.ok) {
+          throw new Error(`Lỗi khi lấy dữ liệu tồn kho: ${response.status}`);
+        }
+        const result = await response.json();
 
-          if (!response.ok) {
-                     throw new Error(`Lỗi khi lấy dữ liệu tồn kho: ${response.status}`);
-                 }
-                 const result = await response.json();
+        const newInventory = {};
+        if (Array.isArray(result.data?.items)) {
+          result.data.items.forEach((item) => {
+            newInventory[item.productId] = item.quantity;
+          });
+        }
+        setInventory(newInventory); // Chỉ gọi setInventory một lần // Không cần setFetchedProductIds nữa
+      } catch (error) {
+        console.error("Lỗi khi fetch tồn kho:", error);
+      } finally {
+        setLoadingInventory(false);
+      }
+    }; // Luôn gọi fetchInventoryData nếu shouldFetch (productIds.length > 0)
+    fetchInventoryData();
+  }, [shouldFetch, page, pageSize, productIds]); // Giữ productIds vì nó thay đổi sau mỗi lần fetch product
 
-                 const newInventory = {};
-                 if (Array.isArray(result.data?.items)) {
-                    result.data.items.forEach(item => {
-                      newInventory[item.productId] = item.quantity; 
-                    });
-                 }
-                 
-                 setInventory(newInventory); // Chỉ gọi setInventory một lần
-                 // Không cần setFetchedProductIds nữa
-             } catch (error) {
-                 console.error("Lỗi khi fetch tồn kho:", error);
-             } finally {
-                 setLoadingInventory(false);
-             }
-         };
-           
-         // Luôn gọi fetchInventoryData nếu shouldFetch (productIds.length > 0)
-         fetchInventoryData();
+  return { inventory, loadingInventory };
+};
 
-   
-     }, [shouldFetch, page, pageSize, productIds]); // Giữ productIds vì nó thay đổi sau mỗi lần fetch product
-
-     return { inventory, loadingInventory };
-}
-
-
-
-export default function Order() {
+export default function Order({ onNavigate }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage, setProductsPerPage] = useState(25);
-  const { products, loading, totalItems } = useFetchProducts(currentPage, productsPerPage);
-  const { promotions } = useFetchPromotions(); 
+  const { products, loading, totalItems } = useFetchProducts(
+    currentPage,
+    productsPerPage
+  );
+  const { promotions } = useFetchPromotions();
 
   const productIds = useMemo(
-    () => Array.isArray(products) ? products.map(p => p.product_id) : [],
+    () => (Array.isArray(products) ? products.map((p) => p.product_id) : []),
     [products]
   );
 
-  const [selectedCategory, setSelectedCategory] = useState("all"); 
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [cart, setCart] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedPromoId, setSelectedPromoId] = useState("");
@@ -253,522 +334,675 @@ export default function Order() {
   const [customerPaid, setCustomerPaid] = useState(0);
   const [chosenIds, setChosenIds] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form] = Form.useForm()
+  const [form] = Form.useForm();
   const [phone, setPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [loadingCustomer, setLoadingCustomer] = useState(false);
-  const { inventory } = useFetchInventory(productIds, currentPage, productsPerPage);
-// Modal kết quả thanh toán
-const [resultModal, setResultModal] = useState({
-  visible: false,
-  type: "",     
-  title: "",
-  message: "",
-  showPrint: false,
-  orderToPrint: null,
-});
+  const { inventory } = useFetchInventory(
+    productIds,
+    currentPage,
+    productsPerPage
+  );
+  const { user } = useAuth();
+  // Low Stock Notification states
+  const [showNotification, setShowNotification] = useState(false);
+  const [productNames, setProductNames] = useState([]);
 
-const { activePromotions, currentProducts } = useMemo(() => {
-  if (!Array.isArray(products)) return { activePromotions: [], currentProducts: [] };
-
-  // 1️⃣ Lọc khuyến mãi đang hoạt động
-  const activePromotions = promotions.filter((p) => {
-    const status = p.status?.toLowerCase();
-    return status === "active" || status === "hoạt động";
+  // Modal kết quả thanh toán
+  const [resultModal, setResultModal] = useState({
+    visible: false,
+    type: "",
+    title: "",
+    message: "",
+    showPrint: false,
+    orderToPrint: null,
   });
 
-  // 2️⃣ Lọc sản phẩm theo danh mục + tìm kiếm
-  const filteredProducts = products.filter((p) => {
-    const productName = p.product_name ?? "";
-
-    // Lấy slug của category (vì selectedCategory là slug)
-    const productCategorySlug = getCategoryData(p.categoryId)?.slug;
-
-    // Điều kiện lọc danh mục
-    const matchCategory =
-      selectedCategory === "all" || productCategorySlug === selectedCategory;
-
-    // Điều kiện tìm kiếm
-    const matchSearch = productName.toLowerCase().includes(search.toLowerCase());
-
-    return matchCategory && matchSearch;
-  });
-
-  // 3️⃣ Gắn thông tin tồn kho vào sản phẩm đã lọc
-  const currentProducts = filteredProducts.map((p) => ({
-    ...p,
-    stock: inventory?.[p.product_id] ?? 0,
-  }));
-
-  return { activePromotions, currentProducts };
-}, [promotions, products, inventory, selectedCategory, search, getCategoryData]);
-
-
-    const handleAddToCart = (product) => {
-      setCart(prev => {
-        const exists = prev.find(item => item.product_id === product.product_id);
-        if (exists) {
-          return prev.map(item =>
-            item.product_id === product.product_id
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          );
-        }
-        message.success(`${product.product_name} đã thêm vào giỏ hàng`);
-        return [...prev, { ...product, quantity: 1 }];
-      });
-
-      setChosenIds(prev => prev.includes(product.product_id)
-        ? prev
-        : [...prev, product.product_id]
-      );
-    };
-
-
- const updateQuantity = async (id, delta) => {
-  // Lấy item hiện tại từ state (synchronous read)
-  const itemToUpdate = cart.find(item => item.product_id === id);
-  if (!itemToUpdate) return;
-
-  const prevCart = [...cart];
-  const newQuantity = Math.max((itemToUpdate.quantity || 0) + delta, 0);
-
-  // Cập nhật UI tối ưu (optimistic)
-  setCart((prev) => {
-    const newCart = prev
-      .map((item) =>
-        item.product_id === id ? { ...item, quantity: newQuantity } : item
-      )
-      .filter((item) => item.quantity > 0);
-    setChosenIds((prevIds) =>
-      prevIds.filter((pid) => newCart.some((item) => item.product_id === pid))
-    );
-    return newCart;
-  });
-
-  // Nếu không có order trên server thì không cần gọi API
-  const currentOrderId = (typeof getActiveOrderId === "function") ? getActiveOrderId() : null;
-  if (!currentOrderId) return;
-
-  const token = getAuthToken();
-  if (!token) return;
-
-  try {
-    // Nếu số lượng mới bằng 0 => cố gắng xóa item trên server (nếu backend hỗ trợ)
-    if (newQuantity === 0) {
+  //Check tồn kho khi vào đầu trang đối với tài khoản là Admin
+  const getRole = JSON.parse(localStorage.getItem("user"));
+  useEffect(() => {
+    if (!getRole || getRole.role !== "Admin") return;
+    const checkLowStock = async () => {
       try {
-        const delResp = await fetch(`${API_BASE_URL}/Orders/${currentOrderId}/items/${id}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        });
-        if (!delResp.ok) {
-          // nếu backend không hỗ trợ DELETE, bỏ qua (UI đã cập nhật)
-          console.warn("Xóa item trên server không thành công:", delResp.status);
+        const notificationShown = sessionStorage.getItem(
+          "lowStockNotificationShown"
+        );
+        if (notificationShown === "true") {
+          return;
         }
-      } catch (e) {
-        console.warn("Lỗi xóa item trên server:", e);
+
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          "http://localhost:5000/api/inventory/low-stock",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (res.data.success && res.data.data.length > 0) {
+          const names = res.data.data.map(
+            (item) => item.product?.productName || "N/A"
+          );
+          setProductNames(names);
+
+          setTimeout(() => {
+            setShowNotification(true);
+            sessionStorage.setItem("lowStockNotificationShown", "true");
+            setTimeout(() => setShowNotification(false), 8000);
+          }, 0);
+        }
+      } catch (err) {
+        console.error("Lỗi low stock:", err);
       }
-      return;
-    }
+    };
+    checkLowStock();
+  }, []);
 
-    // Thử cập nhật (PUT). Nếu 404 => item chưa tồn tại trên server => POST tạo mới
-    const putResp = await fetch(`${API_BASE_URL}/Orders/${currentOrderId}/items/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ quantity: newQuantity }),
+  const { activePromotions, currentProducts } = useMemo(() => {
+    if (!Array.isArray(products))
+      return { activePromotions: [], currentProducts: [] };
+
+    // 1️⃣ Lọc khuyến mãi đang hoạt động
+    const activePromotions = promotions.filter((p) => {
+      const status = p.status?.toLowerCase();
+      return status === "active" || status === "hoạt động";
     });
 
-    if (putResp.ok) {
-      return; // thành công
-    }
+    // 2️⃣ Lọc sản phẩm theo danh mục + tìm kiếm
+    const filteredProducts = products.filter((p) => {
+      const productName = p.product_name ?? "";
 
-    // Nếu PUT trả về 404 (item chưa tồn tại) hoặc server yêu cầu POST thì tạo item mới
-    if (putResp.status === 404 || putResp.status === 400) {
-      const postResp = await fetch(`${API_BASE_URL}/Orders/${currentOrderId}/items`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          productId: id,
-          quantity: newQuantity,
-          price: itemToUpdate.price,
-        }),
+      // Lấy slug của category (vì selectedCategory là slug)
+      const productCategorySlug = getCategoryData(p.categoryId)?.slug;
+
+      // Điều kiện lọc danh mục
+      const matchCategory =
+        selectedCategory === "all" || productCategorySlug === selectedCategory;
+
+      // Điều kiện tìm kiếm
+      const matchSearch = productName
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+      return matchCategory && matchSearch;
+    });
+
+    // 3️⃣ Gắn thông tin tồn kho vào sản phẩm đã lọc
+    const currentProducts = filteredProducts.map((p) => ({
+      ...p,
+      stock: inventory?.[p.product_id] ?? 0,
+    }));
+
+    return { activePromotions, currentProducts };
+  }, [
+    promotions,
+    products,
+    inventory,
+    selectedCategory,
+    search,
+    getCategoryData,
+  ]);
+
+  const handleAddToCart = (product) => {
+    setCart((prev) => {
+      const exists = prev.find(
+        (item) => item.product_id === product.product_id
+      );
+      if (exists) {
+        return prev.map((item) =>
+          item.product_id === product.product_id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      message.success(`${product.product_name} đã thêm vào giỏ hàng`);
+      return [...prev, { ...product, quantity: 1 }];
+    });
+
+    setChosenIds((prev) =>
+      prev.includes(product.product_id) ? prev : [...prev, product.product_id]
+    );
+  };
+
+  const updateQuantity = async (id, delta) => {
+    // Lấy item hiện tại từ state (synchronous read)
+    const itemToUpdate = cart.find((item) => item.product_id === id);
+    if (!itemToUpdate) return;
+
+    const prevCart = [...cart];
+    const newQuantity = Math.max((itemToUpdate.quantity || 0) + delta, 0);
+
+    // Cập nhật UI tối ưu (optimistic)
+    setCart((prev) => {
+      const newCart = prev
+        .map((item) =>
+          item.product_id === id ? { ...item, quantity: newQuantity } : item
+        )
+        .filter((item) => item.quantity > 0);
+      setChosenIds((prevIds) =>
+        prevIds.filter((pid) => newCart.some((item) => item.product_id === pid))
+      );
+      return newCart;
+    });
+
+    // Nếu không có order trên server thì không cần gọi API
+    const currentOrderId =
+      typeof getActiveOrderId === "function" ? getActiveOrderId() : null;
+    if (!currentOrderId) return;
+
+    const token = getAuthToken();
+    if (!token) return;
+
+    try {
+      // Nếu số lượng mới bằng 0 => cố gắng xóa item trên server (nếu backend hỗ trợ)
+      if (newQuantity === 0) {
+        try {
+          const delResp = await fetch(
+            `${API_BASE_URL}/Orders/${currentOrderId}/items/${id}`,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (!delResp.ok) {
+            // nếu backend không hỗ trợ DELETE, bỏ qua (UI đã cập nhật)
+            console.warn(
+              "Xóa item trên server không thành công:",
+              delResp.status
+            );
+          }
+        } catch (e) {
+          console.warn("Lỗi xóa item trên server:", e);
+        }
+        return;
+      }
+
+      // Thử cập nhật (PUT). Nếu 404 => item chưa tồn tại trên server => POST tạo mới
+      const putResp = await fetch(
+        `${API_BASE_URL}/Orders/${currentOrderId}/items/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ quantity: newQuantity }),
+        }
+      );
+
+      if (putResp.ok) {
+        return; // thành công
+      }
+
+      // Nếu PUT trả về 404 (item chưa tồn tại) hoặc server yêu cầu POST thì tạo item mới
+      if (putResp.status === 404 || putResp.status === 400) {
+        const postResp = await fetch(
+          `${API_BASE_URL}/Orders/${currentOrderId}/items`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              productId: id,
+              quantity: newQuantity,
+              price: itemToUpdate.price,
+            }),
+          }
+        );
+        if (postResp.ok) return;
+        // nếu POST cũng lỗi -> rơi ra xử lý chung
+      }
+
+      // Nếu tới đây vẫn không ok thì throw để rollback
+      const text = await putResp.text().catch(() => "");
+      throw new Error(`Server cập nhật thất bại: ${putResp.status} ${text}`);
+    } catch (error) {
+      console.error("Lỗi đồng bộ số lượng:", error);
+      // rollback UI
+      setCart((prev) => {
+        // cố gắng restore prevCart (an toàn)
+        return prevCart;
       });
-      if (postResp.ok) return;
-      // nếu POST cũng lỗi -> rơi ra xử lý chung
+      message.error(
+        "Không thể cập nhật số lượng trên server. Đã phục hồi trạng thái."
+      );
     }
+  };
 
-    // Nếu tới đây vẫn không ok thì throw để rollback
-    const text = await putResp.text().catch(() => "");
-    throw new Error(`Server cập nhật thất bại: ${putResp.status} ${text}`);
-  } catch (error) {
-    console.error("Lỗi đồng bộ số lượng:", error);
-    // rollback UI
-    setCart(prev => {
-      // cố gắng restore prevCart (an toàn)
-      return prevCart;
+  const removeFromCart = (id) => {
+    setCart((prev) => {
+      const newCart = prev.filter((i) => i.product_id !== id);
+
+      setChosenIds((prevIds) => prevIds.filter((pid) => pid !== id));
+      return newCart;
     });
-    message.error("Không thể cập nhật số lượng trên server. Đã phục hồi trạng thái.");
-  }
-};
-
-    const removeFromCart = (id) => {
-      setCart((prev) => {
-        const newCart = prev.filter((i) => i.product_id !== id);
-
-        setChosenIds((prevIds) => prevIds.filter((pid) => pid !== id));
-        return newCart;
-      });
-    };
+  };
 
   const calculateDiscountAmount = (subtotal, selectedPromoId, promotions) => {
     const promoId = Number(selectedPromoId);
-    const selectedPromo = promotions.find(p => p.promo_id === promoId);
-    
+    const selectedPromo = promotions.find((p) => p.promo_id === promoId);
+
     // 1. Kiểm tra tồn tại và tổng tiền
     if (!selectedPromo || subtotal <= 0) {
-        return 0;
+      return 0;
     }
 
-    const minAmount = selectedPromo.min_order_amount || 0; 
-    
+    const minAmount = selectedPromo.min_order_amount || 0;
+
     // 2. Kiểm tra điều kiện đơn hàng tối thiểu
     if (subtotal < minAmount) {
-        return 0; 
+      return 0;
     }
 
     const { discount_type, discount_value } = selectedPromo;
     let discount = 0;
-    
+
     // 3. Tính toán chiết khấu (SỬA: Dùng 'subtotal' thay vì 'currentSubtotal')
     const type = discount_type.toLowerCase();
 
     if (type === "percent") {
-        // Dùng tham số 'subtotal' ở đây
-        discount = (subtotal * discount_value) / 100;
+      // Dùng tham số 'subtotal' ở đây
+      discount = (subtotal * discount_value) / 100;
     } else if (type === "fixed" || type === "amount") {
-        discount = discount_value;
+      discount = discount_value;
     }
 
     // Chiết khấu không được vượt quá Tổng phụ
     return Math.max(0, Math.min(discount, subtotal));
-};
- 
-const { subtotal, discountAmount, total } = useMemo(() => {
-    const currentSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    
+  };
+
+  const { subtotal, discountAmount, total } = useMemo(() => {
+    const currentSubtotal = cart.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
     // Tính Chiết khấu bằng hàm helper mới (đã xử lý minOrderAmount và Fixed/Percent)
     const currentDiscount = calculateDiscountAmount(
-        currentSubtotal,
-        selectedPromoId,
-        promotions
+      currentSubtotal,
+      selectedPromoId,
+      promotions
     );
 
     const currentTotal = Math.max(0, currentSubtotal - currentDiscount);
-    
-    return { subtotal: currentSubtotal, discountAmount: currentDiscount, total: currentTotal };
-}, [cart, selectedPromoId, promotions]);
-const mapPaymentMethodToServer = (method) => {
+
+    return {
+      subtotal: currentSubtotal,
+      discountAmount: currentDiscount,
+      total: currentTotal,
+    };
+  }, [cart, selectedPromoId, promotions]);
+  const mapPaymentMethodToServer = (method) => {
     switch (method) {
-        case "Tiền mặt": return "Cash";
-        case "Thẻ": return "Card"; // Thay 'Thẻ' bằng giá trị tiếng Việt thực tế trong state của bạn
-        case "Chuyển khoản": return "BankTransfer"; // Thay 'Chuyển khoản' bằng giá trị thực tế
-        case "Ví điện tử": return "EWallet"; // Thay 'Ví điện tử' bằng giá trị thực tế
-        default: return "Cash"; 
+      case "Tiền mặt":
+        return "Cash";
+      case "Thẻ":
+        return "Card"; // Thay 'Thẻ' bằng giá trị tiếng Việt thực tế trong state của bạn
+      case "Chuyển khoản":
+        return "BankTransfer"; // Thay 'Chuyển khoản' bằng giá trị thực tế
+      case "Ví điện tử":
+        return "EWallet"; // Thay 'Ví điện tử' bằng giá trị thực tế
+      default:
+        return "Cash";
     }
-};
-// 🧩 Hàm đảm bảo OrderItems đã được đồng bộ lên server
-const updateOrderItemsOnServer = async (orderId, cart) => {
-  console.log("🔄 Đồng bộ OrderItems với server...");
+  };
+  // 🧩 Hàm đảm bảo OrderItems đã được đồng bộ lên server
+  const updateOrderItemsOnServer = async (orderId, cart) => {
+    console.log("🔄 Đồng bộ OrderItems với server...");
 
-  for (const item of cart) {
-    await fetch(`${API_BASE_URL}/Orders/${orderId}/items`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        productId: item.product_id,
-        quantity: item.quantity,
-      }),
-    });
-  }
+    for (const item of cart) {
+      await fetch(`${API_BASE_URL}/Orders/${orderId}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: item.product_id,
+          quantity: item.quantity,
+        }),
+      });
+    }
 
-  console.log("✅ OrderItems đã đồng bộ xong!");
-};
-
-// thanh toan 
-const handlePayment = async () => {
-  console.log("🚀 [Start] handlePayment");
-
-  // 🔹 1. Giỏ hàng trống
-  if (cart.length === 0) {
-    setResultModal({
-      visible: true,
-      type: "warning",
-      title: "Giỏ hàng trống",
-      message: "Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán.",
-    });
-    return;
-  }
-
-  // 🔹 2. Thiếu số điện thoại
-  if (!phone || phone.trim() === "") {
-    setResultModal({
-      visible: true,
-      type: "warning",
-      title: "Thiếu thông tin khách hàng",
-      message: "Vui lòng nhập số điện thoại khách hàng trước khi thanh toán.",
-    });
-    return;
-  }
-
-  // 🔹 3. Thanh toán tiền mặt nhưng không đủ tiền
-  if (paymentMethod === "Tiền mặt" && customerPaid < total) {
-    setResultModal({
-      visible: true,
-      type: "error",
-      title: "Lỗi Thanh Toán Tiền Mặt",
-      message: "Số tiền khách đưa không đủ để thanh toán đơn hàng.",
-    });
-    return;
-  }
-
-  // 🔹 4. Kiểm tra token
-  const token = getAuthToken();
-  if (!token) {
-    setResultModal({
-      visible: true,
-      type: "error",
-      title: "Lỗi Phiên Đăng Nhập",
-      message: "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.",
-    });
-    return;
-  }
-
-  // 🔹 5. Kiểm tra khách hàng
-  let finalCustomerId = 1;
-  let customerFromPhone = null;
-
-  message.loading({ content: "Đang kiểm tra thông tin khách hàng...", key: "customerCheck" });
-  customerFromPhone = await fetchCustomerByPhone(phone);
-  message.destroy("customerCheck");
-
-  if (customerFromPhone?.customerId) {
-    finalCustomerId = customerFromPhone.customerId;
-    setCustomerName(customerFromPhone.name || customerFromPhone.customerName || customerName);
-  }
-
-  // 🔹 6. Chuẩn bị dữ liệu đơn hàng
-  const orderDetails = cart.map((item) => ({
-    productId: item.product_id,
-    quantity: item.quantity,
-    price: item.price,
-  }));
-
-  const createOrderData = {
-    customerId: finalCustomerId,
-    promoId: selectedPromoId ? Number(selectedPromoId) : null,
-    totalAmount: total,
-    discountAmount: discountAmount,
-    subtotal: subtotal,
-    orderDetails: [],
+    console.log("✅ OrderItems đã đồng bộ xong!");
   };
 
-  let orderId = null;
-  let finalOrderResult = null;
+  // thanh toan
+  const handlePayment = async () => {
+    console.log("🚀 [Start] handlePayment");
 
-  try {
-    // 🟢 BƯỚC 1: Tạo đơn hàng
-    message.loading({ content: "Bước 1/5: Đang tạo đơn hàng nháp...", key: "payment" });
-
-    const createResponse = await fetch(`${API_BASE_URL}/Orders`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(createOrderData),
-    });
-    const createResult = await handleApiResponse(createResponse);
-    if (!createResponse.ok || !createResult.data?.orderId)
-      throw new Error(createResult?.message || "Tạo đơn hàng thất bại!");
-    orderId = createResult.data.orderId;
-
-    message.success({
-      content: `✅ Bước 1/5: Đã tạo đơn hàng nháp (ID: ${orderId})`,
-      key: "payment",
-      duration: 1.2,
-    });
-
-    // 🟢 BƯỚC 2: Thêm sản phẩm
-    message.loading({ content: "Bước 2/5: Đang thêm sản phẩm...", key: "payment" });
-    for (const item of orderDetails) {
-      const addResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/items`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(item),
+    // 🔹 1. Giỏ hàng trống
+    if (cart.length === 0) {
+      setResultModal({
+        visible: true,
+        type: "warning",
+        title: "Giỏ hàng trống",
+        message: "Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán.",
       });
-      const addResult = await handleApiResponse(addResponse);
-      if (!addResponse.ok) throw new Error(addResult?.message || `Lỗi khi thêm sản phẩm ${item.productId}`);
+      return;
     }
 
-    message.success({
-      content: "✅ Bước 2/5: Đã thêm sản phẩm thành công.",
-      key: "payment",
-      duration: 1.2,
-    });
-
-    // 🟢 BƯỚC 3: Áp dụng khuyến mãi (nếu có)
-    if (selectedPromoId) {
-      const selectedPromo = promotions.find((p) => Number(p.promo_id) === Number(selectedPromoId));
-      const promoCode = selectedPromo?.promo_code || selectedPromoName;
-
-      if (promoCode) {
-        message.loading({ content: "Bước 3/5: Đang áp dụng khuyến mãi...", key: "payment" });
-        const promoResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/promotion`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ promoCode }),
-        });
-        const promoResult = await handleApiResponse(promoResponse);
-        if (!promoResponse.ok || !promoResult?.success) {
-          throw new Error(promoResult?.message || "Lỗi khi áp dụng khuyến mãi.");
-        }
-
-        // ✅ Cập nhật đã sử dụng mã khuyến mãi
-        await fetch(`${API_BASE_URL}/Promotion/${selectedPromoId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            ...selectedPromo,
-            used_count: (selectedPromo.used_count || 0) + 1,
-          }),
-        });
-
-        message.success({
-          content: "✅ Bước 3/5: Áp dụng mã khuyến mãi thành công.",
-          key: "payment",
-          duration: 1.2,
-        });
-      }
+    // 🔹 2. Thiếu số điện thoại
+    if (!phone || phone.trim() === "") {
+      setResultModal({
+        visible: true,
+        type: "warning",
+        title: "Thiếu thông tin khách hàng",
+        message: "Vui lòng nhập số điện thoại khách hàng trước khi thanh toán.",
+      });
+      return;
     }
 
-    // 🟢 BƯỚC 4: Cập nhật đơn hàng
-    message.loading({ content: "Bước 4/5: Cập nhật đơn hàng...", key: "payment" });
-    const updateResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({}),
+    // 🔹 3. Thanh toán tiền mặt nhưng không đủ tiền
+    if (paymentMethod === "Tiền mặt" && customerPaid < total) {
+      setResultModal({
+        visible: true,
+        type: "error",
+        title: "Lỗi Thanh Toán Tiền Mặt",
+        message: "Số tiền khách đưa không đủ để thanh toán đơn hàng.",
+      });
+      return;
+    }
+
+    // 🔹 4. Kiểm tra token
+    const token = getAuthToken();
+    if (!token) {
+      setResultModal({
+        visible: true,
+        type: "error",
+        title: "Lỗi Phiên Đăng Nhập",
+        message:
+          "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.",
+      });
+      return;
+    }
+
+    // 🔹 5. Kiểm tra khách hàng
+    let finalCustomerId = 1;
+    let customerFromPhone = null;
+
+    message.loading({
+      content: "Đang kiểm tra thông tin khách hàng...",
+      key: "customerCheck",
     });
-    const updateResult = await handleApiResponse(updateResponse);
-    if (!updateResponse.ok) throw new Error(updateResult?.message || "Lỗi khi cập nhật đơn hàng.");
+    customerFromPhone = await fetchCustomerByPhone(phone);
+    message.destroy("customerCheck");
 
-    // 🟢 BƯỚC 5: Thanh toán
-    message.loading({ content: `Bước 5/5: Đang xử lý thanh toán...`, key: "payment" });
+    if (customerFromPhone?.customerId) {
+      finalCustomerId = customerFromPhone.customerId;
+      setCustomerName(
+        customerFromPhone.name || customerFromPhone.customerName || customerName
+      );
+    }
 
-    const checkoutData = {
-      paymentMethod: mapPaymentMethodToServer(paymentMethod),
-      amount: total,
-      customerPaid,
+    // 🔹 6. Chuẩn bị dữ liệu đơn hàng
+    const orderDetails = cart.map((item) => ({
+      productId: item.product_id,
+      quantity: item.quantity,
+      price: item.price,
+    }));
+
+    const createOrderData = {
       customerId: finalCustomerId,
-      customerName: customerName || (phone ? `Khách hàng (${phone})` : "Khách vãng lai"),
+      promoId: selectedPromoId ? Number(selectedPromoId) : null,
+      totalAmount: total,
+      discountAmount: discountAmount,
+      subtotal: subtotal,
+      orderDetails: [],
     };
 
-    const checkoutResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}/checkout`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(checkoutData),
-    });
-    finalOrderResult = await handleApiResponse(checkoutResponse);
+    let orderId = null;
+    let finalOrderResult = null;
 
-    if (finalOrderResult?.success === true) {
-      message.destroy("payment");
+    try {
+      // 🟢 BƯỚC 1: Tạo đơn hàng
+      message.loading({
+        content: "Bước 1/5: Đang tạo đơn hàng nháp...",
+        key: "payment",
+      });
 
-      const orderData = finalOrderResult.data;
-      console.log( orderData.customerNameID);
-      const orderToPrint = {
-        orderId: orderData.orderId,
-        subtotal: orderData.totalAmount,
-        discountAmount: orderData.discountAmount,
-        totalAmount: orderData.finalAmount,
+      const createResponse = await fetch(`${API_BASE_URL}/Orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(createOrderData),
+      });
+      const createResult = await handleApiResponse(createResponse);
+      if (!createResponse.ok || !createResult.data?.orderId)
+        throw new Error(createResult?.message || "Tạo đơn hàng thất bại!");
+      orderId = createResult.data.orderId;
+
+      message.success({
+        content: `✅ Bước 1/5: Đã tạo đơn hàng nháp (ID: ${orderId})`,
+        key: "payment",
+        duration: 1.2,
+      });
+
+      // 🟢 BƯỚC 2: Thêm sản phẩm
+      message.loading({
+        content: "Bước 2/5: Đang thêm sản phẩm...",
+        key: "payment",
+      });
+      for (const item of orderDetails) {
+        const addResponse = await fetch(
+          `${API_BASE_URL}/Orders/${orderId}/items`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(item),
+          }
+        );
+        const addResult = await handleApiResponse(addResponse);
+        if (!addResponse.ok)
+          throw new Error(
+            addResult?.message || `Lỗi khi thêm sản phẩm ${item.productId}`
+          );
+      }
+
+      message.success({
+        content: "✅ Bước 2/5: Đã thêm sản phẩm thành công.",
+        key: "payment",
+        duration: 1.2,
+      });
+
+      // 🟢 BƯỚC 3: Áp dụng khuyến mãi (nếu có)
+      if (selectedPromoId) {
+        const selectedPromo = promotions.find(
+          (p) => Number(p.promo_id) === Number(selectedPromoId)
+        );
+        const promoCode = selectedPromo?.promo_code || selectedPromoName;
+
+        if (promoCode) {
+          message.loading({
+            content: "Bước 3/5: Đang áp dụng khuyến mãi...",
+            key: "payment",
+          });
+          const promoResponse = await fetch(
+            `${API_BASE_URL}/Orders/${orderId}/promotion`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ promoCode }),
+            }
+          );
+          const promoResult = await handleApiResponse(promoResponse);
+          if (!promoResponse.ok || !promoResult?.success) {
+            throw new Error(
+              promoResult?.message || "Lỗi khi áp dụng khuyến mãi."
+            );
+          }
+
+          // ✅ Cập nhật đã sử dụng mã khuyến mãi
+          await fetch(`${API_BASE_URL}/Promotion/${selectedPromoId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              ...selectedPromo,
+              used_count: (selectedPromo.used_count || 0) + 1,
+            }),
+          });
+
+          message.success({
+            content: "✅ Bước 3/5: Áp dụng mã khuyến mãi thành công.",
+            key: "payment",
+            duration: 1.2,
+          });
+        }
+      }
+
+      // 🟢 BƯỚC 4: Cập nhật đơn hàng
+      message.loading({
+        content: "Bước 4/5: Cập nhật đơn hàng...",
+        key: "payment",
+      });
+      const updateResponse = await fetch(`${API_BASE_URL}/Orders/${orderId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+      const updateResult = await handleApiResponse(updateResponse);
+      if (!updateResponse.ok)
+        throw new Error(updateResult?.message || "Lỗi khi cập nhật đơn hàng.");
+
+      // 🟢 BƯỚC 5: Thanh toán
+      message.loading({
+        content: `Bước 5/5: Đang xử lý thanh toán...`,
+        key: "payment",
+      });
+
+      const checkoutData = {
+        paymentMethod: mapPaymentMethodToServer(paymentMethod),
+        amount: total,
         customerPaid,
-        customerName: orderData.customerName,
-        orderDetails: orderData.orderItems.map((item) => ({
-          productName: item.productName,
-          quantity: item.quantity,
-          price: item.price,
-        })),
+        customerId: finalCustomerId,
+        customerName:
+          customerName || (phone ? `Khách hàng (${phone})` : "Khách vãng lai"),
       };
+
+      const checkoutResponse = await fetch(
+        `${API_BASE_URL}/Orders/${orderId}/checkout`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(checkoutData),
+        }
+      );
+      finalOrderResult = await handleApiResponse(checkoutResponse);
+
+      if (finalOrderResult?.success === true) {
+        message.destroy("payment");
+
+        const orderData = finalOrderResult.data;
+        console.log(orderData.customerNameID);
+        const orderToPrint = {
+          orderId: orderData.orderId,
+          subtotal: orderData.totalAmount,
+          discountAmount: orderData.discountAmount,
+          totalAmount: orderData.finalAmount,
+          customerPaid,
+          customerName: orderData.customerName,
+          cashierName: user.fullName || "Thu ngân",
+          orderDetails: orderData.orderItems.map((item) => ({
+            productName: item.productName,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+        };
+
+        setResultModal({
+          visible: true,
+          type: "success",
+          title: "Thanh toán thành công!",
+          message: `Đơn hàng #${orderData.orderId} đã được thanh toán.`,
+          showPrint: true,
+          orderToPrint,
+        });
+
+        // ✅ Reset khi thành công
+        setCart([]);
+        setSelectedPromoId("");
+        setSelectedPromoName("");
+        setCustomerPaid(0);
+        setPhone("");
+        setCustomerName("");
+        setChosenIds([]);
+        if (typeof refetchProducts === "function") refetchProducts();
+      } else {
+        throw new Error(
+          finalOrderResult?.message || "Thanh toán thất bại từ máy chủ."
+        );
+      }
+    } catch (error) {
+      console.error("❌ Lỗi thanh toán:", error);
+      message.destroy("payment");
 
       setResultModal({
         visible: true,
-        type: "success",
-        title: "Thanh toán thành công!",
-        message: `Đơn hàng #${orderData.orderId} đã được thanh toán.`,
-        showPrint: true,
-        orderToPrint,
+        type: "error",
+        title: "Thanh toán thất bại",
+        message: error?.message || "Đã xảy ra lỗi trong quá trình xử lý.",
       });
-
-      // ✅ Reset khi thành công
-      setCart([]);
-      setSelectedPromoId("");
-      setSelectedPromoName("");
-      setCustomerPaid(0);
-      setPhone("");
-      setCustomerName("");
-      setChosenIds([]);
-      if (typeof refetchProducts === "function") refetchProducts();
-    } else {
-      throw new Error(finalOrderResult?.message || "Thanh toán thất bại từ máy chủ.");
     }
-  } catch (error) {
-    console.error("❌ Lỗi thanh toán:", error);
-    message.destroy("payment");
-
-    setResultModal({
-      visible: true,
-      type: "error",
-      title: "Thanh toán thất bại",
-      message: error?.message || "Đã xảy ra lỗi trong quá trình xử lý.",
-    });
-  }
-};
-
-const handleApiResponse = async (response) => {
-  let result = {};
-
-  try {
-    const contentType = response?.headers?.get?.("content-type") || "";
-
-    if (contentType.includes("application/json")) {
-      result = await response.json(); // ✅ Giữ nguyên toàn bộ JSON từ server
-    } else if (response && response.status !== 204) {
-      const text = await response.text();
-      result = { message: text || `Lỗi HTTP: ${response.status}` };
-    }
-
-    // ✅ Gắn metadata
-    result.status = response?.status || 0;
-    result.ok = response?.ok === true;
-  } catch (e) {
-    result = {
-      success: false,
-      message: `Lỗi xử lý phản hồi: ${e.message}`,
-      ok: false,
-      status: 0,
-    };
-  }
-
-  return result;
-};
-
-
-  const handlePaymentChange = (value) => {
-      setPaymentMethod(value);
-      console.log("Phương thức thanh toán:", value);
   };
 
-    //Danh sách các cột trong bảng
-    const columns = [
+  const handleApiResponse = async (response) => {
+    let result = {};
+
+    try {
+      const contentType = response?.headers?.get?.("content-type") || "";
+
+      if (contentType.includes("application/json")) {
+        result = await response.json(); // ✅ Giữ nguyên toàn bộ JSON từ server
+      } else if (response && response.status !== 204) {
+        const text = await response.text();
+        result = { message: text || `Lỗi HTTP: ${response.status}` };
+      }
+
+      // ✅ Gắn metadata
+      result.status = response?.status || 0;
+      result.ok = response?.ok === true;
+    } catch (e) {
+      result = {
+        success: false,
+        message: `Lỗi xử lý phản hồi: ${e.message}`,
+        ok: false,
+        status: 0,
+      };
+    }
+
+    return result;
+  };
+
+  const handlePaymentChange = (value) => {
+    setPaymentMethod(value);
+    console.log("Phương thức thanh toán:", value);
+  };
+
+  //Danh sách các cột trong bảng
+  const columns = [
     {
       title: "No",
       key: "no",
-      width: '10%',
+      width: "10%",
       render: (text, record, index) => index + 1, // tự tăng
     },
     {
@@ -776,120 +1010,126 @@ const handleApiResponse = async (response) => {
       dataIndex: "product_name",
       key: "product_name",
       // Cột này nên chiếm nhiều không gian hơn
-      width: '30%', 
+      width: "30%",
       render: (text) => (
-        <div style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{text}</div>
+        <div style={{ whiteSpace: "normal", wordBreak: "break-word" }}>
+          {text}
+        </div>
       ),
     },
     {
       title: "SL",
       dataIndex: "quantity",
       key: "quantity",
-      width: '25%', // Tăng độ rộng để chứa nút
-      align: 'center',
+      width: "25%", // Tăng độ rộng để chứa nút
+      align: "center",
       render: (qty, record) => (
         <Space>
           {/* Nút Giảm SL: Luôn cho phép giảm (đã có check qty > 0 trong updateQuantity) */}
-          <Button 
-            size="small" 
-            icon={<MinusOutlined />} 
-            onClick={() => updateQuantity(record.product_id, -1)} 
+          <Button
+            size="small"
+            icon={<MinusOutlined />}
+            onClick={() => updateQuantity(record.product_id, -1)}
           />
           {/* Hiển thị số lượng */}
-          <span style={{ minWidth: 20, textAlign: 'center', fontWeight: 600 }}>
+          <span style={{ minWidth: 20, textAlign: "center", fontWeight: 600 }}>
             {qty}
           </span>
           {/* Nút Tăng SL: CHỈ CHO PHÉP TĂNG nếu SL hiện tại < Tồn kho (record.stock) */}
-          <Button 
-            size="small" 
+          <Button
+            size="small"
             icon={<PlusOutlined />}
             disabled={qty >= record.stock} // Vô hiệu hóa nút nếu SL đã bằng hoặc vượt quá tồn kho
             onClick={() => {
               if (qty < record.stock) {
                 updateQuantity(record.product_id, 1);
               } else {
-                 message.warning(`Số lượng tối đa có thể thêm là ${record.stock}!`);
+                message.warning(
+                  `Số lượng tối đa có thể thêm là ${record.stock}!`
+                );
               }
             }}
           />
         </Space>
       ),
     },
-    { 
-      title: "Đơn giá", 
-      dataIndex: "price", 
-      key: "price", 
-      width: '20%',
-      align: 'left', // Căn phải cho dễ đọc
-      render: (p) => p.toLocaleString() + " ₫" 
+    {
+      title: "Đơn giá",
+      dataIndex: "price",
+      key: "price",
+      width: "20%",
+      align: "left", // Căn phải cho dễ đọc
+      render: (p) => p.toLocaleString() + " ₫",
     },
-    { 
-      title: "Thành tiền", 
-      key: "total", 
-      width: '20%',
-      align: 'left', // Căn phải cho dễ đọc
+    {
+      title: "Thành tiền",
+      key: "total",
+      width: "20%",
+      align: "left", // Căn phải cho dễ đọc
       render: (_, r) => (
-          <span style={{ fontWeight: 600 }}>
-             {(r.price * r.quantity).toLocaleString() + " ₫"}
-          </span>
+        <span style={{ fontWeight: 600 }}>
+          {(r.price * r.quantity).toLocaleString() + " ₫"}
+        </span>
       ),
     },
-    { 
-      title: "", 
-      key: "action", 
-      width: 40, 
-      align: 'center',
+    {
+      title: "",
+      key: "action",
+      width: 40,
+      align: "center",
       render: (_, r) => (
-        <Button 
-          type="primary" 
-          danger 
-          size="small" 
-          icon={<DeleteOutlined />} 
-          onClick={() => removeFromCart(r.product_id)} 
+        <Button
+          type="primary"
+          danger
+          size="small"
+          icon={<DeleteOutlined />}
+          onClick={() => removeFromCart(r.product_id)}
         />
       ),
     },
   ];
-   
-    const handlePhoneChange = (e) => {
-      const value = e.target.value;
-      setPhone(value);
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    setPhone(value);
 
-      if (value.length >= 10) {
-        fetchCustomerByPhone(value);
-      } else {
-        setCustomerName("");
-      }
-    };
+    if (value.length >= 10) {
+      fetchCustomerByPhone(value);
+    } else {
+      setCustomerName("");
+    }
+  };
 
-   const fetchCustomerByPhone = async (phone) => {
+  const fetchCustomerByPhone = async (phone) => {
     try {
       setLoadingCustomer(true);
 
-      const response = await fetch(`http://localhost:5000/api/Customer/by-phone/${phone}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await fetch(
+        `http://localhost:5000/api/Customer/by-phone/${phone}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       const result = await response.json();
 
       if (response.ok && result?.data) {
-        setCustomerName(result.data.name || ""); 
+        setCustomerName(result.data.name || "");
       } else {
-          setCustomerName("");
+        setCustomerName("");
         message.warning("Không tìm thấy khách hàng này");
-      }   
-   if (response.ok && result?.data) {
+      }
+      if (response.ok && result?.data) {
         // cập nhật tên hiển thị và trả về toàn bộ object data để caller sử dụng
         setCustomerName(result.data.name || "");
         return result.data;
       } else {
-       setCustomerName("");
+        setCustomerName("");
         message.warning("Không tìm thấy khách hàng này");
-       return null;
+        return null;
       }
     } catch (error) {
       console.error("Lỗi khi tìm khách hàng:", error);
@@ -898,313 +1138,379 @@ const handleApiResponse = async (response) => {
     } finally {
       setLoadingCustomer(false);
     }
-  };
+  }; //Thêm khách hàng mới
 
-    //Thêm khách hàng mới
-    const AddNewCustomer = async (values) => {
-      try {
-        const { name, phone } = values;
+  const AddNewCustomer = async (values) => {
+    try {
+      const { name, phone } = values;
 
-        const response = await fetch("http://localhost:5000/api/Customer", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({ name, phone }),
-        });
+      const response = await fetch("http://localhost:5000/api/Customer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ name, phone }),
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (!response.ok) {
-          // Nếu server trả lỗi trùng số
-          if (data.message?.includes("Phone number already exists")) {
-            form.setFields([{ name: "phone", errors: ["Số điện thoại đã tồn tại!"] }]);
-            return;
-          }
-          throw new Error(data.message || "Thêm khách hàng thất bại");
-        }
+      if (!response.ok) {
+        // Nếu server trả lỗi trùng số
+        if (data.message?.includes("Phone number already exists")) {
+          form.setFields([
+            { name: "phone", errors: ["Số điện thoại đã tồn tại!"] },
+          ]);
+          return;
+        }
+        throw new Error(data.message || "Thêm khách hàng thất bại");
+      }
 
-        message.success("Thêm khách hàng thành công");
-        form.resetFields();
-        setIsModalOpen(false);
-        setPhone(phone);
-        setCustomerName(name);
+      message.success("Thêm khách hàng thành công");
+      form.resetFields();
+      setIsModalOpen(false);
+      setPhone(phone);
+      setCustomerName(name);
+    } catch (error) {
+      // Lỗi khác
+      message.error(error.message || "Lỗi khi thêm khách hàng");
+      console.error(error);
+    }
+  }; //Tính tiền thừa cho khách
 
-      } catch (error) {
-        // Lỗi khác
-        message.error(error.message || "Lỗi khi thêm khách hàng");
-        console.error(error);
-      }
-    };
-
-    //Tính tiền thừa cho khách
-    function tienthua(tiendua, tongmua) {
-      const change = tiendua - tongmua;
-      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(change);
-    }
+  function tienthua(tiendua, tongmua) {
+    const change = tiendua - tongmua;
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(change);
+  }
   return (
-      <ConfigProvider getPopupContainer={() => document.body}>
-
-    <div className="order-container">
-      <Row gutter={16}>
-        {/* Cột bên trái */}
-        <Col span={16}>
-          <Card
-              title={null}
-              style={{height: "calc(100vh - 80px)",display: "flex",flexDirection: "column",borderRadius: 12,boxShadow: "0 4px 12px rgba(0,0,0,0.08)",overflow: "hidden",}}
-              styles={{ body: { display: "flex", flexDirection: "column", height: "100%", padding: 0 } }}          >
-              {/* Header */}
-              <div
-                style={{padding: "10px 20px",borderBottom: "1px solid #f0f0f0",background: "#fff",position: "sticky",top: 0,zIndex: 2,}}
-              >
-                <Space style={{ width: "100%", justifyContent: "space-between" }}>
-                  <Select
-                    onChange={(val) => setSelectedCategory(val)} 
-                    value={selectedCategory}
-                    style={{width: 160,height: 50,borderRadius: 6,}}
-                    size="middle"
+    <ConfigProvider getPopupContainer={() => document.body}>
+      {showNotification && (
+        <Notification
+          productNames={productNames}
+          onNavigate={onNavigate}
+          onClose={() => setShowNotification(false)}
+        />
+      )}
+      <div className="order-container">
+        <Row gutter={16}>
+          {/* Cột bên trái */}
+          <Col span={16}>
+            <Card
+              title={null}
+              style={{
+                height: "calc(100vh - 80px)",
+                display: "flex",
+                flexDirection: "column",
+                borderRadius: 12,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                overflow: "hidden",
+              }}
+              styles={{
+                body: {
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                  padding: 0,
+                },
+              }}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  padding: "10px 20px",
+                  borderBottom: "1px solid #f0f0f0",
+                  background: "#fff",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 2,
+                }}
+              >
+                <Space
+                  style={{ width: "100%", justifyContent: "space-between" }}
                 >
+                  <Select
+                    onChange={(val) => setSelectedCategory(val)}
+                    value={selectedCategory}
+                    style={{ width: 160, height: 50, borderRadius: 6 }}
+                    size="middle"
+                  >
                     <Option value="all">Tất cả</Option>
-               
-                    {Object.values(CATEGORY_MAP).map(cat => (
-                        <Option key={cat.slug} value={cat.slug}>
-                            {cat.name}
-                        </Option>
+
+                    {Object.values(CATEGORY_MAP).map((cat) => (
+                      <Option key={cat.slug} value={cat.slug}>
+                        {cat.name}
+                      </Option>
                     ))}
-                </Select>
-
-                  <Input
-                    prefix={<SearchOutlined style={{ color: "#999" }} />}
-                    placeholder="Tìm sản phẩm..."
-                    allowClear
-                    onChange={(e) => setSearch(e.target.value)}
-                    style={{width: 240,height: 36,borderRadius: 6,}}
-                    size="middle"
-                  />
-                </Space>
-              </div>
-
-              {/* Danh sách sản phẩm*/}
-              <div
-                style={{flex: 1,overflowY: "auto",padding: "16px 20px",background: "#fafafa",}}
-              >
-                {loading ? (
-                  <div style={{ textAlign: "center", padding: "60px 0" }}>
-                    <Spin size="large" />
-                  </div>
-                ) : (
-                  <div
-                    className="product-grid"
-                    style={{display: "grid",gridTemplateColumns: "auto-fit, minmax(160px, 1fr)",gap: 5,justifyItems: "center",alignItems: "start",}}
-                  >
-                    {currentProducts.map((p) => (
-                        <Card
-                          key={p.product_id}
-                          hoverable={inventory?.[p.product_id] > 0}
-                          onClick={() => inventory?.[p.product_id] > 0 && handleAddToCart(p)}
+                  </Select>
+                  <Input
+                    prefix={<SearchOutlined style={{ color: "#999" }} />}
+                    placeholder="Tìm sản phẩm..."
+                    allowClear
+                    onChange={(e) => setSearch(e.target.value)}
+                    style={{ width: 240, height: 36, borderRadius: 6 }}
+                    size="middle"
+                  />
+                </Space>
+              </div>
+              {/* Danh sách sản phẩm*/}
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: "auto",
+                  padding: "16px 20px",
+                  background: "#fafafa",
+                }}
+              >
+                {loading ? (
+                  <div style={{ textAlign: "center", padding: "60px 0" }}>
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <div
+                    className="product-grid"
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "auto-fit, minmax(160px, 1fr)",
+                      gap: 5,
+                      justifyItems: "center",
+                      alignItems: "start",
+                    }}
+                  >
+                    {currentProducts.map((p) => (
+                      <Card
+                        key={p.product_id}
+                        hoverable={inventory?.[p.product_id] > 0}
+                        onClick={() =>
+                          inventory?.[p.product_id] > 0 && handleAddToCart(p)
+                        }
+                        style={{
+                          position: "relative", // để Tag và icon nằm đúng vị trí
+                          width: 160,
+                          height: 230,
+                          borderRadius: 10,
+                          background: "#fff",
+                          cursor:
+                            inventory?.[p.product_id] > 0
+                              ? "pointer"
+                              : "not-allowed",
+                          opacity: inventory?.[p.product_id] > 0 ? 1 : 0.6,
+                          transition: "all 0.25s ease",
+                          boxShadow: "0 3px 10px rgba(0,0,0,0.06)",
+                          overflow: "hidden",
+                          display: "flex",
+                          flexDirection: "column",
+                          padding: 0,
+                        }}
+                        onMouseEnter={(e) => {
+                          if (inventory?.[p.product_id] > 0) {
+                            e.currentTarget.style.transform =
+                              "translateY(-4px)";
+                            e.currentTarget.style.boxShadow =
+                              "0 8px 18px rgba(0,0,0,0.1)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow =
+                            "0 3px 10px rgba(0,0,0,0.06)";
+                        }}
+                      >
+                        {/* Tag danh mục */}
+                        <div
                           style={{
-                            position: "relative", // để Tag và icon nằm đúng vị trí
-                            width: 160,
-                            height: 230,
-                            borderRadius: 10,
-                            background: "#fff",
-                            cursor: inventory?.[p.product_id] > 0 ? "pointer" : "not-allowed",
-                            opacity: inventory?.[p.product_id] > 0 ? 1 : 0.6,
-                            transition: "all 0.25s ease",
-                            boxShadow: "0 3px 10px rgba(0,0,0,0.06)",
-                            overflow: "hidden",
-                            display: "flex",
-                            flexDirection: "column",
-                            padding: 0,
-                          }}
-                          onMouseEnter={(e) => {
-                            if (inventory?.[p.product_id] > 0) {
-                              e.currentTarget.style.transform = "translateY(-4px)";
-                              e.currentTarget.style.boxShadow = "0 8px 18px rgba(0,0,0,0.1)";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow = "0 3px 10px rgba(0,0,0,0.06)";
+                            position: "absolute",
+                            top: 6,
+                            left: 6,
+                            zIndex: 5,
                           }}
                         >
-                          {/* Tag danh mục */}
+                          <Tag
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 600,
+                              borderRadius: 8,
+                              padding: "2px 6px",
+                              background:
+                                "linear-gradient(135deg, #3b82f6, #2563eb)",
+                              color: "#fff",
+                              boxShadow: "0 2px 6px rgba(37,99,235,0.25)",
+                            }}
+                          >
+                            {getCategoryData(p.categoryId)?.name || "Khác"}
+                          </Tag>
+                        </div>
+
+                        {/* Icon đã chọn */}
+                        {chosenIds.includes(p.product_id) && (
                           <div
                             style={{
                               position: "absolute",
                               top: 6,
-                              left: 6,
-                              zIndex: 5,
+                              right: 6,
+                              width: 22,
+                              height: 22,
+                              background:
+                                "linear-gradient(135deg, #22c55e, #16a34a)",
+                              borderRadius: "50%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#fff",
+                              fontSize: 12,
+                              boxShadow: "0 3px 6px rgba(22,163,74,0.25)",
+                              zIndex: 10,
                             }}
                           >
-                            <Tag
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 600,
-                                borderRadius: 8,
-                                padding: "2px 6px",
-                                background: "linear-gradient(135deg, #3b82f6, #2563eb)",
-                                color: "#fff",
-                                boxShadow: "0 2px 6px rgba(37,99,235,0.25)",
-                              }}
-                            >
-                              {getCategoryData(p.categoryId)?.name || "Khác"}
-                            </Tag>
+                            ✓
                           </div>
+                        )}
 
-                          {/* Icon đã chọn */}
-                          {chosenIds.includes(p.product_id) && (
+                        {/* ẢNH SẢN PHẨM */}
+                        <div
+                          style={{
+                            position: "relative",
+                            height: 115,
+                            background: "#f9fafb",
+                            overflow: "hidden",
+                            flexShrink: 0,
+                            borderBottom: "1px solid #f1f5f9",
+                          }}
+                        >
+                          <img
+                            alt={p.product_name}
+                            src={
+                              p.imagePath
+                                ? p.imagePath.startsWith("http")
+                                  ? p.imagePath
+                                  : `${API_IMAGE}${p.imagePath}`
+                                : aquavoiem
+                            }
+                            onError={(e) => (e.target.src = aquavoiem)}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              transition: "transform 0.3s ease",
+                              filter:
+                                inventory?.[p.product_id] > 0
+                                  ? "none"
+                                  : "grayscale(70%)",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.transform = "scale(1.05)")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.transform = "scale(1)")
+                            }
+                          />
+
+                          {/* Hết hàng */}
+                          {inventory?.[p.product_id] === 0 && (
                             <div
                               style={{
                                 position: "absolute",
                                 top: 6,
                                 right: 6,
-                                width: 22,
-                                height: 22,
-                                background: "linear-gradient(135deg, #22c55e, #16a34a)",
-                                borderRadius: "50%",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
+                                background: "rgba(17, 24, 39, 0.75)",
                                 color: "#fff",
-                                fontSize: 12,
-                                boxShadow: "0 3px 6px rgba(22,163,74,0.25)",
-                                zIndex: 10,
+                                fontSize: 10.5,
+                                padding: "2px 6px",
+                                borderRadius: 6,
+                                fontWeight: 600,
+                                boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                               }}
                             >
-                              ✓
+                              Hết hàng
                             </div>
                           )}
+                        </div>
 
-                          {/* ẢNH SẢN PHẨM */}
+                        {/* TÊN SẢN PHẨM */}
+                        <div
+                          style={{
+                            padding: "5px 5px 0px 0px",
+                            flex: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                          }}
+                        >
                           <div
                             style={{
-                              position: "relative",
-                              height: 115,
-                              background: "#f9fafb",
+                              fontWeight: 700,
+                              fontSize: 13,
+                              color: "#111827",
+                              marginBottom: 3,
                               overflow: "hidden",
-                              flexShrink: 0,
-                              borderBottom: "1px solid #f1f5f9",
+                              textOverflow: "ellipsis",
+                              lineHeight: "17px",
+                              textAlign: "center",
                             }}
                           >
-                            <img
-                              alt={p.product_name}
-                              src={
-                                p.imagePath
-                                  ? p.imagePath.startsWith("http")
-                                    ? p.imagePath
-                                    : `${API_IMAGE}${p.imagePath}`
-                                  : aquavoiem
-                              }
-                              onError={(e) => (e.target.src = aquavoiem)}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                                transition: "transform 0.3s ease",
-                                filter: inventory?.[p.product_id] > 0 ? "none" : "grayscale(70%)",
-                              }}
-                              onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                              onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                            />
-
-                            {/* Hết hàng */}
-                            {inventory?.[p.product_id] === 0 && (
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  top: 6,
-                                  right: 6,
-                                  background: "rgba(17, 24, 39, 0.75)",
-                                  color: "#fff",
-                                  fontSize: 10.5,
-                                  padding: "2px 6px",
-                                  borderRadius: 6,
-                                  fontWeight: 600,
-                                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-                                }}
-                              >
-                                Hết hàng
-                              </div>
-                            )}
+                            {p.product_name}
                           </div>
+                        </div>
 
-                          {/* TÊN SẢN PHẨM */}
+                        {/* GIÁ + SỐ LƯỢNG */}
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            padding: "0 6px 6px 6px",
+                          }}
+                        >
                           <div
                             style={{
-                              padding: "5px 5px 0px 0px",
-                              flex: 1,
-                              display: "flex",
-                              flexDirection: "column",
-                              justifyContent: "center",
+                              background:
+                                "linear-gradient(90deg, #ef4444, #f97316)",
+                              WebkitBackgroundClip: "text",
+                              WebkitTextFillColor: "transparent",
+                              fontWeight: 800,
+                              fontSize: 14,
+                              marginBottom: 2,
                             }}
                           >
-                            <div
-                              style={{
-                                fontWeight: 700,
-                                fontSize: 13,
-                                color: "#111827",
-                                marginBottom: 3,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                lineHeight: "17px",
-                                textAlign: "center",
-                              }}
-                            >
-                              {p.product_name}
-                            </div>
+                            {p.price.toLocaleString()} ₫
                           </div>
-
-                          {/* GIÁ + SỐ LƯỢNG */}
                           <div
                             style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              padding: "0 6px 6px 6px",
+                              fontSize: 11,
+                              color: "#6b7280",
+                              fontWeight: 500,
                             }}
                           >
-                            <div
-                              style={{
-                                background: "linear-gradient(90deg, #ef4444, #f97316)",
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                fontWeight: 800,
-                                fontSize: 14,
-                                marginBottom: 2,
-                              }}
-                            >
-                              {p.price.toLocaleString()} ₫
-                            </div>
-                            <div
-                              style={{
-                                fontSize: 11,
-                                color: "#6b7280",
-                                fontWeight: 500,
-                              }}
-                            >
-                              Còn lại: {inventory?.[p.product_id] || 0} {p.unit}
-                            </div>
+                            Còn lại: {inventory?.[p.product_id] || 0} {p.unit}
                           </div>
-                        </Card>
-                    ))}
-                  </div>
-              )}
-              </div>
-              {/* Footer */}
-              <div
-                style={{padding: "10px 24px",borderTop: "1px solid #f0f0f0",background: "#fff",
-                  position: "sticky",bottom: 0,zIndex: 2,display: "flex",justifyContent: "flex-end",
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Footer */}
+              <div
+                style={{
+                  padding: "10px 24px",
+                  borderTop: "1px solid #f0f0f0",
+                  background: "#fff",
+                  position: "sticky",
+                  bottom: 0,
+                  zIndex: 2,
+                  display: "flex",
+                  justifyContent: "flex-end",
                   // backgroundColor:"red"
-                }}
-              >
-                     <Pagination
+                }}
+              >
+                <Pagination
                   style={{ transform: "translateY(-10px)" }}
                   current={currentPage}
                   pageSize={productsPerPage}
-                  total={totalItems/2}
+                  total={totalItems / 2}
                   showSizeChanger
                   pageSizeOptions={["5", "10", "15", "20", "25", "50"]}
                   onChange={(page, size) => {
@@ -1212,321 +1518,473 @@ const handleApiResponse = async (response) => {
                     setProductsPerPage(size);
                   }}
                 />
-              </div>
-            </Card>
-        </Col>
-        {/* Cột bên phải*/}
-        <Col span={8} style={{ paddingRight: 0}}>
-            <Card
-              bordered
-              style={{ height: "calc(100vh - 80px)", display: "flex", flexDirection: "column", padding: 0 }}
-              bodyStyle={{ padding: 0 }}
-            >
-              {/* Danh sách sản phẩm */}
-              <div style={{ flex: 1, overflowY: "auto", background: "#fafafa", padding: 0}}>
-                <Table
-                  columns={columns}
-                  dataSource={cart}
-                  rowKey="product_id"
-                  pagination={false}
-                  size="small"
-                  locale={{ emptyText: "Chưa có sản phẩm" }}
-                  bordered
-                  scroll={cart.length > 5 ? { y: 330 } : undefined}
-                  style={{ tableLayout: "fixed", width: "100%" }}
-                  components={{
-                    header: {
-                      cell: ({ children, ...restProps }) => (
-                        <th
-                          {...restProps}
-                          style={{backgroundColor: "#008f5a",color: "#fff",fontWeight: 600,textAlign: "center",}}
-                        >
-                          {children}
-                        </th>
-                      ),
-                    },
-                  }}
-                />
-              </div>
-
-              {/* 2. Thông tin khách + thanh toán */}
-                <div 
-                  style={{ display: "flex", padding: 16, gap: 16, flex: 1, overflowY: "auto", background: "#fff"}}>
-                  {/* Cột trái */}
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
-
-                    <Input
-                      placeholder="Nhập SĐT khách hàng"
-                      value={phone}
-                    
-                      addonAfter={
-                        <Button onClick={() => setIsModalOpen(true)} type="primary" style={{ padding: "0 12px", height: 28 }}>
-                          + Thêm
-                        </Button>
-                      }
-                      suffix={loadingCustomer ? <Spin size="small" /> : null}
-                      style={{ height: 36, borderRadius: 6 }}
-                      onChange={handlePhoneChange}
-                    />
-                    
-                    <Input
-                      placeholder="Tên khách hàng "
-                      value={customerName}
-                      readOnly
-                      style={{ height: 36, borderRadius: 6, marginTop: 8 }}
-                    />               
-                    <Select
-                        value={selectedPromoId || ""}
-                        onChange={(v) => {
-                          setSelectedPromoId(v);
-                          const selectedPromo = activePromotions.find((p) => p.promo_id === v);
-                          setSelectedPromoName(selectedPromo ? selectedPromo.name : "");
-                        }}
-                        placeholder="Chọn mã khuyến mãi"
-                        style={{ width: "100%", height: 36, borderRadius: 6 }}
-                      >
-                        <Option value="">Không áp dụng</Option>
-
-                        {promotions.map((promo) => {
-                          const now = new Date();
-                          const startDate = new Date(promo.start_date);
-                          const endDate = new Date(promo.end_date);
-                          const status = promo.status?.toLowerCase();
-                          const minOrder = promo.min_order_amount || 0;
-
-                          // Điều kiện hợp lệ
-                          const isActive =
-                            (status === "active" || status === "hoạt động") &&
-                            now >= startDate &&
-                            now <= endDate &&
-                            subtotal >= minOrder;
-
-                          // Thông báo lý do không hợp lệ (nếu có)
-                          let reason = "";
-                          if (status !== "active" && status !== "hoạt động") reason = " (Đã khóa)";
-                          else if (now < startDate) reason = " (Chưa bắt đầu)";
-                          else if (now > endDate) reason = " (Hết hạn)";
-                          else if (subtotal < minOrder)
-                            reason = ` (Đơn tối thiểu ${minOrder.toLocaleString()}₫)`;
-
-                          return (
-                            <Option
-                              key={promo.promo_id}
-                              value={promo.promo_id}
-                              disabled={!isActive} // ❌ Không đủ điều kiện thì disable
-                            >
-                              {promo.name}
-                              {!isActive && (
-                                <span style={{ color: "#999", marginLeft: 4 }}>{reason}</span>
-                              )}
-                            </Option>
-                          );
-                        })}
-                      </Select>
-
-
-
-                    <Input.TextArea placeholder="Ghi chú cho đơn" rows={2} style={{ borderRadius: 6, resize: "none"}}  />
-                    <Select
-                      value={paymentMethod}
-  //                     onChange={handlePayment}
-                      onChange={handlePaymentChange}
-                      style={{ width: "100%", height: 36, borderRadius: 6 }}
-                    >
-                      <Option value="Tiền mặt">Tiền mặt</Option>
-                      <Option value="Chuyển khoản">Chuyển khoản</Option>
-                      <Option value="Thẻ">Thẻ</Option>
-                    </Select>
-                  </div>
-
-                  {/* Cột phải */}
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "#555" }}>
-                      <span>Tổng phụ:</span>
-                      <span>{subtotal.toLocaleString()} ₫</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "#555" }}>
-                      <span>Giảm giá:</span>
-                      <span>- {discountAmount.toLocaleString()} ₫</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: 18 }}>
-                      <span>Tổng cộng:</span>
-                      <span>{total.toLocaleString()} ₫</span> 
-                      
-                    </div>
-                    {paymentMethod === "Tiền mặt" && 
-                      <>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: "bold" }}>
-                          <span>Khách đưa:</span>
-                            <InputNumber
-                              min={0}
-                              value={customerPaid}
-                              formatter={(value) => `${value?.toLocaleString()} ₫`}
-                              parser={(value) => value.replace(/\D/g, "")}
-                              onChange={(value) => setCustomerPaid(value)}
-                              style={{ width: 120 }}
-                            />
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "red", fontWeight: "bold"}}>
-                          <span>Tiền thừa:</span>
-                          <span>
-                            {customerPaid != null && tienthua(customerPaid, total)}
-                          </span>
-                        </div>
-
-                      </>
-                    }
-                    {paymentMethod === "Chuyển khoản" && (
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginTop: "5px" }}>
-                        <img src={QR} alt="QR Payment" style={{ width: 100, height: 100, objectFit: "contain" }} />
-                        <div style={{ textAlign: "center", fontSize: 14, fontWeight: 500 }}>
-                          Tên tài khoản: CaiTiemTapHoa <br />
-                          STK: 1010101010
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-              {/* 3. Footer: nút luôn sát đáy */}
-              <div style={{display: "flex",gap: 8,borderTop: "1px solid #f0f0f0",padding: 12,flexShrink: 0}}>                      
-                <Button type="default" style={{ flex: 1 }} onClick={() => {setCart([]);setChosenIds([]);}}>Hủy</Button>
-                <Button type="primary" style={{ flex: 1 }} onClick={handlePayment}>Thanh toán</Button>              
               </div>
-            </Card>
-          </Col>
-        </Row>
-
-        {/*Model thêm khách hàng mới*/}
-      <Modal
-        title={"Thêm Khách Hàng Mới"}
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        footer={null}
-        width={400}
-        style={{ top: 100 }}
-        closeIcon={false}
-      >
-        <Form form={form} layout="vertical" autoComplete="off" onFinish={AddNewCustomer}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <Form.Item
-              label="Họ và tên"
-              name="name"
-              rules={[
-                { required: true, message: "Vui lòng nhập họ và tên" },
-                { max: 250, message: "Họ và tên không quá 250 ký tự" }
-                  ]}
+            </Card>
+          </Col>
+          {/* Cột bên phải*/}
+          <Col span={8} style={{ paddingRight: 0 }}>
+            <Card
+              bordered
+              style={{
+                height: "calc(100vh - 80px)",
+                display: "flex",
+                flexDirection: "column",
+                padding: 0,
+              }}
+              bodyStyle={{ padding: 0 }}
             >
-                <Input placeholder="Nguyễn Văn An" style={{ width: "100%", height: 36 }} />
-              </Form.Item>
+              {/* Danh sách sản phẩm */}
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: "auto",
+                  background: "#fafafa",
+                  padding: 0,
+                }}
+              >
+                <Table
+                  columns={columns}
+                  dataSource={cart}
+                  rowKey="product_id"
+                  pagination={false}
+                  size="small"
+                  locale={{ emptyText: "Chưa có sản phẩm" }}
+                  bordered
+                  scroll={cart.length > 5 ? { y: 330 } : undefined}
+                  style={{ tableLayout: "fixed", width: "100%" }}
+                  components={{
+                    header: {
+                      cell: ({ children, ...restProps }) => (
+                        <th
+                          {...restProps}
+                          style={{
+                            backgroundColor: "#008f5a",
+                            color: "#fff",
+                            fontWeight: 600,
+                            textAlign: "center",
+                          }}
+                        >
+                           {children}                   
+                        </th>
+                      ),
+                    },
+                  }}
+                />
+              </div>
+              {/* 2. Thông tin khách + thanh toán */}
+              <div
+                style={{
+                  display: "flex",
+                  padding: 16,
+                  gap: 16,
+                  flex: 1,
+                  overflowY: "auto",
+                  background: "#fff",
+                }}
+              >
+                {/* Cột trái */}
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                  }}
+                >
+                  <Input
+                    placeholder="Nhập SĐT khách hàng"
+                    value={phone}
+                    addonAfter={
+                      <Button
+                        onClick={() => setIsModalOpen(true)}
+                        type="primary"
+                        style={{ padding: "0 12px", height: 28 }}
+                      >
+                        + Thêm
+                      </Button>
+                    }
+                    suffix={loadingCustomer ? <Spin size="small" /> : null}
+                    style={{ height: 36, borderRadius: 6 }}
+                    onChange={handlePhoneChange}
+                  />
+                  <Input
+                    placeholder="Tên khách hàng "
+                    value={customerName}
+                    readOnly
+                    style={{ height: 36, borderRadius: 6, marginTop: 8 }}
+                  />
+                               
+                  <Select
+                    value={selectedPromoId || ""}
+                    onChange={(v) => {
+                      setSelectedPromoId(v);
+                      const selectedPromo = activePromotions.find(
+                        (p) => p.promo_id === v
+                      );
+                      setSelectedPromoName(
+                        selectedPromo ? selectedPromo.name : ""
+                      );
+                    }}
+                    placeholder="Chọn mã khuyến mãi"
+                    style={{ width: "100%", height: 36, borderRadius: 6 }}
+                  >
+                    <Option value="">Không áp dụng</Option>
 
-              <Form.Item
-                label="Số điện thoại"
-                name="phone"
-                validateTrigger="onSubmit"
-                rules={[
-                  { required: true, message: "Vui lòng nhập số điện thoại" },
-                  { pattern: /^[0-9]{10}$/, message: "Số điện thoại không hợp lệ (10 số)" }
-                ]}
-              >
-                <Input placeholder="090xxxxxxx" style={{ width: "100%", height: 36 }} maxLength={10} />
-              </Form.Item>
-            </div>
+                    {promotions.map((promo) => {
+                      const now = new Date();
+                      const startDate = new Date(promo.start_date);
+                      const endDate = new Date(promo.end_date);
+                      const status = promo.status?.toLowerCase();
+                      const minOrder = promo.min_order_amount || 0;
 
-            <Form.Item style={{ marginTop: 24, textAlign: "right", marginBottom: 0 }}>
-              <Space>
-                <Button onClick={() => setIsModalOpen(false)}>Hủy</Button>
-                <Button type="primary" htmlType="submit">Thêm mới</Button>
-              </Space>
-            </Form.Item>
-          </Form>
-      </Modal>
-      
-    </div>
-    {/* Modal kết quả thanh toán */}
-<Modal
-  open={resultModal.visible}
-  onCancel={() => setResultModal({ ...resultModal, visible: false })}
-  footer={null}
-  centered
-  width={420}
-  closable={false}
->
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      textAlign: "center",
-      padding: "10px 10px 0",
-    }}
-  >
-    <div
-      style={{
-        width: 70,
-        height: 70,
-        borderRadius: "50%",
-        backgroundColor:
-          resultModal.type === "success"
-            ? "#16a34a"
-            : resultModal.type === "error"
-            ? "#dc2626"
-            : "#facc15",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#fff",
-        fontSize: 36,
-        marginBottom: 16,
-      }}
-    >
-      {resultModal.type === "success" && "✓"}
-      {resultModal.type === "error" && "✕"}
-      {resultModal.type === "warning" && "!"}
-    </div>
+                      // Điều kiện hợp lệ
+                      const isActive =
+                        (status === "active" || status === "hoạt động") &&
+                        now >= startDate &&
+                        now <= endDate &&
+                        subtotal >= minOrder;
 
-    <h3
-      style={{
-        fontSize: 20,
-        fontWeight: 700,
-        color:
-          resultModal.type === "success"
-            ? "#16a34a"
-            : resultModal.type === "error"
-            ? "#dc2626"
-            : "#ca8a04",
-      }}
-    >
-      {resultModal.title}
-    </h3>
+                      // Thông báo lý do không hợp lệ (nếu có)
+                      let reason = "";
+                      if (status !== "active" && status !== "hoạt động")
+                        reason = " (Đã khóa)";
+                      else if (now < startDate) reason = " (Chưa bắt đầu)";
+                      else if (now > endDate) reason = " (Hết hạn)";
+                      else if (subtotal < minOrder)
+                        reason = ` (Đơn tối thiểu ${minOrder.toLocaleString()}₫)`;
 
-    <p style={{ fontSize: 15, marginTop: 8, color: "#444" }}>
-      {resultModal.message}
-    </p>
-
-    <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 24 }}>
-      {resultModal.showPrint && (
-        <Button
-          type="primary"
-          style={{ background: "#16a34a" }}
-          onClick={() => {
-            if (resultModal.orderToPrint) {
-              printInvoice(resultModal.orderToPrint);
-            }
-            setResultModal({ ...resultModal, visible: false });
+                      return (
+                        <Option
+                          key={promo.promo_id}
+                          value={promo.promo_id}
+                          disabled={!isActive} // ❌ Không đủ điều kiện thì disable
+                        >
+                          {promo.name}
+                          {!isActive && (
+                            <span style={{ color: "#999", marginLeft: 4 }}>
+                              {reason}
+                            </span>
+                          )}
+                        </Option>
+                      );
+                    })}
+                  </Select>
+                  <Input.TextArea
+                    placeholder="Ghi chú cho đơn"
+                    rows={2}
+                    style={{ borderRadius: 6, resize: "none" }}
+                  />
+                  <Select
+                    value={paymentMethod}
+                    //                     onChange={handlePayment}
+                    onChange={handlePaymentChange}
+                    style={{ width: "100%", height: 36, borderRadius: 6 }}
+                  >
+                    <Option value="Tiền mặt">Tiền mặt</Option>                 
+                      <Option value="Chuyển khoản">Chuyển khoản</Option>       
+                      <Option value="Thẻ">Thẻ</Option>               
+                  </Select>
+                </div>
+                {/* Cột phải */}
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: 14,
+                      color: "#555",
+                    }}
+                  >
+                      <span>Tổng phụ:</span>
+                    <span>{subtotal.toLocaleString()} ₫</span>               
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: 14,
+                      color: "#555",
+                    }}
+                  >
+                      <span>Giảm giá:</span>
+                    <span>- {discountAmount.toLocaleString()} ₫</span>       
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontWeight: "bold",
+                      fontSize: 18,
+                    }}
+                  >
+                      <span>Tổng cộng:</span>
+                    <span>{total.toLocaleString()} ₫</span>                   
+                  </div>
+                  {paymentMethod === "Tiền mặt" && (
+                    <>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          fontSize: 14,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        <span>Khách đưa:</span>         
+                        <InputNumber
+                          min={0}
+                          value={customerPaid}
+                          formatter={(value) => `${value?.toLocaleString()} ₫`}
+                          parser={(value) => value.replace(/\D/g, "")}
+                          onChange={(value) => setCustomerPaid(value)}
+                          style={{ width: 120 }}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          fontSize: 14,
+                          color: "red",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        <span>Tiền thừa:</span>         
+                        <span>
+                          {customerPaid != null &&
+                            tienthua(customerPaid, total)}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {paymentMethod === "Chuyển khoản" && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 8,
+                        marginTop: "5px",
+                      }}
+                    >
+                      <img
+                        src={QR}
+                        alt="QR Payment"
+                        style={{
+                          width: 100,
+                          height: 100,
+                          objectFit: "contain",
+                        }}
+                      />
+                      <div
+                        style={{
+                          textAlign: "center",
+                          fontSize: 14,
+                          fontWeight: 500,
+                        }}
+                      >
+                         Tên tài khoản: CaiTiemTapHoa
+                        <br />
+                        STK: 1010101010          
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* 3. Footer: nút luôn sát đáy */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  borderTop: "1px solid #f0f0f0",
+                  padding: 12,
+                  flexShrink: 0,
+                }}
+              >
+                <Button
+                  type="default"
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setCart([]);
+                    setChosenIds([]);
+                  }}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  type="primary"
+                  style={{ flex: 1 }}
+                  onClick={handlePayment}
+                >
+                  Thanh toán
+                </Button>
+                           
+              </div>
+            </Card>
+          </Col>
+        </Row>
+        {/*Model thêm khách hàng mới*/}
+        <Modal
+          title={"Thêm Khách Hàng Mới"}
+          open={isModalOpen}
+          onCancel={() => setIsModalOpen(false)}
+          footer={null}
+          width={400}
+          style={{ top: 100 }}
+          closeIcon={false}
+        >
+          <Form
+            form={form}
+            layout="vertical"
+            autoComplete="off"
+            onFinish={AddNewCustomer}
+          >
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+            >
+              <Form.Item
+                label="Họ và tên"
+                name="name"
+                rules={[
+                  { required: true, message: "Vui lòng nhập họ và tên" },
+                  { max: 250, message: "Họ và tên không quá 250 ký tự" },
+                ]}
+              >
+                <Input
+                  placeholder="Nguyễn Văn An"
+                  style={{ width: "100%", height: 36 }}
+                />
+              </Form.Item>
+              <Form.Item
+                label="Số điện thoại"
+                name="phone"
+                validateTrigger="onSubmit"
+                rules={[
+                  { required: true, message: "Vui lòng nhập số điện thoại" },
+                  {
+                    pattern: /^[0-9]{10}$/,
+                    message: "Số điện thoại không hợp lệ (10 số)",
+                  },
+                ]}
+              >
+                <Input
+                  placeholder="090xxxxxxx"
+                  style={{ width: "100%", height: 36 }}
+                  maxLength={10}
+                />
+              </Form.Item>
+            </div>
+            <Form.Item
+              style={{ marginTop: 24, textAlign: "right", marginBottom: 0 }}
+            >
+              <Space>
+                <Button onClick={() => setIsModalOpen(false)}>Hủy</Button>     
+                <Button type="primary" htmlType="submit">
+                  Thêm mới
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Modal>
+      </div>
+      {/* Modal kết quả thanh toán */}
+      <Modal
+        open={resultModal.visible}
+        onCancel={() => setResultModal({ ...resultModal, visible: false })}
+        footer={null}
+        centered
+        width={420}
+        closable={false}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+            padding: "10px 10px 0",
           }}
         >
-          In Hóa Đơn
-        </Button>
-      )}
-      <Button onClick={() => setResultModal({ ...resultModal, visible: false })}>
-        Đóng
-      </Button>
-    </div>
-  </div>
-</Modal>
+          <div
+            style={{
+              width: 70,
+              height: 70,
+              borderRadius: "50%",
+              backgroundColor:
+                resultModal.type === "success"
+                  ? "#16a34a"
+                  : resultModal.type === "error"
+                  ? "#dc2626"
+                  : "#facc15",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#fff",
+              fontSize: 36,
+              marginBottom: 16,
+            }}
+          >
+            {resultModal.type === "success" && "✓"}
+            {resultModal.type === "error" && "✕"}
+            {resultModal.type === "warning" && "!"}
+          </div>
 
-      </ConfigProvider>
+          <h3
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              color:
+                resultModal.type === "success"
+                  ? "#16a34a"
+                  : resultModal.type === "error"
+                  ? "#dc2626"
+                  : "#ca8a04",
+            }}
+          >
+            {resultModal.title}
+          </h3>
 
+          <p style={{ fontSize: 15, marginTop: 8, color: "#444" }}>
+            {resultModal.message}
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 10,
+              marginTop: 24,
+            }}
+          >
+            {resultModal.showPrint && (
+              <Button
+                type="primary"
+                style={{ background: "#16a34a" }}
+                onClick={() => {
+                  if (resultModal.orderToPrint) {
+                    printInvoice(resultModal.orderToPrint);
+                  }
+                  setResultModal({ ...resultModal, visible: false });
+                }}
+              >
+                In Hóa Đơn
+              </Button>
+            )}
+            <Button
+              onClick={() => setResultModal({ ...resultModal, visible: false })}
+            >
+              Đóng
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </ConfigProvider>
   );
 }

@@ -127,7 +127,7 @@ export default function InventoryManage() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5000/api/Products?searchTerm=${searchTerm}&PageSize=25`,
+        `http://localhost:5000/api/Products?searchTerm=${searchTerm}&PageSize=100`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -147,8 +147,10 @@ export default function InventoryManage() {
       } else if (Array.isArray(response.data)) {
         productData = response.data;
       }
-
-      setAllProducts(productData);
+      const ActiveProduct = productData.filter(
+        (p) => p.status === "Active" || p.status === "active"
+      );
+      setAllProducts(ActiveProduct);
     } catch (error) {
       message.error("Lỗi khi tải danh sách sản phẩm.");
       setAllProducts([]);
@@ -285,45 +287,65 @@ export default function InventoryManage() {
       title: "Mã sản phẩm",
       dataIndex: "product_id",
       key: "product_id",
-      width: 100,
     },
     {
       title: "Tên sản phẩm",
       dataIndex: "product_name",
       key: "product_name",
-      width: 200,
     },
     {
       title: "Số lượng tồn",
       dataIndex: "quantity",
       key: "quantity",
-      width: 120,
+      render: (quantity) => {
+        const isLowStock = quantity < 10; // Ngưỡng cảnh báo
+        return (
+          <span
+            style={{
+              color: isLowStock ? "red" : "inherit",
+              fontWeight: isLowStock ? "bold" : "normal",
+            }}
+          >
+            {quantity}
+          </span>
+        );
+      },
     },
-    { title: "Đơn vị", dataIndex: "unit", key: "unit", width: 100 },
+    { title: "Đơn vị", dataIndex: "unit", key: "unit" },
   ];
 
   const importTableColumns = [
     {
+      title: "STT",
+      key: "index",
+      align: "center",
+      width: 80,
+      render: (text, record, index) => index + 1,
+    },
+    {
       title: "Tên sản phẩm",
       dataIndex: "productName",
       key: "productName",
+      width: "45%",
     },
     {
       title: "Số lượng",
       dataIndex: "quantity",
       key: "quantity",
-      width: 100,
+      width: "20%",
+      align: "center",
     },
     {
       title: "Đơn vị",
       dataIndex: "unit",
       key: "unit",
-      width: 100,
+      width: "20%",
+      align: "center",
     },
     {
       title: "Thao tác",
       key: "action",
-      width: 80,
+      width: "15%",
       align: "center",
       render: (_, record) => (
         <Popconfirm
@@ -331,8 +353,9 @@ export default function InventoryManage() {
           onConfirm={() => handleRemoveFromImportList(record.productId)}
           okText="Xoá"
           cancelText="Huỷ"
+          getPopupContainer={(trigger) => trigger.parentNode}
         >
-          <Button type="link" danger icon={<DeleteOutlined />} />
+          <Button type="primary" danger icon={<DeleteOutlined />} />
         </Popconfirm>
       ),
     },
@@ -380,7 +403,14 @@ export default function InventoryManage() {
         <Alert
           message={`Có ${lowStock.length} sản phẩm sắp hết hàng!`}
           description={
-            <ul style={{ margin: 0, paddingLeft: 20 }}>
+            <ul
+              style={{
+                margin: 0,
+                paddingLeft: 20,
+                maxHeight: "70px",
+                overflowY: "auto",
+              }}
+            >
               {lowStock.map((item) => (
                 <li key={item.inventory_id}>
                   <b>{item.product_name}</b> (Còn lại:{" "}
@@ -403,18 +433,20 @@ export default function InventoryManage() {
           loading={loading}
           pagination={{
             ...pagination,
-            showTotal: (total) => (
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "50", "100"],
+            showTotal: (total, range) => (
               <span>
-                Tổng{" "}
+                Tổng {""}
                 <span style={{ color: "red", fontWeight: "bold" }}>
                   {total}
                 </span>{" "}
-                Sản phẩm
+                sản phẩm
               </span>
             ),
           }}
           onChange={handleTableChange}
-          scroll={{ y: 400, x: 1200 }}
+          scroll={{ y: lowStock.length > 0 ? 260 : 400, x: 1200 }}
         />
       </div>
 
@@ -424,17 +456,20 @@ export default function InventoryManage() {
         onCancel={handleCancel}
         width={800}
         footer={null}
+        destroyOnClose
+        style={{ top: 20 }}
+        closable={false}
       >
         <Form
           form={importForm}
           onFinish={handleAddItemToImportList}
           autoComplete="off"
         >
-          <Space align="start" wrap style={{ width: "100%", marginBottom: 8 }}>
+          <Space align="start" wrap style={{ width: "100%", marginBottom: 16 }}>
             <Form.Item
               name="productId"
               rules={[{ required: true, message: "Vui lòng chọn sản phẩm" }]}
-              style={{ flexGrow: 1, minWidth: 400 }}
+              style={{ flexGrow: 1, minWidth: 400, marginBottom: 0 }}
             >
               <Select
                 size="large"
@@ -444,8 +479,13 @@ export default function InventoryManage() {
                 loading={productLoading}
                 filterOption={false}
                 notFoundContent={
-                  productLoading ? <Spin size="small" /> : "Không tìm thấy"
+                  productLoading ? (
+                    <Spin size="small" />
+                  ) : (
+                    "Không tìm thấy sản phẩm"
+                  )
                 }
+                getPopupContainer={(trigger) => trigger.parentNode}
                 style={{ width: "100%" }}
               >
                 {allProducts.map((product) => (
@@ -462,6 +502,7 @@ export default function InventoryManage() {
                 { required: true, message: "Nhập số lượng" },
                 { type: "number", min: 1, message: "Số lượng phải lớn hơn 0" },
               ]}
+              style={{ marginBottom: 0 }}
             >
               <InputNumber
                 size="large"
@@ -471,7 +512,7 @@ export default function InventoryManage() {
               />
             </Form.Item>
 
-            <Form.Item>
+            <Form.Item style={{ marginBottom: 0 }}>
               <Button type="primary" htmlType="submit" size="large">
                 Thêm vào danh sách
               </Button>
@@ -486,21 +527,32 @@ export default function InventoryManage() {
           rowKey="productId"
           pagination={false}
           bordered
-          title={() => <b>Danh sách nhập hàng</b>}
+          scroll={{ y: 300 }}
+          title={() => (
+            <b>Danh sách nhập hàng ({importList.length} sản phẩm)</b>
+          )}
+          locale={{ emptyText: "Chưa có sản phẩm nào trong danh sách" }}
         />
 
-        <div style={{ textAlign: "right", marginTop: "16px" }}>
+        <div
+          style={{
+            textAlign: "right",
+            marginTop: 16,
+            paddingTop: 16,
+            borderTop: "1px solid #f0f0f0",
+          }}
+        >
           <Space>
-            <Button key="back" onClick={handleCancel}>
+            <Button size="large" onClick={handleCancel}>
               Huỷ
             </Button>
             <Button
-              key="submit"
               type="primary"
+              size="large"
               onClick={handleFinalizeImport}
               disabled={importList.length === 0}
             >
-              Nhập Hàng
+              Xác nhận nhập hàng
             </Button>
           </Space>
         </div>

@@ -1,14 +1,14 @@
 .order-container {
-    position: fixed;
-    top: 60px;
-    left: 70px;
-    width: calc(100% - 70px);
-    min-height: calc(100vh - 60px);
-    background-color: #f8f9fa;
-    padding: 10px 20px;
-    overflow-y: auto;   /* ✅ cho phép cuộn */
-    overflow-x: hidden; /* tránh tràn ngang */
-    z-index: 1;
+  position: fixed;
+  top: 60px;
+  left: 70px;
+  width: calc(100% - 70px);
+  min-height: calc(100vh - 60px);
+  background-color: #f8f9fa;
+  padding: 10px 20px;
+  overflow-y: auto; /* ✅ cho phép cuộn */
+  overflow-x: hidden; /* tránh tràn ngang */
+  z-index: 1;
 }
 
 /* ...existing code... */
@@ -33,11 +33,10 @@
 }
 .ant-pagination-item-link {
   background-color: #008f5a !important; /* màu nền xanh ngọc */
-  color: white !important;              /* màu chữ */
-  border-radius: 8px !important;        /* bo góc mềm */
-  border: none !important;              /* bỏ viền mặc định */
+  color: white !important; /* màu chữ */
+  border-radius: 8px !important; /* bo góc mềm */
+  border: none !important; /* bỏ viền mặc định */
   transition: all 0.2s ease;
-  
 }
 .ant-pagination-item-link:hover {
   background-color: #008f5a !important;
@@ -71,12 +70,14 @@
 }
 
 /* Force modal/notification/message lên trên cùng */
-.ant-modal-root, .ant-modal {
+.ant-modal-root,
+.ant-modal {
   z-index: 14000 !important;
 }
 
 /* wrap và mask */
-.ant-modal-wrap, .ant-modal-wrap-centered {
+.ant-modal-wrap,
+.ant-modal-wrap-centered {
   z-index: 14000 !important;
   display: flex;
   align-items: center;
@@ -86,7 +87,7 @@
 /* backdrop */
 .ant-modal-mask {
   z-index: 13990 !important;
-  background-color: rgba(0,0,0,0.45) !important;
+  background-color: rgba(0, 0, 0, 0.45) !important;
   pointer-events: auto !important;
 }
 
@@ -94,24 +95,113 @@
 .ant-modal-content {
   width: auto !important;
   max-width: 90vw !important;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.15) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
   z-index: 14010 !important;
 }
 
 /* nút đóng / tiêu đề */
-.ant-modal-close, .ant-modal-header {
+.ant-modal-close,
+.ant-modal-header {
   z-index: 14020 !important;
 }
 
 /* Đảm bảo notification / message hiển thị trên modal nếu cần */
-.ant-notification, .ant-notification-notice, .ant-message {
+.ant-notification,
+.ant-notification-notice,
+.ant-message {
   z-index: 15000 !important;
-    position: fixed !important;
-    background-color: red !important;
-
+  position: fixed !important;
+  background-color: red !important;
 }
 
 /* Nếu có custom full-screen overlays, đảm bảo chúng không che modal */
-[data-overlay] {
+/* [data-overlay] {
   z-index: 1;
+} */
+
+/* Low Stock Notification Styles
+.low-stock-notification {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background-color: #fff;
+  border: 2px solid #008f5a;
+  border-radius: 10px;
+  padding: 16px 20px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  z-index: 9999;
+  max-width: 350px;
+  animation: slideIn 0.3s ease-out;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
+
+.low-stock-notification:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+.low-stock-notification-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.low-stock-notification-icon {
+  font-size: 24px;
+}
+
+.low-stock-notification-content {
+  flex: 1;
+}
+
+.low-stock-notification-title {
+  font-weight: bold;
+  color: #2e7d32;
+  font-size: 15px;
+}
+
+.low-stock-notification-subtitle {
+  color: #666;
+  font-size: 13px;
+}
+
+.low-stock-notification-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #999;
+}
+
+.low-stock-notification-list {
+  font-size: 13px;
+  color: #555;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.low-stock-notification-item {
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.low-stock-notification-item:nth-child(even) {
+  background-color: #e8f5e9;
+}
+
+.low-stock-notification-item:nth-child(odd) {
+  background-color: #c8e6c9;
+}
+
+.low-stock-notification-footer {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #c8e6c9;
+  font-size: 12px;
+  color: #2e7d32;
+  text-align: center;
+  font-weight: 500;
+} */

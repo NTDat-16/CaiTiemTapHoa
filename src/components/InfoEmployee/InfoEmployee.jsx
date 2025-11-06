@@ -1,6 +1,6 @@
-import { useAuth } from '../../context/AuthContext';
-import './InfoEmployee.css';
-import { FiX } from 'react-icons/fi';
+import { useAuth } from "../../context/AuthContext";
+import "./InfoEmployee.css";
+import { FiX } from "react-icons/fi";
 
 export default function InfoEmployee({ OpenInfo }) {
   const { user } = useAuth();
@@ -14,19 +14,23 @@ export default function InfoEmployee({ OpenInfo }) {
             <h2>{user.fullName}</h2>
             <p>{user.role === "Admin" ? "Quản trị viên" : "Nhân viên"}</p>
           </div>
-          <FiX
-            size={30}
-            onClick={OpenInfo}
-            className='CloseButton'
-          />
+          <FiX size={30} onClick={OpenInfo} className="CloseButton" />
         </div>
 
         {/* Liên hệ */}
         <div className="ProfileContact">
           <h3>Thông tin liên hệ</h3>
-          <div className="ContactRow"><span>Họ tên:</span>{user.fullName}</div>
-          <div className="ContactRow"><span>Chức vụ:</span>{user.role === "Admin" ? "Quản trị viên" : "Nhân viên"} </div>
-          <div className="ContactRow"><span>Ngày bắt đầu làm việc:</span>2025-10-01</div>
+          <div className="ContactRow">
+            <span>Họ tên:</span>
+            {user.fullName}
+          </div>
+          <div className="ContactRow">
+            <span>Chức vụ:</span>
+            {user.role === "Admin" ? "Quản trị viên" : "Nhân viên"}{" "}
+          </div>
+          <div className="ContactRow">
+            <span>Ngày bắt đầu làm việc:</span>2025-10-01
+          </div>
         </div>
 
         {/* Cập nhật */}

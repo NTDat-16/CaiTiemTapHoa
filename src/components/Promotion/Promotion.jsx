@@ -1,16 +1,11 @@
 import { useState, useEffect } from "react";
-import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, DatePicker, Tooltip, Tag } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons";
+import { Dropdown, Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, DatePicker, Tooltip, Tag } from "antd";
+import { FilterOutlined, PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons";
 import "./Promotion.css";
 import dayjs from "dayjs";
 import axios from "axios"; 
 const { Option } = Select;
 
-// Dữ liệu giả định (mock data)
-const mockPromotions = [
-    { promo_id: 1, promo_code: 'SALE30', description: 'Giảm 30% cho mọi đơn hàng', discount_type: 'percentage', discount_value: 30, start_date: '2025-10-01T00:00:00', end_date: '2025-10-31T23:59:59', min_order_amount: 100000, usage_limit: 100, used_count: 50, status: 'active' },
-    { promo_id: 2, promo_code: 'FREESHIP', description: 'Miễn phí vận chuyển', discount_type: 'fixed', discount_value: 25000, start_date: '2025-10-10T00:00:00', end_date: '2025-11-30T23:59:59', min_order_amount: 200000, usage_limit: 500, used_count: 450, status: 'inactive' },
-];
 
 export default function App() {
     // URL API (Giả định là endpoint Promotions)
@@ -34,9 +29,10 @@ export default function App() {
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
     const [currentDiscountType, setCurrentDiscountType] = useState('percentage');
+    const [filterType, setFilterType] = useState(null)
+    const [filterId, setFilterId] = useState(null)
 
-    const itemsPerPage = 8;
-
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
     // Biến tính toán dựa trên state
     const editingPromotion = editingId !== null;
     const searchTerm = search; // Dùng cho pagination message
@@ -45,96 +41,91 @@ export default function App() {
     const getAuthToken = () => {
         return localStorage.getItem('token');
     };
-
-   const fetchPromotions = async () => {
-    setLoading(true);
-    setErrorMessage('');
-
     const token = getAuthToken();
-    // console.log(token);
 
-    if (!token) {
-        console.warn("Lỗi: Không tìm thấy Token Xác thực. Đang dùng dữ liệu mock.");
-        setPromotions(mockPromotions);
-        setLoading(false);
-        return;
-    }
+    const fetchPromotions = async (page = 1, pageSize = 10) => {
+        setLoading(true);
+        try {
+            const response = await fetch(`${PROMOTION_API_URL}?pageNumber=${page}&pageSize=${pageSize}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-    try {
-        const response = await fetch(PROMOTION_API_URL, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+            if (response.status === 401) {
+                setErrorMessage("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
+                throw new Error("Unauthorized");
             }
-        });
 
-        if (response.status === 401) {
-            setErrorMessage("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
-            throw new Error("Unauthorized");
+        if (!response.ok) {
+                const errorDetail = await response.text();
+                throw new Error(`Lỗi HTTP! Status: ${response.status}. Chi tiết: ${errorDetail}`);
+            }
+
+            const apiResult = await response.json();
+
+            // SỬA LỖI QUAN TRỌNG: Kiểm tra và truy cập vào apiResult.data.items
+            if (apiResult.data && Array.isArray(apiResult.data.items)) {
+                const mappedPromotions = apiResult.data.items.map(item => ({
+                    promo_id: item.promoId,
+                    promo_code: item.promoCode,
+                    description: item.description,
+                    discount_type: item.discountType,
+                    discount_value: item.discountValue,
+                    start_date: item.startDate,
+                    end_date: item.endDate,
+                    min_order_amount: item.minOrderAmount,
+                    usage_limit: item.usageLimit,
+                    used_count: item.usedCount || 0,
+                    status: item.status,
+                }));
+                
+                setPromotions(mappedPromotions);
+                setPagination({
+                    current: apiResult.data.pageNumber || page,
+                    pageSize: apiResult.data.pageSize || pageSize,
+                    total: apiResult.data.totalCount || apiResult.data.items.length,
+                });
+            } else {
+                console.error("Dữ liệu API trả về không hợp lệ (Thiếu data.items hoặc không phải mảng):", apiResult);
+                throw new Error("Dữ liệu nhận được không hợp lệ (Không tìm thấy data.items).");
+            }
+        } catch (error)  {
+            console.error("Lỗi khi tải dữ liệu khuyến mãi:", error);
+            setErrorMessage(error.message.includes("Unauthorized") ? errorMessage : "Lỗi khi tải dữ liệu. Hãy kiểm tra console.");
+        } finally {
+            setLoading(false);
         }
+    };
 
-       if (!response.ok) {
-            const errorDetail = await response.text();
-            throw new Error(`Lỗi HTTP! Status: ${response.status}. Chi tiết: ${errorDetail}`);
-        }
-
-        const apiResult = await response.json(); // Lấy toàn bộ object trả về
-
-        // SỬA LỖI QUAN TRỌNG: Kiểm tra và truy cập vào apiResult.data.items
-        if (apiResult.data && Array.isArray(apiResult.data.items)) {
-            // ÁNH XẠ DỮ LIỆU: Chuyển đổi từ camelCase sang snake_case
-            const mappedPromotions = apiResult.data.items.map(item => ({
-                promo_id: item.promoId,
-                promo_code: item.promoCode,
-                description: item.description,
-                discount_type: item.discountType, // Giả định trường này là 'percentage' hoặc 'fixed'
-                discount_value: item.discountValue,
-                start_date: item.startDate,
-                end_date: item.endDate,
-                min_order_amount: item.minOrderAmount,
-                usage_limit: item.usageLimit,
-                used_count: item.usedCount || 0, // Đảm bảo có giá trị mặc định
-                status: item.status,
-            }));
-
-            setPromotions(mappedPromotions);
-        } else {
-            console.error("Dữ liệu API trả về không hợp lệ (Thiếu data.items hoặc không phải mảng):", apiResult);
-            // Dùng mock data nếu dữ liệu API không đúng định dạng
-            setPromotions(mockPromotions);
-            throw new Error("Dữ liệu nhận được không hợp lệ (Không tìm thấy data.items).");
-        }
-    } catch (error)  {
-        console.error("Lỗi khi tải dữ liệu khuyến mãi:", error);
-        setErrorMessage(error.message.includes("Unauthorized") ? errorMessage : "Lỗi khi tải dữ liệu. Hãy kiểm tra console.");
-        setPromotions(mockPromotions); // Dùng mock data nếu API lỗi
-    } finally {
-        setLoading(false);
-    }
-};
     // Gọi API khi component mount
     useEffect(() => {
         fetchPromotions();
     }, []);
-    
-    // Logic Phân trang (Giữ nguyên logic lọc)
-    const filteredPromotions = Array.isArray(promotions) ? promotions.filter(p =>
-        p.promo_code.toLowerCase().includes(search.toLowerCase()) ||
-        p.description.toLowerCase().includes(search.toLowerCase())
-    ) : [];
-    
-    // Logic phân trang thủ công (đã bị vô hiệu hóa khi dùng pagination của Antd Table)
-    // const indexOfLastItem = currentPage * itemsPerPage;
-    // const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    // const currentPromotions = filteredPromotions.slice(indexOfFirstItem, indexOfLastItem);
-    // const totalPages = Math.ceil(filteredPromotions.length / itemsPerPage);
 
-    // const paginate = (pageNumber) => {
-    //     if (pageNumber < 1 || pageNumber > totalPages) return;
-    //     setCurrentPage(pageNumber);
-    // }
-    
+    // Lọc dữ liệu dựa trên search và filter
+    const filteredPromotions = promotions.filter((promo) => {
+    // Lọc theo trạng thái nếu có
+        if (filterType === "status" && filterId !== null) {
+            if (
+                (filterId === "Active" && promo.status !== "active") ||
+                (filterId === "Inactive" && promo.status !== "inactive")
+            ) return false;
+        }
+
+        // Lọc theo searchTerm nếu có
+        if (!searchTerm) return true;
+
+        const searchLower = searchTerm.toLowerCase();
+
+        return (
+            promo.promo_code?.toLowerCase().includes(searchLower) ||
+            promo.description?.toLowerCase().includes(searchLower)
+        );
+    });
+
     useEffect(() => {
         setCurrentPage(1);
     }, [search]);
@@ -153,13 +144,9 @@ export default function App() {
         setCurrentDiscountType('percentage');
     };
 
-    // SỬA LỖI: handleSearch cần nhận giá trị, không phải lấy từ biến không xác định
     const handleSearch = (value) => {
-        // setSearch(value); // Đã bị gọi trong onChange của Input.Search
-        setSearch(value || ""); // Cập nhật state search
-        // Không cần setCurrentPage, useEffect [search] sẽ tự làm
+        setSearch(value || "");
     }
-
 
     const handleOpenAddModal = () => {
         resetForm();
@@ -176,11 +163,8 @@ export default function App() {
         handleCancel();
     };
 
-
     const onDiscountTypeChange = (value) => {
         setCurrentDiscountType(value);
-        // Có thể reset giá trị giảm giá khi đổi loại
-        // form.setFieldsValue({ discount_value: undefined });
     };
 
     /// Hàm gọi API THÊM MỚI hoặc CẬP NHẬT
@@ -188,14 +172,6 @@ export default function App() {
     const handleSubmit = async (values) => {
         setSubmitting(true);
         setErrorMessage('');
-        
-        const token = getAuthToken();
-        
-        if (!token) {
-            setErrorMessage("Vui lòng Đăng nhập để thực hiện thao tác này.");
-            setSubmitting(false);
-            return;
-        }
 
         // Khắc phục ReferenceError
         let url = PROMOTION_API_URL;
@@ -208,23 +184,15 @@ export default function App() {
 
         // 🌟 ÁNH XẠ DỮ LIỆU ĐÚNG CHUẨN BACKEND (camelCase + Enum Integer)
         const finalData = {
-            // Tên trường camelCase
             promoCode: values.promo_code,
             description: values.description,
-            
-            // 🌟 ÁNH XẠ ENUM (percentage -> 0, fixed -> 1)
-            discountType: values.discount_type === 'percentage' ? 0 : 1, 
-            
-            discountValue: Number(values.discount_value),
-            
-            // Chuyển đổi ngày tháng sang ISO 8601 string
-            startDate: values.start_date ? values.start_date.toISOString() : '', 
+            discountType: values.discount_type === 'percent' ? "Percent" : "Fixed", 
+            startDate: dayjs().startOf('day').add(7, 'hour').toISOString(), // bù +7h cho giờ VN
             endDate: values.end_date ? values.end_date.toISOString() : '', 
-            
+            discountValue: Number(values.discount_value),
             minOrderAmount: Number(values.min_order_amount),
             usageLimit: Number(values.usage_limit),
             usedCount: Number(values.used_count || 0), 
-            // Giả định Status string 'active'/'inactive' được chấp nhận hoặc tự chuyển đổi
             status: values.status,
         };
         
@@ -241,7 +209,6 @@ export default function App() {
             // Xử lý lỗi 400 chi tiết
             if (response.status === 400) {
                 const errorText = await response.text();
-                // Cố gắng parse JSON để lấy chi tiết lỗi validation
                 let errorDetail = {};
                 try {
                     errorDetail = JSON.parse(errorText);
@@ -278,28 +245,26 @@ export default function App() {
             setSubmitting(false);
         }
     };
+
     // Mở Modal và điền dữ liệu cho việc chỉnh sửa
     const handleEdit = (promo) => {
         const initialValues = {
             ...promo,
-            // Chuyển lại thành dayjs object cho DatePicker
             start_date: promo.start_date ? dayjs(promo.start_date) : null, 
             end_date: promo.end_date ? dayjs(promo.end_date) : null,
-            // Chuyển lại thành chuỗi để hiển thị trong Input
-            discount_value: String(promo.discount_value),
-            min_order_amount: String(promo.min_order_amount),
-            usage_limit: String(promo.usage_limit),
-            used_count: String(promo.used_count || 0),
+            discountValue: Number(promo.discount_value),
+            minOrderAmount: Number(promo.min_order_amount),
+            usageLimit: Number(promo.usage_limit),
+            usedCount: Number(promo.used_count || 0),
         };
         form.setFieldsValue(initialValues);
-        setCurrentDiscountType(promo.discount_type); // Cập nhật type cho addonAfter
+        setCurrentDiscountType(promo.discount_type);
         setEditingId(promo.promo_id);
         setIsModalOpen(true);
     };
 
-    // Hàm gọi API XÓA
+    // Hàm gọi API XÓA(Chưa dùng)
     const handleDelete = async (id) => {
-        // Sử dụng Popconfirm của Antd đã được định nghĩa trong columns
         setLoading(true);
         setErrorMessage('');
         const token = getAuthToken();
@@ -335,8 +300,7 @@ export default function App() {
         }
     }
 
-
-    // THÊM: ĐỊNH NGHĨA BIẾN COLUMNS CHO TABLE (Dòng 488 lỗi)
+    //Danh sách các cột của bảng
     const columns = [
         {
             title: 'Mã KM',
@@ -353,7 +317,7 @@ export default function App() {
             width: 150,
             render: (value, record) => {
                 const type = record.discount_type;
-                if (type === 'percentage') {
+                if (type === 'percent') {
                     return `${value}%`;
                 } else if (type === 'fixed') {
                     return `${value.toLocaleString('vi-VN')} VNĐ`;
@@ -405,7 +369,7 @@ export default function App() {
             fixed: 'right',
             render: (status) => (
                 <Tag color={status === 'active' ? 'green' : 'red'}>
-                    {status === 'active' ? 'HOẠT ĐỘNG' : 'ĐÃ KHÓA'}
+                    {status === 'active' ? 'CÒN HẠN' : 'HẾT HẠN'}
                 </Tag>
             ),
         },
@@ -416,7 +380,7 @@ export default function App() {
             fixed: 'right',
             render: (_, record) => (
                 <Space size="middle">
-                   <Tooltip title="Sửa">
+                    <Tooltip title="Sửa">
                         <Button
                             className="btn-edit"
                             icon={<EditOutlined />}
@@ -426,7 +390,7 @@ export default function App() {
                             Sửa
                         </Button>
                     </Tooltip>
-                    <Popconfirm
+                    {/* <Popconfirm
                         title="Bạn có chắc chắn?"
                         description={`Bạn muốn xóa mã ${record.promo_code}?`}
                         onConfirm={() => handleDelete(record.promo_id)}
@@ -443,27 +407,92 @@ export default function App() {
                                 Xóa
                             </Button>
                         </Tooltip>
-                    </Popconfirm>
+                    </Popconfirm> */}
                 </Space>
             ),
         },
     ];
 
+    const handleFilterByStatus = (status) => {
+        setFilterType("status");
+        setFilterId(status);
+        message.success(`Đang lọc theo trạng thái: ${status === "Active" ? "Còn hạn" : "Hết hạn"}`);
+    };
+
+    const handleClearFilter = () => {
+        setFilterType(null)
+        setFilterId(null)
+        message.info("Đã xóa bộ lọc")
+    };
+
+    const filterMenuItems = [
+        {
+            key: "status",
+            label: "Lọc theo trạng thái",
+            children: [
+                {
+                key: "status-active",
+                label: "Còn hạn",
+                onClick: () => handleFilterByStatus("Active"),
+                },
+                {
+                key: "status-inactive",
+                label: "Hết hạn",
+                onClick: () => handleFilterByStatus("Inactive"),
+                },
+            ],
+        },
+        {
+            type: "divider",
+        },
+        {
+            key: "clear",
+            label: "Xóa bộ lọc",
+            onClick: handleClearFilter,
+            disabled: filterType === null,
+        },
+    ];
+
+    const getFilterDisplayName = () => {
+        if (!filterType || filterId === null) return "Lọc";
+
+        if (filterType === "status") {
+        return filterId === "Active" ? "Lọc: Còn hạn" : "Lọc: Hết hạn";
+        }
+
+        return "Lọc";
+    };
     return (
         <div className="promotion-manage-container">
             {/* Thanh tìm kiếm và nút thêm mới */}
             <div className="promotion-manage-header">
                 <h2 className="promotion-manage-title">Quản Lý Mã Khuyến Mãi</h2>
                 <div className="header-actions">
-                    <Input.Search
-                        placeholder="Tìm kiếm theo mã, loại, trạng thái, mô tả..."
-                        allowClear
-                        enterButton={<SearchOutlined />}
-                        size="large"
-                        onSearch={handleSearch}
-                        onChange={(e) => setSearch(e.target.value)} // SỬA: Dùng setSearch thay vì gọi handleSearch trong onChange
-                        className="promotion-search-input"
-                    />
+                    <div className="search-filter-group">
+                        <Input.Search
+                            placeholder="Tìm kiếm theo mã, loại, trạng thái, mô tả..."
+                            allowClear
+                            enterButton={<SearchOutlined />}
+                            size="large"
+                            onSearch={handleSearch}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="promotion-search-input"
+                        />
+                        <Dropdown
+                            menu={{ items: filterMenuItems }}
+                            trigger={["click"]}
+                            placement="bottomLeft"
+                        >
+                            <Button
+                                icon={<FilterOutlined />}
+                                size="large"
+                                className="filter-button"
+                                type={filterType ? "primary" : "default"}
+                            >
+                                {getFilterDisplayName()}
+                            </Button>
+                        </Dropdown>
+                    </div>
                     <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAddModal} size="large" className="product-search-btn">
                         Thêm mã giảm giá
                     </Button>
@@ -472,22 +501,26 @@ export default function App() {
 
             {/* Bảng hiển thị danh sách khuyến mãi */}
             <div className="promotion-manage-table">
-                {/* LỖI ĐƯỢC SỬA: columns đã được định nghĩa */}
                 <Table
                     columns={columns}
                     dataSource={filteredPromotions}
                     rowKey="promo_id"
                     loading={loading}
                     pagination={{
-                        pageSize: 10,
+                        current: pagination.current,
+                        pageSize: pagination.pageSize,
+                        total: pagination.total,
                         showSizeChanger: true,
                         showTotal: (total) => (
-                            <span>
-                                Tổng <span style={{ color: 'red', fontWeight: 'bold' }}>{total}</span> mã giảm giá
-                            </span>
+                        <span>
+                            Tổng <span style={{ color: 'red', fontWeight: 'bold' }}>{total}</span> mã khuyến mãi
+                        </span>
                         ),
                     }}
                     scroll={{ y: 400, x: 1200 }}
+                    onChange={(pagination) => {
+                        fetchPromotions(pagination.current, pagination.pageSize);
+                    }}
                 />
             </div>
 
@@ -504,7 +537,7 @@ export default function App() {
                 style={{ top: 70 }}
             >
                 <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off"
-                    initialValues={{ discount_type: 'percentage', status: 'active', used_count: '0' }}
+                    initialValues={{ discount_type: 'percent', status: 'active', used_count: '0' }}
                 >
                     <div
                         style={{
@@ -525,9 +558,17 @@ export default function App() {
                                 },
                                 { max: 50, message: "Mã không quá 50 ký tự" },
                             ]}
-                            style={{ marginBottom: 0 }}
+                            style={{ marginBottom: 0}}
                         >
-                            <Input placeholder="Nhập mã khuyến mãi" style={{ height: 36 }} />
+                            <Input 
+                                placeholder="Nhập mã khuyến mãi" 
+                                style={{ height: 36 }}
+                                onChange={(e) => {
+                                    form.setFieldsValue({
+                                        promo_code: e.target.value.toUpperCase()
+                                    });
+                                }}  
+                            />
                         </Form.Item>
 
                         <Form.Item
@@ -540,9 +581,10 @@ export default function App() {
                                 placeholder="Chọn loại" 
                                 style={{ height: 36 }}
                                 onChange={onDiscountTypeChange} // THÊM: Hàm này để cập nhật `currentDiscountType`
+                                getPopupContainer={(trigger) => trigger.parentNode}
                             >
-                                <Select.Option value="percentage">Phần trăm (%)</Select.Option>
-                                <Select.Option value="fixed">Giá cố định (VNĐ)</Select.Option>
+                                <Option value="percent">Phần trăm (%)</Option>
+                                <Option value="fixed">Giá cố định (VNĐ)</Option>
                             </Select>
                         </Form.Item>
 
@@ -593,7 +635,7 @@ export default function App() {
                                 { required: true, message: "Vui lòng nhập đơn tối thiểu" },
                                 {
                                     validator: (_, value) =>
-                                        !value || (Number(value) >= 1 && Number.isInteger(Number(value)))
+                                        !value || (Number(value) >= 0 && Number.isInteger(Number(value)))
                                             ? Promise.resolve()
                                             : Promise.reject(new Error("Giá trị phải là số nguyên ≥ 1")),
                                 },
@@ -626,9 +668,9 @@ export default function App() {
                             rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
                             style={{ marginBottom: 0 }}
                         >
-                            <Select placeholder="Chọn trạng thái" style={{ height: 36 }}>
-                                <Select.Option value="active">Hoạt động</Select.Option>
-                                <Select.Option value="inactive">Đã khóa</Select.Option>
+                            <Select placeholder="Chọn trạng thái" style={{ height: 36 }} getPopupContainer={(trigger) => trigger.parentNode}>
+                                <Option value="active">Còn Hạn</Option>
+                                <Option value="inactive">Hết Hạn</Option>
                             </Select>
                         </Form.Item>
 
@@ -647,11 +689,17 @@ export default function App() {
                         <Form.Item
                             label="Ngày bắt đầu"
                             name="start_date"
-                            rules={[{ required: true, message: "Vui lòng chọn ngày bắt đầu" }]}
                             style={{ marginBottom: 0 }}
+                            initialValue={dayjs()}
                         >
-                            <DatePicker style={{ width: "100%", height: 36 }} format="DD/MM/YYYY" />
+                            <DatePicker
+                                getPopupContainer={(trigger) => trigger.parentNode}
+                                style={{ width: "100%", height: 36 }}
+                                format="DD/MM/YYYY"
+                                disabled
+                            />
                         </Form.Item>
+
 
                         <Form.Item
                             label="Ngày kết thúc"
@@ -673,7 +721,7 @@ export default function App() {
                             ]}
                             style={{ marginBottom: 0 }}
                         >
-                            <DatePicker style={{ width: "100%", height: 36 }} format="DD/MM/YYYY" />
+                            <DatePicker getPopupContainer={(trigger) => trigger.parentNode} style={{ width: "100%", height: 36 }} format="DD/MM/YYYY" />
                         </Form.Item>
                     </div>
 

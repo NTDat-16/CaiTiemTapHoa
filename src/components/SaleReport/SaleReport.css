@@ -1,0 +1,296 @@
+/* SaleReport.css – PHẲNG, LIỀN MẠCH, KHÔNG PHÂN KHỐI */
+
+.SaleReport-container {
+  width: 100%;
+  background: #f5f7fa;
+  height: calc(100vh - 205px);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+/* Card = 100% container */
+.SaleReport-card {
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.SaleReport-card > .ant-card-head {
+  flex-shrink: 0;
+  padding: 16px 24px !important;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.SaleReport-card > .ant-card-body {
+  flex: 1;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Body: 3 cột liền mạch */
+.SaleReport-body {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.5fr;
+  gap: 24px;
+  flex: 1;
+  padding: 20px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* === CỘT 1: Tổng DT + Top 5 – KHÔNG NỀN, KHÔNG VIỀN === */
+.SaleReport-left-block {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.SaleReport-revenue-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.revenue-box {
+  background: linear-gradient(135deg, #e6fff7 0%, #c8f0e0 100%);
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+}
+
+.revenue-box:hover {
+  transform: translateY(-4px);
+}
+
+.revenue-box .icon {
+  font-size: 24px;
+  color: #008f5a;
+  margin-bottom: 8px;
+}
+
+.revenue-box h3 {
+  font-size: 13px;
+  color: #1a1a1a;
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.revenue-box .value {
+  font-size: 19px;
+  font-weight: 700;
+  color: #008f5a;
+}
+
+.revenue-box .sub {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.SaleReport-top5 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.SaleReport-top5 h4 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.SaleReport-top5 ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.SaleReport-top5 li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px dashed #e6e6e6;
+  font-size: 13px;
+  transition: background 0.2s ease;
+}
+
+.SaleReport-top5 li:hover {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  margin: 0 -8px;
+}
+
+.SaleReport-top5 li:last-child {
+  border-bottom: none;
+}
+
+.SaleReport-top5 .rank {
+  font-weight: 700;
+  color: #008f5a;
+  width: 28px;
+  font-size: 14px;
+}
+
+.SaleReport-top5 .name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 12px;
+  color: #1a1a1a;
+}
+
+.SaleReport-top5 .value {
+  font-weight: 600;
+  color: #008f5a;
+}
+
+/* === CỘT 2 & 3: Biểu đồ – KHÔNG NỀN, KHÔNG VIỀN === */
+.SaleReport-pie-block,
+.SaleReport-line-block {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.SaleReport-pie-block .chart-header,
+.SaleReport-line-block .chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1a1a1a;
+}
+
+.SaleReport-pie-block .chart-header {
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.SaleReport-pie-block .chart-container,
+.SaleReport-line-block .chart-container {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+/* Nút Xem chi tiết nhỏ gọn */
+.SaleReport-pie-block .ant-btn {
+  font-size: 12px;
+  height: 28px;
+  padding: 0 10px;
+}
+
+/* Filter */
+.SaleReport-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.SaleReport-filter .modern-picker {
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  background: #f8f9fa;
+  height: 40px;
+}
+
+.SaleReport-filter .modern-button {
+  border-radius: 8px;
+  height: 40px;
+  padding: 0 20px;
+  font-weight: 600;
+  background: #008f5a;
+  border: 1px solid #008f5a;
+  color: #fff;
+}
+
+.SaleReport-filter .modern-button:hover {
+  background: #00c48f;
+  transform: scale(1.05);
+}
+
+.SaleReport-filter .modern-button-secondary {
+  border-color: #008f5a;
+  color: #008f5a;
+  background: #fff;
+}
+
+.SaleReport-filter .modern-button-secondary:hover {
+  background: #e6fff7;
+  transform: scale(1.05);
+}
+
+/* Modal */
+.SaleReport-detail-table .ant-table {
+  font-size: 13px;
+}
+
+.SaleReport-detail-table .ant-table-thead > tr > th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.SaleReport-modal .ant-table {
+  font-size: 14px;
+}
+
+/* Tiêu đề bảng màu trắng */
+.SaleReport-modal .ant-table-thead > tr > th {
+  background-color: #008f5a !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border: none !important;
+}
+
+/* Hover hàng */
+.SaleReport-modal .ant-table-tbody > tr:hover > td {
+  background-color: #e6f4ea !important;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .SaleReport-body {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .SaleReport-line-block {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .SaleReport-body {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+  .SaleReport-revenue-summary {
+    grid-template-columns: 1fr;
+  }
+}

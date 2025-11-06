@@ -1,18 +1,30 @@
-import  './Sidebar.css'
-import { FiTruck, FiUsers, FiFileText, FiTrendingUp, FiPackage, FiUser, FiGift, FiLogOut, FiGrid, FiBox } from 'react-icons/fi'
-import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import "./Sidebar.css";
+import {
+  FiTruck,
+  FiUsers,
+  FiFileText,
+  FiTrendingUp,
+  FiPackage,
+  FiUser,
+  FiGift,
+  FiLogOut,
+  FiGrid,
+  FiBox,
+  FiPlusSquare,
+} from "react-icons/fi";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
-export default function Sidebar({onTag, choosen}) {
+export default function Sidebar({ onTag, choosen }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const role = user?.role || user?.user?.role;
 
   const HandleLogOut = async () => {
     logout();
-    navigate('/login');
-  }
+    navigate("/login");
+  };
 
   function handleTag(frame) {
     onTag(frame);
@@ -22,123 +34,156 @@ export default function Sidebar({onTag, choosen}) {
     <div className="sidebar">
       <div className="SidebarWrapper">
         <ul className="SidebarList">
-          { role === "Admin" &&
+          {role === "Admin" && (
             <>
               {/* Hóa đơn */}
               <li
-                className={`SidebarItem ${choosen === 'order' ? 'active' : ''}`}
+                className={`SidebarItem ${choosen === "order" ? "active" : ""}`}
                 data-label="Hóa đơn"
-                onClick={() => onTag('order')}
+                onClick={() => onTag("order")}
               >
                 <FiFileText />
               </li>
 
               {/* Quản lý danh mục */}
-              
+
               <li
-                className={`SidebarItem ${choosen === 'category' ? 'active' : ''}`}
+                className={`SidebarItem ${
+                  choosen === "category" ? "active" : ""
+                }`}
                 data-label="Danh mục"
-                onClick={() => onTag('category')}
+                onClick={() => onTag("category")}
               >
                 <FiGrid />
               </li>
 
               {/* Quản lý nhà cung cấp */}
               <li
-                className={`SidebarItem ${choosen === 'supplier' ? 'active' : ''}`}
+                className={`SidebarItem ${
+                  choosen === "supplier" ? "active" : ""
+                }`}
                 data-label="Nhà cung cấp"
-                onClick={() => onTag('supplier')}
+                onClick={() => onTag("supplier")}
               >
                 <FiTruck />
               </li>
 
               {/* Quản lý sản phẩm */}
               <li
-                className={`SidebarItem ${choosen === 'product' ? 'active' : ''}`}
+                className={`SidebarItem ${
+                  choosen === "product" ? "active" : ""
+                }`}
                 data-label="Sản phẩm"
-                onClick={() => onTag('product')}
+                onClick={() => onTag("product")}
               >
                 <FiPackage />
               </li>
-              
+
               {/* Quản lý nhân viên */}
               <li
-                className={`SidebarItem ${choosen === 'employee' ? 'active' : ''}`}
+                className={`SidebarItem ${
+                  choosen === "employee" ? "active" : ""
+                }`}
                 data-label="Nhân viên"
-                onClick={() => onTag('employee')}
+                onClick={() => onTag("employee")}
               >
                 <FiUser />
               </li>
 
               {/* Quản lý khách hàng */}
               <li
-                className={`SidebarItem ${choosen === 'customer' ? 'active' : ''}`}
+                className={`SidebarItem ${
+                  choosen === "customer" ? "active" : ""
+                }`}
                 data-label="Khách hàng"
-                onClick={() => onTag('customer')}
+                onClick={() => onTag("customer")}
               >
                 <FiUsers />
               </li>
 
               {/* Quản lý kho */}
               <li
-                className={`SidebarItem ${choosen === 'inventory' ? 'active' : ''}`}
+                className={`SidebarItem ${
+                  choosen === "inventory" ? "active" : ""
+                }`}
                 data-label="Tồn kho"
-                onClick={() => onTag('inventory')}
+                onClick={() => onTag("inventory")}
               >
                 <FiBox />
               </li>
 
+              {/* Nhập hàng */}
+              <li
+                className={`SidebarItem ${
+                  choosen === "purchase" ? "active" : ""
+                }`}
+                data-label="Nhập hàng"
+                onClick={() => onTag("purchase")}
+              >
+                <FiPlusSquare />
+              </li>
+
               {/* Khuyến mãi */}
               <li
-                className={`SidebarItem ${choosen === 'promotion' ? 'active' : ''}`}
+                className={`SidebarItem ${
+                  choosen === "promotion" ? "active" : ""
+                }`}
                 data-label="Khuyến mãi"
-                onClick={() => onTag('promotion')}
+                onClick={() => onTag("promotion")}
               >
                 <FiGift />
               </li>
 
               {/* Thống kê */}
               <li
-                className={`SidebarItem ${choosen === 'report' ? 'active' : ''}`}
+                className={`SidebarItem ${
+                  choosen === "report" ? "active" : ""
+                }`}
                 data-label="Báo cáo"
-                onClick={() => onTag('report')}
+                onClick={() => onTag("report")}
                 onMouseEnter={() => setShowReportMenu(true)}
                 onMouseLeave={() => setShowReportMenu(false)}
               >
                 <FiTrendingUp />
               </li>
             </>
-          }
+          )}
 
-          { role === "Staff" &&
+          {role === "Staff" && (
             <>
               {/* Hóa đơn */}
               <li
-                className={`SidebarItem ${choosen === 'order' ? 'active' : ''}`}
+                className={`SidebarItem ${choosen === "order" ? "active" : ""}`}
                 data-label="Hóa đơn"
-                onClick={() => onTag('order')}
+                onClick={() => onTag("order")}
               >
                 <FiFileText />
               </li>
 
               {/* Thống kê */}
               <li
-                className={`SidebarItem ${choosen === 'report' ? 'active' : ''}`}
+                className={`SidebarItem ${
+                  choosen === "report" ? "active" : ""
+                }`}
                 data-label="Báo cáo"
-                onClick={() => onTag('report')}
+                onClick={() => onTag("report")}
                 onMouseEnter={() => setShowReportMenu(true)}
                 onMouseLeave={() => setShowReportMenu(false)}
               >
                 <FiTrendingUp />
               </li>
             </>
-          }
+          )}
         </ul>
 
-        <div className="SidebarLogout" data-label="Đăng xuất" onClick={HandleLogOut}>
-          <FiLogOut style={{ rotate: '180deg' }} />
+        <div
+          className="SidebarLogout"
+          data-label="Đăng xuất"
+          onClick={HandleLogOut}
+        >
+          <FiLogOut style={{ rotate: "180deg" }} />
         </div>
       </div>
     </div>
-  )
+  );
 }
