@@ -64,15 +64,15 @@ export default function Deadstock() {
       render: (v) => v.toLocaleString()
     },
     { 
-      title: "Tồn kho",
+      title: "Số lượng hàng tồn",   // 🟢 đổi nhãn cột
       dataIndex: "quantityInStock",
       render: (v) => v.toLocaleString()
     }
   ];
 
   return (
-    <div style={{ padding: 16, background: "white", minHeight: "100vh", color: "white" }}>
-      <PageHeader title=" Báo cáo hàng tồn kho" style={{ backgroundcolor: 'green'}} />
+    <div style={{ padding: 16, background: "white", minHeight: "100vh" }}>
+      <PageHeader title="Báo cáo hàng tồn kho" />
 
       <Card style={{ marginTop: 12, background: "white" }}>
         <Row gutter={12}>
@@ -104,7 +104,6 @@ export default function Deadstock() {
               dataSource={deadstock}
               pagination={false}
               size="small"
-              
             />
           </Spin>
         </Card>
@@ -112,16 +111,21 @@ export default function Deadstock() {
         {/* Chart Right */}
         <Card 
           title="📊 Biểu đồ tồn kho"
-          style={{ width: "45%", background: "white"   }}
+          style={{ width: "45%", background: "white" }}
         >
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={deadstock}>
               <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
-              <XAxis dataKey="productName" tick={{ fill: "#cbd5e1" }} />
-              <YAxis tick={{ fill: "#cbd5e1" }} />
-              <Tooltip contentStyle={{ background: "#1e293b", border: "1px solid #334155" }} />
-              <Legend />
-              <Bar dataKey="quantityInStock"  fill="#38bdf8" radius={[6, 6, 0, 0]} />
+              <XAxis dataKey="productName" tick={{ fill: "#334155" }} />
+              <YAxis tick={{ fill: "#334155" }} />
+              <Tooltip 
+                contentStyle={{ background: "#1e293b", border: "1px solid #334155" }}
+                formatter={(value) => [`${value.toLocaleString()} sản phẩm`, "Số lượng hàng tồn"]} // 🟢 đổi nhãn tooltip
+              />
+              <Legend 
+                formatter={() => "Số lượng hàng tồn"} // 🟢 đổi nhãn chú thích
+              />
+              <Bar dataKey="quantityInStock" fill="#38bdf8" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
