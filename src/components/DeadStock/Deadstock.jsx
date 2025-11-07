@@ -1,11 +1,26 @@
 import React, { useEffect, useState } from "react";
 import {
-  Card, Row, Col, DatePicker, Button, Table, Spin, Space, notification
+  Card,
+  Row,
+  Col,
+  DatePicker,
+  Button,
+  Table,
+  Spin,
+  Space,
+  notification,
 } from "antd";
 import dayjs from "dayjs";
 import { PageHeader } from "@ant-design/pro-layout";
-import { 
-  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+  Legend,
 } from "recharts";
 
 const { RangePicker } = DatePicker;
@@ -28,18 +43,20 @@ export default function Deadstock() {
       const token = getAuthToken();
       const params = new URLSearchParams({ startDate, endDate }).toString();
 
-      const resp = await fetch(`${API_BASE_URL}/Reports/products/dead-stock?${params}`, {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
-          "Content-Type": "application/json",
-        },
-      });
+      const resp = await fetch(
+        `${API_BASE_URL}/Reports/products/dead-stock?${params}`,
+        {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
       const json = await resp.json();
       setDeadstock(json.data ?? []);
-
     } catch (error) {
       notification.error({
         message: "Lỗi tải dữ liệu Deadstock",
@@ -58,42 +75,53 @@ export default function Deadstock() {
     { title: "ID", dataIndex: "productId", width: 60 },
     { title: "Tên sản phẩm", dataIndex: "productName" },
     { title: "Barcode", dataIndex: "barcode" },
-    { 
+    {
       title: "Giá (VND)",
       dataIndex: "price",
-      render: (v) => v.toLocaleString()
+      render: (v) => v.toLocaleString(),
     },
-    { 
-      title: "Số lượng hàng tồn",   // 🟢 đổi nhãn cột
+    {
+      title: "Số lượng hàng tồn", // 🟢 đổi nhãn cột
       dataIndex: "quantityInStock",
-      render: (v) => v.toLocaleString()
-    }
+      render: (v) => v.toLocaleString(),
+    },
   ];
 
   return (
-    <div style={{ padding: 16, background: "white", minHeight: "100vh" }}>
-      <PageHeader title="Báo cáo hàng tồn kho" />
-
-      <Card style={{ marginTop: 12, background: "white" }}>
+    <div
+      style={{
+        background: "white",
+        height: "calc(100vh - 205px)",
+      }}
+    >
+      <Card style={{ background: "white" }}>
         <Row gutter={12}>
           <Col xs={24} sm={12} md={8}>
-            <label style={{ color: "black" }}>Chọn khoảng thời gian</label>
-            <RangePicker value={range} onChange={setRange} style={{ width: "100%" }} />
+            <RangePicker
+              value={range}
+              onChange={setRange}
+              style={{ width: "100%" }}
+            />
           </Col>
           <Col>
-            <Space style={{ marginTop: 24 }}>
-              <Button type="primary" onClick={fetchDeadStock}>Tìm</Button>
-              <Button onClick={() => setRange([dayjs().subtract(90, "day"), dayjs()])}>Reset</Button>
+            <Space>
+              <Button type="primary" onClick={fetchDeadStock}>
+                Tìm
+              </Button>
+              <Button
+                onClick={() => setRange([dayjs().subtract(90, "day"), dayjs()])}
+              >
+                Reset
+              </Button>
             </Space>
           </Col>
         </Row>
       </Card>
 
-      <div style={{ display: 'flex', gap: 16, marginTop: 12 }}>
-
+      <div style={{ display: "flex", gap: 16, marginTop: 4 }}>
         {/* Table Left */}
-        <Card 
-          title="Danh sách sản phẩm Dead Stock" 
+        <Card
+          title="Danh sách sản phẩm tồn kho"
           style={{ flex: 1, background: "white" }}
           bodyStyle={{ maxHeight: 480, overflow: "auto" }}
         >
@@ -109,8 +137,8 @@ export default function Deadstock() {
         </Card>
 
         {/* Chart Right */}
-        <Card 
-          title="📊 Biểu đồ tồn kho"
+        <Card
+          title="Biểu đồ tồn kho"
           style={{ width: "45%", background: "white" }}
         >
           <ResponsiveContainer width="100%" height={400}>
@@ -118,18 +146,28 @@ export default function Deadstock() {
               <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
               <XAxis dataKey="productName" tick={{ fill: "#334155" }} />
               <YAxis tick={{ fill: "#334155" }} />
-              <Tooltip 
-                contentStyle={{ background: "#1e293b", border: "1px solid #334155" }}
-                formatter={(value) => [`${value.toLocaleString()} sản phẩm`, "Số lượng hàng tồn"]} // 🟢 đổi nhãn tooltip
+              <Tooltip
+                contentStyle={{
+                  background: "#1e293b",
+                  border: "1px solid #334155",
+                }}
+                formatter={(value) => [
+                  `${value.toLocaleString()} sản phẩm`,
+                  "Số lượng hàng tồn",
+                ]} // 🟢 đổi nhãn tooltip
               />
-              <Legend 
+              <Legend
                 formatter={() => "Số lượng hàng tồn"} // 🟢 đổi nhãn chú thích
               />
-              <Bar dataKey="quantityInStock" fill="#38bdf8" radius={[6, 6, 0, 0]} />
+              <Bar
+                dataKey="quantityInStock"
+                fill="#38bdf8"
+                radius={[6, 6, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </Card>
       </div>
     </div>
-  );  
+  );
 }

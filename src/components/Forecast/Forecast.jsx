@@ -42,7 +42,6 @@ const MOCK_FORECAST = Array.from({ length: 30 }, (_, i) => {
   return { date, forecast, actual };
 });
 
-
 export default function Forecast() {
   const [data, setData] = useState(MOCK_FORECAST);
   const [products] = useState(MOCK_PRODUCTS);
@@ -51,20 +50,19 @@ export default function Forecast() {
   const [endDate, setEndDate] = useState(dayjs("2025-10-07"));
   const [loading, setLoading] = useState(false);
 
- const fetchForecast = () => {
-  if (startDate.isAfter(endDate)) {
-    message.error("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
-    return;
-  }
-  // Lọc dữ liệu ngay lập tức
-  const filteredData = MOCK_FORECAST.filter(
-    (d) =>
-      dayjs(d.date).isSameOrAfter(startDate) &&
-      dayjs(d.date).isSameOrBefore(endDate)
-  );
-  setData(filteredData);
-};
-
+  const fetchForecast = () => {
+    if (startDate.isAfter(endDate)) {
+      message.error("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
+      return;
+    }
+    // Lọc dữ liệu ngay lập tức
+    const filteredData = MOCK_FORECAST.filter(
+      (d) =>
+        dayjs(d.date).isSameOrAfter(startDate) &&
+        dayjs(d.date).isSameOrBefore(endDate)
+    );
+    setData(filteredData);
+  };
 
   const trend = useMemo(() => {
     if (data.length < 2) return "Không đủ dữ liệu";
@@ -157,7 +155,11 @@ export default function Forecast() {
             const diff = d.actual ? Math.abs(d.forecast - d.actual) : null;
             return [
               `${ctx.dataset.label}: ${ctx.parsed.y}`,
-              diff ? `Chênh lệch: ${diff} (${((diff / d.actual) * 100).toFixed(1)}%)` : "",
+              diff
+                ? `Chênh lệch: ${diff} (${((diff / d.actual) * 100).toFixed(
+                    1
+                  )}%)`
+                : "",
             ];
           },
         },
@@ -172,17 +174,26 @@ export default function Forecast() {
   const totalForecast = data.reduce((sum, d) => sum + (d.forecast || 0), 0);
   const totalActual = data.reduce((sum, d) => sum + (d.actual || 0), 0);
   const avgForecast = data.length ? Math.round(totalForecast / data.length) : 0;
-  const maxForecast = data.length ? Math.max(...data.map((d) => d.forecast || 0)) : 0;
+  const maxForecast = data.length
+    ? Math.max(...data.map((d) => d.forecast || 0))
+    : 0;
 
   return (
     <div className="forecast-container">
       <Card
         className="forecast-card"
-        title="🌾 Dự báo nhu cầu sản phẩm (Mock Data)"
         extra={
           <div className="forecast-filter">
-            <DatePicker value={startDate} onChange={setStartDate} placeholder="Ngày bắt đầu" />
-            <DatePicker value={endDate} onChange={setEndDate} placeholder="Ngày kết thúc" />
+            <DatePicker
+              value={startDate}
+              onChange={setStartDate}
+              placeholder="Ngày bắt đầu"
+            />
+            <DatePicker
+              value={endDate}
+              onChange={setEndDate}
+              placeholder="Ngày kết thúc"
+            />
             <Select
               value={selectedProduct}
               style={{ width: 180 }}

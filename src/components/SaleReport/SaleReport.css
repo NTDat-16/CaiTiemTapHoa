@@ -6,7 +6,7 @@
   height: calc(100vh - 205px);
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  /* padding: 16px; */
   box-sizing: border-box;
 }
 
@@ -40,8 +40,8 @@
 /* Body: 3 cột liền mạch */
 .SaleReport-body {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1.5fr;
-  gap: 24px;
+  grid-template-columns: 1fr 1.2fr 1.5fr;
+  gap: 20px;
   flex: 1;
   padding: 20px;
   overflow: hidden;
@@ -293,4 +293,18 @@
   .SaleReport-revenue-summary {
     grid-template-columns: 1fr;
   }
+}
+.rank {
+  font-weight: bold;
+  color: #16a34a;
+}
+
+.value {
+  font-weight: 500;
+}
+
+li:hover {
+  background-color: #f9fafb;
+  border-radius: 8px;
+  transition: background 0.2s;
 }

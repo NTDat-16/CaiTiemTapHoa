@@ -21,7 +21,7 @@ import {
   message,
 } from "antd";
 import {
-  RiseOutlined,
+  ArrowUpOutlined,
   DollarOutlined,
   CalendarOutlined,
   DownloadOutlined,
@@ -41,7 +41,9 @@ ChartJS.register(
   LineElement
 );
 
-const API_URL = "http://localhost:5000/api/Products/abc-analysis";
+const API_URL = "http://localhost:5000/api";
+const token = localStorage.getItem("token");
+const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
 const ABC_COLORS = {
   A: { color: "#52c41a", bg: "#f6ffed", label: "A - Cao" },
@@ -64,118 +66,245 @@ export default function SaleReport() {
   const [top5Products, setTop5Products] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
+  const currentYear = dayjs();
+  const [yearSelected, setYearSelected] = useState(currentYear);
+  const [yearSelectedpie, setYearSelectedPie] = useState(currentYear);
+  const [monthSelected, setMonthSelected] = useState(dayjs());
+  const [TotalRevenueMonth, setTotalRevenueMonth] = useState(0);
+  const startOfMonth = dayjs().startOf("month"); // Ngày đầu tháng hiện tại
+  const endOfMonth = dayjs().endOf("month"); // Ngày cuối tháng hiện tại
+  const [startDate] = useState(startOfMonth);
+  const [endDate] = useState(endOfMonth);
 
-  const today = dayjs();
-  const oneMonthAgo = today.subtract(1, "month");
-  const [startDate] = useState(oneMonthAgo);
-  const [endDate] = useState(today);
+  // === HÀM TÍNH TOÁN DOANH THU NĂM ===
+  const fetchtotalRevenueYear = async () => {
+    try {
+      // Xác định ngày đầu năm và cuối năm
+      const year = yearSelected ? yearSelected.year() : dayjs().year();
+      const startDate = dayjs(`${year}-01-01`).startOf("year");
+      const endDate = dayjs(`${year}-12-31`).endOf("year");
 
-  useEffect(() => {
-    const fetchABCData = async () => {
-      try {
-        const fromDate = startDate.format("YYYY-MM-DD");
-        const toDate = endDate.format("YYYY-MM-DD");
-        const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${API_URL}/Reports/sales/overview?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&groupBy=day`,
+        {
+          headers: { ...authHeader },
+        }
+      );
 
-        const response = await fetch(
-          `${API_URL}?pageNumber=1&pageSize=100&fromDate=${fromDate}&toDate=${toDate}`,
+      if (!response.ok) throw new Error(`Lỗi API: ${response.status}`);
+
+      const result = await response.json();
+      if (!result.success || !result.data)
+        throw new Error("Dữ liệu không hợp lệ");
+
+      const items = result.data;
+
+      // === TÍNH TỔNG DOANH THU CẢ NĂM ===
+      const total = items.reduce(
+        (sum, item) => sum + Number(item.totalRevenue || 0),
+        0
+      );
+
+      setTotalRevenue(total);
+      console.log(`Doanh thu năm ${year}:`, total.toLocaleString(), "₫");
+    } catch (error) {
+      console.error("Lỗi API:", error);
+    }
+  };
+
+  // === HÀM TÍNH TOÁN DOANH THU THÁNG HIỆN TẠI ===
+  const fetchtotalRevenueMonth = async () => {
+    try {
+      // const now = dayjs();
+      const now = yearSelectedpie ? yearSelectedpie : dayjs();
+      const monthStart = now.startOf("month");
+      const monthEnd = now.endOf("month");
+
+      const response = await fetch(
+        `${API_URL}/Reports/sales/overview?startDate=${monthStart.toISOString()}&endDate=${monthEnd.toISOString()}&groupBy=day`,
+        {
+          headers: { ...authHeader },
+        }
+      );
+
+      if (!response.ok) throw new Error(`Lỗi API: ${response.status}`);
+
+      const result = await response.json();
+      if (!result.success || !result.data)
+        throw new Error("Dữ liệu không hợp lệ");
+
+      const items = result.data;
+
+      const total = items.reduce(
+        (sum, item) => sum + Number(item.totalRevenue || 0),
+        0
+      );
+
+      setTotalRevenueMonth(total);
+      console.log(
+        `Doanh thu tháng ${now.month() + 1}/${now.year()}:`,
+        total.toLocaleString(),
+        "₫"
+      );
+    } catch (error) {
+      console.error("Lỗi API:", error);
+    }
+  };
+
+  // === HÀM TẢI DỮ LIỆU BIỂU ĐỒ THEO THÁNG ĐƯỢC CHỌN ===
+  const fetchChartABC = async (yearSelectedpie) => {
+    try {
+      const month = yearSelectedpie
+        ? yearSelectedpie.month() + 1
+        : dayjs().month() + 1;
+      const year = yearSelectedpie ? yearSelectedpie.year() : dayjs().year();
+
+      // Ngày bắt đầu và kết thúc của tháng đó
+      const fromDate = dayjs(`${year}-${month}-01`).startOf("month");
+      const toDate = dayjs(`${year}-${month}-01`).endOf("month");
+
+      // Gọi API
+      const response = await fetch(
+        `${API_URL}/Products/abc-analysis?pageNumber=1&pageSize=100&fromDate=${fromDate.format(
+          "YYYY-MM-DD"
+        )}&toDate=${toDate.format("YYYY-MM-DD")}`,
+        {
+          headers: { ...authHeader },
+        }
+      );
+
+      if (!response.ok) throw new Error(`Lỗi API: ${response.status}`);
+
+      const result = await response.json();
+      if (!result.success || !result.data?.items)
+        throw new Error("Dữ liệu không hợp lệ");
+
+      const items = result.data.items;
+
+      // === Xử lý dữ liệu như cũ ===
+      setAbcData(items);
+
+      const sorted = [...items].sort((a, b) => b.value - a.value);
+      setTop5Products(sorted.slice(0, 5));
+
+      const grouped = items.reduce((acc, item) => {
+        const cls = item.abcClassification;
+        acc[cls] = (acc[cls] || 0) + Number(item.value);
+        return acc;
+      }, {});
+
+      setPieData({
+        labels: Object.keys(grouped),
+        datasets: [
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+            data: Object.values(grouped),
+            backgroundColor: Object.keys(grouped).map(
+              (k) => (ABC_COLORS[k]?.color || "#8c8c8c") + "80"
+            ),
+          },
+        ],
+      });
+
+      console.log(
+        `Dữ liệu biểu đồ ABC tháng ${month}/${year} đã tải thành công.`
+      );
+    } catch (error) {
+      console.error("Lỗi API:", error);
+    }
+  };
+
+  const fetchChart = async () => {
+    try {
+      const year = yearSelected ? yearSelected.year() : dayjs().year();
+      const monthlyRevenue = [];
+
+      for (let month = 0; month < 12; month++) {
+        const monthStart = dayjs(`${year}-${month + 1}-01`).startOf("month");
+        const monthEnd = dayjs(`${year}-${month + 1}-01`).endOf("month");
+
+        const res = await fetch(
+          `${API_URL}/Reports/sales/overview?startDate=${monthStart.toISOString()}&endDate=${monthEnd.toISOString()}&groupBy=day`,
+          {
+            headers: { ...authHeader },
           }
         );
 
-        if (!response.ok) throw new Error(`Lỗi API: ${response.status}`);
+        if (!res.ok)
+          throw new Error(`Lỗi API tháng ${month + 1}: ${res.status}`);
 
-        const result = await response.json();
-        if (!result.success || !result.data?.items)
-          throw new Error("Dữ liệu không hợp lệ");
+        const data = await res.json();
 
-        const items = result.data.items;
-
-        // === TÍNH TỔNG DOANH THU ===
-        const total = items.reduce((sum, item) => sum + Number(item.value), 0);
-        setTotalRevenue(total);
-
-        // === LƯU DỮ LIỆU ABC ===
-        setAbcData(items);
-
-        // === TOP 5 ===
-        const sorted = [...items].sort((a, b) => b.value - a.value);
-        setTop5Products(sorted.slice(0, 5));
-        console.log("Top 5 sản phẩm bán chạy:", sorted.slice(0, 5));
-
-        // === BIỂU ĐỒ PIE ===
-        const grouped = items.reduce((acc, item) => {
-          const cls = item.abcClassification;
-          acc[cls] = (acc[cls] || 0) + Number(item.value);
-          return acc;
-        }, {});
-
-        setPieData({
-          labels: Object.keys(grouped),
-          datasets: [
-            {
-              data: Object.values(grouped),
-              backgroundColor: Object.keys(grouped).map(
-                (k) => (ABC_COLORS[k]?.color || "#8c8c8c") + "80"
-              ),
-            },
-          ],
-        });
-
-        // === BIỂU ĐỒ LINE (dùng mock) ===
-        const days = Array.from({ length: dayjs(toDate).date() }, (_, i) =>
-          (i + 1).toString()
+        // Tính tổng doanh thu của tháng đó
+        const totalRevenue = data?.data?.reduce(
+          (sum, item) => sum + (item.totalRevenue || 0),
+          0
         );
-        setLineData({
-          labels: days,
-          datasets: [
-            {
-              label: "Doanh thu (₫)",
-              data: MOCK_DAILY_REVENUE,
-              borderColor: "#008f5a",
-              backgroundColor: "rgba(0, 143, 90, 0.1)",
-              fill: true,
-              tension: 0.4,
-            },
-          ],
-        });
-
-        message.success("Đã tải dữ liệu từ API thành công!");
-      } catch (error) {
-        console.error("Lỗi API:", error);
-        message.error(
-          "Không thể tải dữ liệu. Vui lòng kiểm tra API hoặc token."
-        );
+        monthlyRevenue.push(totalRevenue || 0);
       }
-    };
 
-    fetchABCData();
-  }, [startDate, endDate]);
+      // Sau khi có dữ liệu 12 tháng → render Line chart
+      const months = Array.from({ length: 12 }, (_, i) => `T${i + 1}`);
 
+      setLineData({
+        labels: months,
+        datasets: [
+          {
+            label: `Doanh thu năm ${year} (₫)`,
+            data: monthlyRevenue,
+            borderColor: "#008f5a",
+            backgroundColor: "rgba(0, 143, 90, 0.1)",
+            fill: true,
+            tension: 0.4,
+          },
+        ],
+      });
+
+      message.success("Đã tải dữ liệu từ API thành công!");
+    } catch (error) {
+      console.error("Lỗi API:", error);
+      message.error("Không thể tải dữ liệu. Vui lòng kiểm tra API hoặc token.");
+    }
+  };
+
+  // === CẬP NHẬT DOANH THU NĂM KHI NĂM ĐƯỢC CHỌN THAY ĐỔI ===
+  useEffect(() => {
+    fetchtotalRevenueYear();
+    fetchtotalRevenueMonth();
+    fetchChartABC(yearSelectedpie);
+    fetchChart();
+  }, [yearSelected, monthSelected, yearSelectedpie]);
+
+  // === HÀM TẢI BÁO CÁO DƯỚI DẠNG CSV ===
   const downloadReport = () => {
-    const csv = [
-      "Mã SP,Tên SP,Barcode,Doanh thu,Tần suất,Điểm,Phân loại",
-      ...abcData.map(
-        (i) =>
-          `${i.productId},"${i.productName}",${i.barcode},${i.value},${i.frequency},${i.score},${i.abcClassification}`
-      ),
-    ].join("\n");
+    const header = [
+      "Mã sản phẩm",
+      "Tên sản phẩm",
+      "Mã vạch",
+      "Doanh thu (₫)",
+      "Tần suất bán",
+      "Điểm",
+      "Phân loại ABC",
+    ];
+
+    const rows = abcData.map(
+      (i) =>
+        `${i.productId},"${i.productName}",${i.barcode},${i.value},${i.frequency},${i.score},${i.abcClassification}`
+    );
+
+    // BOM + dấu phẩy
+    const csv = "\uFEFF" + [header.join(","), ...rows].join("\n");
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement("a");
     a.href = url;
-    a.download = `sale_report_${startDate.format("DDMM")}-${endDate.format(
-      "DDMM"
-    )}.csv`;
+    a.download = `Báo cáo_ABC_Tháng_${startDate.format("MM_YYYY")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
+  // === COLUMNS CHO BẢNG DỮ LIỆU TRONG MODAL ===
   const columns = [
     { title: "Mã SP", dataIndex: "productId", width: 90 },
     { title: "Tên sản phẩm", dataIndex: "productName", ellipsis: true },
@@ -216,11 +345,12 @@ export default function SaleReport() {
         className="SaleReport-card"
         extra={
           <div className="SaleReport-filter">
-            <RangePicker
-              value={[startDate, endDate]}
-              format="DD/MM/YYYY"
+            <DatePicker
+              picker="year"
+              value={yearSelected}
+              onChange={setYearSelected}
+              placeholder="Chọn năm"
               className="modern-picker"
-              disabled
             />
             <Button
               icon={<DownloadOutlined />}
@@ -238,62 +368,103 @@ export default function SaleReport() {
             <div className="SaleReport-revenue-summary">
               <div className="revenue-box">
                 <DollarOutlined className="icon" />
-                <h3>Tổng doanh thu</h3>
-                <div className="value">{totalRevenue.toLocaleString()} ₫</div>
+                <h3>Doanh thu năm {yearSelected.year()}</h3>
+                <div className="value" style={{ color: "red" }}>
+                  {totalRevenue.toLocaleString()} ₫
+                </div>
               </div>
               <div className="revenue-box">
                 <CalendarOutlined className="icon" />
-                <h3>Doanh thu kỳ hiện tại</h3>
-                <div className="value">{totalRevenue.toLocaleString()} ₫</div>
-                <div className="sub">
-                  {startDate.format("DD/MM")} - {endDate.format("DD/MM")}
+                <h3>
+                  Doanh thu tháng{" "}
+                  {yearSelectedpie
+                    ? `tháng ${
+                        yearSelectedpie.month() + 1
+                      }/${yearSelectedpie.year()}`
+                    : "tháng hiện tại"}
+                </h3>
+                <div className="value">
+                  {TotalRevenueMonth.toLocaleString()} ₫
                 </div>
               </div>
             </div>
-
             <div className="SaleReport-top5">
-              <h4>Top 5 sản phẩm bán chạy</h4>
-              <ul>
-                {top5Products.map((p, i) => (
-                  <li key={p.productId}>
-                    <span className="rank">#{i + 1}</span>
-                    <span className="name" title={p.productName}>
-                      {p.productName}
-                    </span>
-                    <span className="value">
-                      {Number(p.value).toLocaleString()} ₫
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <h4>
+                Top 5 sản phẩm bán chạy trong{" "}
+                {yearSelectedpie
+                  ? `tháng ${
+                      yearSelectedpie.month() + 1
+                    }/${yearSelectedpie.year()}`
+                  : "tháng hiện tại"}
+              </h4>
+
+              {top5Products && top5Products.length > 0 ? (
+                <ul>
+                  {top5Products.map((p, i) => (
+                    <li
+                      key={p.productId}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <div>
+                        <span style={{ fontWeight: "bold", marginRight: 8 }}>
+                          #{i + 1}
+                        </span>
+                        <span title={p.productName}>{p.productName}</span>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <span>{Number(p.value).toLocaleString()} ₫</span>
+                        <ArrowUpOutlined style={{ color: "red" }} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <Empty description="Không có dữ liệu Top 5 sản phẩm" />
+              )}
             </div>
           </div>
 
           {/* CỘT 2: Pie */}
           <div className="SaleReport-pie-block">
-            {pieData ? (
-              <>
-                <div className="chart-header">
-                  <span>Tỷ trọng nhóm ABC</span>
-                  <Button
-                    size="small"
-                    icon={<EyeOutlined />}
-                    onClick={() => setModalVisible(true)}
-                  >
-                    Xem chi tiết
-                  </Button>
-                </div>
-                <div className="chart-container">
-                  <Pie
-                    data={pieData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: { legend: { position: "bottom" } },
-                    }}
-                  />
-                </div>
-              </>
+            <div className="chart-header">
+              <span>Tỷ trọng nhóm ABC</span>
+              <DatePicker
+                picker="month"
+                value={yearSelectedpie}
+                onChange={setYearSelectedPie}
+                placeholder="Chọn tháng"
+                className="modern-picker"
+              />
+              <Button
+                size="small"
+                icon={<EyeOutlined />}
+                onClick={() => setModalVisible(true)}
+              >
+                Xem chi tiết
+              </Button>
+            </div>
+            {pieData && pieData.labels && pieData.labels.length > 0 ? (
+              <div className="chart-container">
+                <Pie
+                  data={pieData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: "bottom" } },
+                  }}
+                />
+              </div>
             ) : (
               <Empty description="Không có dữ liệu ABC" />
             )}
@@ -302,7 +473,7 @@ export default function SaleReport() {
           {/* CỘT 3: Line */}
           <div className="SaleReport-line-block">
             <div className="chart-header">
-              Doanh thu mỗi ngày ({endDate.format("MM/YYYY")})
+              Doanh thu năm {yearSelected.year()}
             </div>
             <div className="chart-container">
               {lineData ? (

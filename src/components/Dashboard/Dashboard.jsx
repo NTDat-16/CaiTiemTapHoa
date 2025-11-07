@@ -21,7 +21,6 @@ export default function Dashboard() {
     { key: "overview", label: "Tổng quan", icon: <BarChartOutlined /> },
     { key: "sales", label: "Doanh thu", icon: <LineChartOutlined /> },
     { key: "forecast", label: "Dự báo Nhu cầu", icon: <DatabaseOutlined /> },
-    { key: "inventory", label: "Tồn kho", icon: <DatabaseOutlined /> },
     { key: "deadstock", label: "Dead Stock", icon: <WarningOutlined /> },
   ];
 
@@ -31,12 +30,10 @@ export default function Dashboard() {
         return <SalesReport />;
       case "forecast":
         return <Forecast />;
-      case "inventory":
-        return <h2>Chưa làm</h2>;
       case "deadstock":
         return <DeadStock />;
       default:
-        return <Overview />
+        return <Overview />;
     }
   };
 
