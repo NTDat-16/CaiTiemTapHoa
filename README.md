@@ -115,6 +115,8 @@
     └── vite.config.js
 ```
 
+---
+
 ### 🛠️ Cài đặt và chạy dự án
 
 #### 1️⃣ Clone dự án
@@ -127,8 +129,13 @@ hoặc tải file zip về giải nén
 #### 2️⃣ Chạy dự án
 
 ```bash
+# 🧩 Lần đầu chạy (cần cài thư viện)
 cd caitiemtaphoa
 npm install
+npm run dev
+
+# ⚡ Lần sau (đã có node_modules)
+cd caitiemtaphoa
 npm run dev
 ```
 
