@@ -11,6 +11,7 @@ import Employee from "../../components/Employee/Employee";
 import Customer from "../../components/Customer/Customer";
 import Supplier from "../../components/Supplier/Supplier";
 import Purchase from "../../components/Purchase/Purchase";
+import Adjustment from "../../components/Adjustment/Adjustment";
 import "./Home.css";
 
 export default function Home() {
@@ -39,6 +40,7 @@ export default function Home() {
           {choosen === "inventory" && <Inventory />}
           {choosen === "report" && <Dashboard />}
           {choosen === "purchase" && <Purchase />}
+          {choosen === "adjustment" && <Adjustment />}
         </div>
       </div>
     </div>

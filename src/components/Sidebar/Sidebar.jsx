@@ -11,6 +11,7 @@ import {
   FiGrid,
   FiBox,
   FiPlusSquare,
+  FiEdit,
 } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -121,6 +122,17 @@ export default function Sidebar({ onTag, choosen }) {
                 onClick={() => onTag("purchase")}
               >
                 <FiPlusSquare />
+              </li>
+
+              {/* Điều chỉnh kho */}
+              <li
+                className={`SidebarItem ${
+                  choosen === "adjustment" ? "active" : ""
+                }`}
+                data-label="Điều chỉnh kho"
+                onClick={() => onTag("adjustment")}
+              >
+                <FiEdit />
               </li>
 
               {/* Khuyến mãi */}

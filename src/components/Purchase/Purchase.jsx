@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Table, Button, Modal, Form, Input, Select, Space, message, Tag, InputNumber, Popconfirm, Spin } from "antd";
 import { PlusOutlined, DeleteOutlined, SearchOutlined, EyeOutlined, SaveOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import "./Purchase.css";
+import PriceErrorNotification from "./PriceErrorNotification";
 const { Option } = Select;
 
 export default function Purchase() {
@@ -22,6 +23,7 @@ export default function Purchase() {
   const [productQuantity, setProductQuantity] = useState(1);
   const [productLoading, setProductLoading] = useState(false);
   const [supplierLoading, setSupplierLoading] = useState(false);
+  const [priceErrorItems, setPriceErrorItems] = useState([]);
 
   const searchTimeoutRef = useRef(null);
 
@@ -195,6 +197,24 @@ export default function Purchase() {
         return;
       }
 
+      // Kiểm tra nếu có sản phẩm nào có giá nhập lớn hơn giá bán
+      const invalidItems = purchaseItems.filter(item => {
+        console.log(`Sản phẩm: ${item.productName}, Giá nhập: ${item.purchasePrice}, Giá bán: ${item.salePrice}`);
+        return item.purchasePrice > item.salePrice;
+      });
+      
+      console.log("Số sản phẩm không hợp lệ:", invalidItems.length);
+      console.log("Danh sách sản phẩm không hợp lệ:", invalidItems);
+      
+      if (invalidItems.length > 0) {
+        // Reset state và đợi một chút trước khi set lại để đảm bảo component unmount/mount hoàn toàn
+        setPriceErrorItems([]);
+        setTimeout(() => {
+          setPriceErrorItems([...invalidItems]); // Tạo array mới để trigger re-render
+        }, 50);
+        return; // Không lưu và giữ modal mở
+      }
+
       const payload = {
         supplierId: values.supplierId,
         notes: values.notes || "",
@@ -289,6 +309,7 @@ export default function Purchase() {
       productName: product.productName,
       quantity: productQuantity || 1,
       purchasePrice: 0,
+      salePrice: product.price || 0, // Gán giá bán từ trường 'price' của sản phẩm
       subtotal: 0,
     };
 
@@ -313,6 +334,12 @@ export default function Purchase() {
       if (item.productId === productId) {
         const updated = { ...item, [field]: value };
         updated.subtotal = updated.quantity * updated.purchasePrice;
+        
+        // Hiển thị cảnh báo nếu giá nhập lớn hơn giá bán (không chặn nhập)
+        if (field === "purchasePrice" && value > item.salePrice && item.salePrice > 0) {
+          message.warning(`Cảnh báo: Giá nhập đang lớn hơn giá bán (${item.salePrice?.toLocaleString("vi-VN")} ₫)`);
+        }
+        
         return updated;
       }
       return item;
@@ -611,6 +638,7 @@ export default function Purchase() {
         destroyOnClose
         style={{ top: 20 }}
         closable={false}
+        zIndex={1000}
       >
         <Form form={form} onFinish={handleSaveDraft} layout="vertical" autoComplete="off">
           {/* Thông tin đơn hàng nếu đã tồn tại */}
@@ -782,6 +810,14 @@ export default function Purchase() {
             </div>
           </div>
         </Form>
+
+        {/* Price Error Notification - Đặt trong Modal */}
+        {isDetailModalOpen && (
+          <PriceErrorNotification 
+            invalidItems={priceErrorItems}
+            onClose={() => setPriceErrorItems([])}
+          />
+        )}
       </Modal>
     </div>
   );
