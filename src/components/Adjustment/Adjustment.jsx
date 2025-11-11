@@ -150,7 +150,7 @@ export default function Adjustment() {
       title: "Ngày giờ",
       dataIndex: "createdAt",
       key: "createdAt",
-      width: 200,
+      width: 250,
       align: "center",
       render: (date) => new Date(date).toLocaleString("vi-VN"),
     },
@@ -188,7 +188,7 @@ export default function Adjustment() {
       title: "Người thực hiện",
       dataIndex: "staffName",
       key: "staffName",
-      width: 150,
+      width: 200,
       align: "center",
     },
     {
