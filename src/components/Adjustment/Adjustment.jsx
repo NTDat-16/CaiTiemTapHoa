@@ -186,8 +186,8 @@ export default function Adjustment() {
     },
     {
       title: "Người thực hiện",
-      dataIndex: "userName",
-      key: "userName",
+      dataIndex: "staffName",
+      key: "staffName",
       width: 150,
       align: "center",
     },
