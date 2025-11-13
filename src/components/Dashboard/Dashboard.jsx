@@ -20,7 +20,7 @@ export default function Dashboard() {
   const tabs = [
     { key: "overview", label: "Tổng quan", icon: <BarChartOutlined /> },
     { key: "sales", label: "Doanh thu", icon: <LineChartOutlined /> },
-    { key: "forecast", label: "Dự báo Nhu cầu", icon: <DatabaseOutlined /> },
+    // { key: "forecast", label: "Dự báo Nhu cầu", icon: <DatabaseOutlined /> },
     { key: "deadstock", label: "Dead Stock", icon: <WarningOutlined /> },
   ];
 

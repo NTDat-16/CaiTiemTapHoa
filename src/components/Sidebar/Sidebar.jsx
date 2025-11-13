@@ -14,18 +14,13 @@ import {
   FiEdit,
 } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+
 import { useState } from "react";
 
 export default function Sidebar({ onTag, choosen }) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const role = user?.role || user?.user?.role;
+  const { user } = useAuth();
 
-  const HandleLogOut = async () => {
-    logout();
-    navigate("/login");
-  };
+  const role = user?.role || user?.user?.role;
 
   function handleTag(frame) {
     onTag(frame);
@@ -187,14 +182,6 @@ export default function Sidebar({ onTag, choosen }) {
             </>
           )}
         </ul>
-
-        <div
-          className="SidebarLogout"
-          data-label="Đăng xuất"
-          onClick={HandleLogOut}
-        >
-          <FiLogOut style={{ rotate: "180deg" }} />
-        </div>
       </div>
     </div>
   );
