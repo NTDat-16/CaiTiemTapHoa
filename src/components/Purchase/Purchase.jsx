@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Table, Button, Modal, Form, Input, Select, Space, message, Tag, InputNumber, Popconfirm, Spin } from "antd";
+import { Table, Button, Modal, Form, Input, Select, Space, message, notification, Tag, InputNumber, Popconfirm, Spin } from "antd";
 import { PlusOutlined, DeleteOutlined, SearchOutlined, EyeOutlined, SaveOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import "./Purchase.css";
 import PriceErrorNotification from "./PriceErrorNotification";
@@ -24,6 +24,7 @@ export default function Purchase() {
   const [productLoading, setProductLoading] = useState(false);
   const [supplierLoading, setSupplierLoading] = useState(false);
   const [priceErrorItems, setPriceErrorItems] = useState([]);
+  const [zeroPriceError, setZeroPriceError] = useState("");
 
   const searchTimeoutRef = useRef(null);
 
@@ -192,8 +193,26 @@ export default function Purchase() {
   // Save draft (Pending status)
   const handleSaveDraft = async (values) => {
     try {
+      console.log("Form values:", values);
+      
+      // Kiểm tra nhà cung cấp
+      if (!values.supplierId) {
+        message.error("Vui lòng chọn nhà cung cấp");
+        return;
+      }
+      
       if (purchaseItems.length === 0) {
         message.error("Vui lòng thêm ít nhất một sản phẩm");
+        return;
+      }
+
+      // Kiểm tra nếu có sản phẩm nào có giá nhập = 0
+      const zeroPrice = purchaseItems.filter(item => !item.purchasePrice || item.purchasePrice <= 0);
+      console.log("Sản phẩm giá = 0:", zeroPrice);
+      if (zeroPrice.length > 0) {
+        const productNames = zeroPrice.map(item => item.productName).join(", ");
+        setZeroPriceError(`Có ${zeroPrice.length} sản phẩm chưa nhập giá hoặc giá = 0: ${productNames}. Vui lòng nhập giá hợp lệ!`);
+        setTimeout(() => setZeroPriceError(""), 5000); // Tự động ẩn sau 5 giây
         return;
       }
 
@@ -462,7 +481,8 @@ export default function Purchase() {
 
   // Is editable
   const isEditable = () => {
-    return !currentPurchase || currentPurchase.status === "Pending";
+    // Chỉ cho phép chỉnh sửa khi tạo đơn mới (chưa có purchaseId)
+    return !currentPurchase;
   };
 
   // Purchase items table columns
@@ -512,6 +532,7 @@ export default function Purchase() {
             formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
             parser={value => value.replace(/\$\s?|(,*)/g, '')}
             style={{ width: "100%" }}
+            placeholder="Nhập giá..."
           />
         ) : (
           value?.toLocaleString("vi-VN") + " ₫"
@@ -793,7 +814,11 @@ export default function Purchase() {
 
                 {currentPurchase?.status === "Pending" && (
                   <>
-                    <Button danger icon={<CloseCircleOutlined />} onClick={handleCancel}>
+                    <Button 
+                      icon={<CloseCircleOutlined />} 
+                      onClick={handleCancel}
+                      style={{ backgroundColor: "#ff4d4f", color: "white", borderColor: "#ff4d4f" }}
+                    >
                       Hủy đơn
                     </Button>
                     <Button
@@ -817,6 +842,46 @@ export default function Purchase() {
             invalidItems={priceErrorItems}
             onClose={() => setPriceErrorItems([])}
           />
+        )}
+        
+        {/* Zero Price Error */}
+        {zeroPriceError && (
+          <div
+            style={{
+              position: "fixed",
+              top: "20px",
+              right: "20px",
+              zIndex: 999999,
+              backgroundColor: "#fff2f0",
+              border: "1px solid #ffccc7",
+              borderRadius: "8px",
+              padding: "16px 24px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              maxWidth: "400px"
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+              <div style={{ color: "#ff4d4f", fontSize: "20px" }}>⚠️</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, color: "#ff4d4f", marginBottom: "4px" }}>
+                  Lỗi giá nhập hàng
+                </div>
+                <div style={{ color: "#595959", fontSize: "14px" }}>{zeroPriceError}</div>
+              </div>
+              <button
+                onClick={() => setZeroPriceError("")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "16px",
+                  color: "#999",
+                  cursor: "pointer"
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
         )}
       </Modal>
     </div>
